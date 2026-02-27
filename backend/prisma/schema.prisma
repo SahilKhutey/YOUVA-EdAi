@@ -29,6 +29,7 @@ model User {
   stats            UserStats?
   badges             UserBadge[]
   assessmentSessions AssessmentSession[]
+  engagementLogs     EngagementLog[]
 }
 
 model Subject {
@@ -57,6 +58,7 @@ model Topic {
   userMastery      UserTopicMastery[]
   mistakeLogs        MistakeLog[]
   assessmentSessions AssessmentSession[]
+  engagementLogs     EngagementLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -240,5 +242,25 @@ model IntegrityLog {
   timestamp   DateTime          @default(now())
 
   createdAt   DateTime          @default(now())
+}
+
+// --- Emotional & Engagement AI Models ---
+
+model EngagementLog {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id])
+  topicId               String
+  topic                 Topic    @relation(fields: [topicId], references: [id])
+  
+  activityRate          Float    // Typing speed / interactions per min
+  accuracyScore         Float    // Error spike patterns
+  timeConsistency       Float    // Hesitation times
+  fatigueIndex          Float    // Time since last break / active duration
+  finalEngagementScore  Float
+  
+  interventionTriggered String?  // e.g., 'BREAK_SUGGESTED', 'DIFFICULTY_DROPPED'
+  
+  createdAt             DateTime @default(now())
 }
 

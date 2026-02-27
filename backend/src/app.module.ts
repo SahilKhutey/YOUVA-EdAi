@@ -19,6 +19,7 @@ import { GamificationModule } from './gamification/gamification.module';
 import { LearningEngineModule } from './learning-engine/learning-engine.module';
 import { AiMentorModule } from './ai-mentor/ai-mentor.module';
 import { AssessmentModule } from './assessment/assessment.module';
+import { EngagementModule } from './engagement/engagement.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AssessmentModule } from './assessment/assessment.module';
     LearningEngineModule,
     AiMentorModule,
     AssessmentModule,
+    EngagementModule,
   ],
   controllers: [AppController],
   providers: [AppService],
