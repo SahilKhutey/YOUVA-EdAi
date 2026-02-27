@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String  @id @default(uuid())
+  email     String  @unique
+  password  String
+  role      String  @default("STUDENT") // SQLite doesn't support Enum
+  name           String?
+  avatarUrl      String?
+  cognitiveLevel String  @default("TEEN") // CHILD, TEEN, ADULT
+  gradeLevel     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  subscription     Subscription?
+  learningSessions LearningSession[]
+  practiceSessions PracticeSession[]
+  topicMastery     UserTopicMastery[]
+  mistakeLogs      MistakeLog[]
+  stats            UserStats?
+  badges           UserBadge[]
+}
+
+model Subject {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  topics      Topic[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Topic {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+  subjectId   String
+  subject     Subject @relation(fields: [subjectId], references: [id])
+  order       Int     @default(0)
+
+  // Relations
+  prerequisites    TopicPrerequisite[] @relation("TopicToPrerequisite")
+  dependents       TopicPrerequisite[] @relation("PrerequisiteToTopic")
+  learningSessions LearningSession[]
+  practiceSessions PracticeSession[]
+  questions        Question[]
+  userMastery      UserTopicMastery[]
+  mistakeLogs      MistakeLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TopicPrerequisite {
+  topicId        String
+  topic          Topic  @relation("TopicToPrerequisite", fields: [topicId], references: [id])
+  prerequisiteId String
+  prerequisite   Topic  @relation("PrerequisiteToTopic", fields: [prerequisiteId], references: [id])
+
+  @@id([topicId, prerequisiteId])
+}
+
+model LearningSession {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  topicId   String
+  topic     Topic     @relation(fields: [topicId], references: [id])
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  logs      String? // SQLite doesn't support Json
+}
+
+model PracticeSession {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  topicId   String
+  topic     Topic        @relation(fields: [topicId], references: [id])
+  score     Float?
+  startTime DateTime     @default(now())
+  endTime   DateTime?
+  answers   UserAnswer[]
+}
+
+model Question {
+  id            String  @id @default(uuid())
+  topicId       String
+  topic         Topic   @relation(fields: [topicId], references: [id])
+  content       String
+  difficulty    Float   @default(0.5) // Replaced String enum with Float for RL tuning (e.g. 0.0 - 1.0)
+  type          String // "MCQ", "NUMERIC", etc.
+  correctAnswer String
+  options       String? // SQLite doesn't support Json
+  explanation   String?
+
+  answers UserAnswer[]
+}
+
+model UserAnswer {
+  id         String          @id @default(uuid())
+  sessionId  String
+  session    PracticeSession @relation(fields: [sessionId], references: [id])
+  questionId String
+  question   Question        @relation(fields: [questionId], references: [id])
+  answer     String
+  isCorrect  Boolean
+  createdAt  DateTime        @default(now())
+}
+
+model UserTopicMastery {
+  id      String @id @default(uuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  topicId String
+  topic   Topic  @relation(fields: [topicId], references: [id])
+
+  masteryProbability Float @default(0.1) // Bayesian Knowledge Tracing: P(Ln)
+  difficultyState    Float @default(0.5) // RL current target difficulty
+
+  lastReviewed DateTime?
+
+  @@unique([userId, topicId])
+}
+
+model Subscription {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id])
+  plan             String    @default("FREE")
+  status           String    @default("ACTIVE")
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Resource {
+  id              String    @id @default(uuid())
+  title           String
+  description     String?
+  url             String    @unique
+  source          String
+  viewCount       Int       @default(0)
+  likeCount       Int       @default(0)
+  durationSeconds Int       @default(0)
+  publishedAt     DateTime?
+  tags            String? // JSON string
+  score           Float     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- Gamification Models ---
+
+model UserStats {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id])
+  totalXp          Int       @default(0)
+  currentLevel     Int       @default(1)
+  currentStreak    Int       @default(0)
+  bestStreak       Int       @default(0)
+  lastActivityDate DateTime?
+  updatedAt        DateTime  @updatedAt
+}
+
+model Badge {
+  id               String      @id @default(uuid())
+  name             String      @unique
+  description      String
+  icon             String // Icon name or URL
+  requirementType  String // E.g., 'XP', 'STREAK', 'TOPICS_MASTERED'
+  requirementValue Int
+  users            UserBadge[]
+  createdAt        DateTime    @default(now())
+}
+
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+// --- AI Mentor Models ---
+
+model MistakeLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id])
+  description String // e.g., "Forgot to carry the 1", "Confused 'there' and 'their'"
+  isResolved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+}
