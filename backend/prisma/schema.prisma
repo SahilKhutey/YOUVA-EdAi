@@ -27,7 +27,8 @@ model User {
   topicMastery     UserTopicMastery[]
   mistakeLogs      MistakeLog[]
   stats            UserStats?
-  badges           UserBadge[]
+  badges             UserBadge[]
+  assessmentSessions AssessmentSession[]
 }
 
 model Subject {
@@ -54,7 +55,8 @@ model Topic {
   practiceSessions PracticeSession[]
   questions        Question[]
   userMastery      UserTopicMastery[]
-  mistakeLogs      MistakeLog[]
+  mistakeLogs        MistakeLog[]
+  assessmentSessions AssessmentSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -209,3 +211,34 @@ model MistakeLog {
   createdAt   DateTime @default(now())
   resolvedAt  DateTime?
 }
+
+// --- Assessment & Anti-Cheating Models ---
+
+model AssessmentSession {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id])
+  topicId        String
+  topic          Topic          @relation(fields: [topicId], references: [id])
+  startTime      DateTime       @default(now())
+  endTime        DateTime?
+  integrityScore Float          @default(100.0)
+  status         String         @default("ONGOING") // ONGOING, COMPLETED, FLAGGED
+  
+  logs           IntegrityLog[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model IntegrityLog {
+  id          String            @id @default(uuid())
+  sessionId   String
+  session     AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  anomalyType String            // TAB_SWITCH, FACE_MISSING, RAPID_ANSWER_CHANGE, MOUSE_IRREGULARITY
+  severity    Float
+  metadata    String?           // SQLite doesn't support Json, store as stringified object
+  timestamp   DateTime          @default(now())
+
+  createdAt   DateTime          @default(now())
+}
+
