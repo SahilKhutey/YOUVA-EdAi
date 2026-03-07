@@ -121,7 +121,7 @@ export default function CollaborativeBoard({
   // Initial Setup
   useEffect(() => {
     // Connect to namespace
-    const newSocket = io("http://localhost:3001/board", {
+    const newSocket = io(`${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'}/board`, {
       transports: ["websocket"],
     });
 

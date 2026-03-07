@@ -6,7 +6,7 @@ interface HeatmapProps {
 
 export default function Heatmap({ topics = [] }: HeatmapProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-border p-6">
+    <div className="clay-card p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-bold text-lg text-foreground">
           Weak Topics Heatmap

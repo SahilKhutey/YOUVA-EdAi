@@ -14,7 +14,7 @@ interface UpcomingTestsProps {
 
 export default function UpcomingTests({ tests = [] }: UpcomingTestsProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-4">
+    <div className="clay-card p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-lg text-foreground">Upcoming Tests</h3>
         <button className="text-sm text-primary hover:underline">

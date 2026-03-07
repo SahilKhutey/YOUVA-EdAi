@@ -3,33 +3,60 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String  @id @default(uuid())
-  email     String  @unique
-  password  String
-  role      String  @default("STUDENT") // SQLite doesn't support Enum
-  name           String?
-  avatarUrl      String?
-  cognitiveLevel String  @default("TEEN") // CHILD, TEEN, ADULT
-  gradeLevel     String?
+  id                 String  @id @default(uuid())
+  email              String  @unique
+  password           String
+  role               String  @default("STUDENT") // SQLite doesn't support Enum
+  name               String?
+  avatarUrl          String?
+  cognitiveLevel     String  @default("TEEN") // CHILD, TEEN, ADULT
+  gradeLevel         String?
+  onboardingComplete Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  subscription     Subscription?
-  learningSessions LearningSession[]
-  practiceSessions PracticeSession[]
-  topicMastery     UserTopicMastery[]
-  mistakeLogs      MistakeLog[]
-  stats            UserStats?
+  subscription       Subscription?
+  learningSessions   LearningSession[]
+  practiceSessions   PracticeSession[]
+  topicMastery       UserTopicMastery[]
+  mistakeLogs        MistakeLog[]
+  stats              UserStats?
   badges             UserBadge[]
   assessmentSessions AssessmentSession[]
   engagementLogs     EngagementLog[]
+  studyGoals         StudyGoal[]
+  announcements      Announcement[]
+  studySessions      StudySession[]
+  generatedContents  GeneratedContent[]
+  notifications      Notification[]
+  discussionPosts    DiscussionPost[]
+  discussionReplies  DiscussionReply[]
+  postVotes          PostVote[]
+  cognitiveProfile   CognitiveProfile?
+
+  skillCredentials   SkillCredential[]
+  assessmentProjects AssessmentProject[]
+
+  // Phase 6: Neural Cognitive Modeling
+  userSkillNodes     UserSkillNode[]
+  userSkillEdges     UserSkillEdge[]
+  cognitiveStateLogs CognitiveStateLog[]
+
+  // Phase: 1-on-1 Digital Classroom
+  teacherLessonPlans   LessonPlan[]              @relation("TeacherLessonPlans")
+  teacherWorksheets    Worksheet[]               @relation("TeacherWorksheets")
+  teacherClassrooms    DigitalClassroomSession[] @relation("TeacherClassrooms")
+  studentClassrooms    DigitalClassroomSession[] @relation("StudentClassrooms")
+  worksheetSubmissions WorksheetSubmission[]
+
+  feedbacks Feedback[]
 }
 
 model Subject {
@@ -41,6 +68,59 @@ model Subject {
   updatedAt   DateTime @updatedAt
 }
 
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String // e.g., 'SYSTEM', 'ACHIEVEMENT', 'REPLY'
+  title     String
+  body      String
+  metadata  String? // JSON string
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model DiscussionPost {
+  id        String   @id @default(uuid())
+  topicId   String
+  topic     Topic    @relation(fields: [topicId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  title     String
+  body      String
+  upvotes   Int      @default(0)
+  isPinned  Boolean  @default(false)
+  status    String   @default("OPEN") // OPEN, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  replies DiscussionReply[]
+  votes   PostVote[]
+}
+
+model DiscussionReply {
+  id         String         @id @default(uuid())
+  postId     String
+  post       DiscussionPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User           @relation(fields: [authorId], references: [id])
+  body       String
+  upvotes    Int            @default(0)
+  isAccepted Boolean        @default(false)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model PostVote {
+  postId String
+  post   DiscussionPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User           @relation(fields: [userId], references: [id])
+  value  Int
+
+  @@id([postId, userId])
+}
+
 model Topic {
   id          String  @id @default(uuid())
   title       String
@@ -50,18 +130,26 @@ model Topic {
   order       Int     @default(0)
 
   // Relations
-  prerequisites    TopicPrerequisite[] @relation("TopicToPrerequisite")
-  dependents       TopicPrerequisite[] @relation("PrerequisiteToTopic")
-  learningSessions LearningSession[]
-  practiceSessions PracticeSession[]
-  questions        Question[]
-  userMastery      UserTopicMastery[]
+  prerequisites      TopicPrerequisite[] @relation("TopicToPrerequisite")
+  dependents         TopicPrerequisite[] @relation("PrerequisiteToTopic")
+  learningSessions   LearningSession[]
+  practiceSessions   PracticeSession[]
+  questions          Question[]
+  userMastery        UserTopicMastery[]
   mistakeLogs        MistakeLog[]
   assessmentSessions AssessmentSession[]
   engagementLogs     EngagementLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  studySessions     StudySession[]
+  generatedContents GeneratedContent[]
+  discussionPosts   DiscussionPost[]
+
+  assessmentProjects AssessmentProject[]
+  LessonPlan         LessonPlan[]
+  Worksheet          Worksheet[]
 }
 
 model TopicPrerequisite {
@@ -85,15 +173,18 @@ model LearningSession {
 }
 
 model PracticeSession {
-  id        String       @id @default(uuid())
-  userId    String
-  user      User         @relation(fields: [userId], references: [id])
-  topicId   String
-  topic     Topic        @relation(fields: [topicId], references: [id])
-  score     Float?
-  startTime DateTime     @default(now())
-  endTime   DateTime?
-  answers   UserAnswer[]
+  id              String       @id @default(uuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id])
+  topicId         String
+  topic           Topic        @relation(fields: [topicId], references: [id])
+  score           Float?
+  startTime       DateTime     @default(now())
+  endTime         DateTime?
+  isCompleted     Boolean      @default(false)
+  durationSeconds Int?
+  xpEarned        Int?
+  answers         UserAnswer[]
 }
 
 model Question {
@@ -203,64 +294,394 @@ model UserBadge {
 // --- AI Mentor Models ---
 
 model MistakeLog {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
   topicId     String
-  topic       Topic    @relation(fields: [topicId], references: [id])
+  topic       Topic     @relation(fields: [topicId], references: [id])
   description String // e.g., "Forgot to carry the 1", "Confused 'there' and 'their'"
-  isResolved  Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  isResolved  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
   resolvedAt  DateTime?
 }
 
 // --- Assessment & Anti-Cheating Models ---
 
 model AssessmentSession {
-  id             String         @id @default(uuid())
+  id             String    @id @default(uuid())
   userId         String
-  user           User           @relation(fields: [userId], references: [id])
+  user           User      @relation(fields: [userId], references: [id])
   topicId        String
-  topic          Topic          @relation(fields: [topicId], references: [id])
-  startTime      DateTime       @default(now())
+  topic          Topic     @relation(fields: [topicId], references: [id])
+  startTime      DateTime  @default(now())
   endTime        DateTime?
-  integrityScore Float          @default(100.0)
-  status         String         @default("ONGOING") // ONGOING, COMPLETED, FLAGGED
-  
-  logs           IntegrityLog[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  integrityScore Float     @default(100.0)
+  status         String    @default("ONGOING") // ONGOING, COMPLETED, FLAGGED
+
+  logs      IntegrityLog[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 }
 
 model IntegrityLog {
   id          String            @id @default(uuid())
   sessionId   String
   session     AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  anomalyType String            // TAB_SWITCH, FACE_MISSING, RAPID_ANSWER_CHANGE, MOUSE_IRREGULARITY
+  anomalyType String // TAB_SWITCH, FACE_MISSING, RAPID_ANSWER_CHANGE, MOUSE_IRREGULARITY
   severity    Float
-  metadata    String?           // SQLite doesn't support Json, store as stringified object
+  metadata    String? // SQLite doesn't support Json, store as stringified object
   timestamp   DateTime          @default(now())
 
-  createdAt   DateTime          @default(now())
+  createdAt DateTime @default(now())
 }
 
 // --- Emotional & Engagement AI Models ---
 
 model EngagementLog {
-  id                    String   @id @default(uuid())
-  userId                String
-  user                  User     @relation(fields: [userId], references: [id])
-  topicId               String
-  topic                 Topic    @relation(fields: [topicId], references: [id])
-  
-  activityRate          Float    // Typing speed / interactions per min
-  accuracyScore         Float    // Error spike patterns
-  timeConsistency       Float    // Hesitation times
-  fatigueIndex          Float    // Time since last break / active duration
-  finalEngagementScore  Float
-  
-  interventionTriggered String?  // e.g., 'BREAK_SUGGESTED', 'DIFFICULTY_DROPPED'
-  
-  createdAt             DateTime @default(now())
+  id      String @id @default(uuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  topicId String
+  topic   Topic  @relation(fields: [topicId], references: [id])
+
+  activityRate         Float // Typing speed / interactions per min
+  accuracyScore        Float // Error spike patterns
+  timeConsistency      Float // Hesitation times
+  fatigueIndex         Float // Time since last break / active duration
+  finalEngagementScore Float
+
+  interventionTriggered String? // e.g., 'BREAK_SUGGESTED', 'DIFFICULTY_DROPPED'
+
+  createdAt DateTime @default(now())
 }
 
+// --- Goal Setting ---
+
+model StudyGoal {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  weeklyXpTarget     Int      @default(500)
+  weeklyStudyMinutes Int      @default(120)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+}
+
+// --- Announcements ---
+
+model Announcement {
+  id        String   @id @default(uuid())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  title     String
+  body      String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StudySession {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  topicId         String?
+  topic           Topic?   @relation(fields: [topicId], references: [id])
+  title           String
+  scheduledAt     DateTime
+  durationMinutes Int
+  notes           String?
+  isCompleted     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model GeneratedContent {
+  id                  String   @id @default(uuid())
+  teacherId           String
+  teacher             User     @relation(fields: [teacherId], references: [id])
+  topicId             String?
+  topic               Topic?   @relation(fields: [topicId], references: [id])
+  type                String // LESSON_PLAN, WORKSHEET, QUIZ
+  difficulty          String
+  learningObjective   String
+  bloomsTaxonomyLevel String
+  targetDuration      Int? // in minutes
+  content             String // Large text
+  status              String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// --- Blueprint: Layer 1 - Cognitive Digital Twin ---
+model CognitiveProfile {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningVelocityIndex Float    @default(1.0) // Multiplier for how fast they learn
+  skillGenome           String? // JSON string storing high-level skill affinities
+  attentionSpan         Int      @default(15) // Minutes of focused attention
+  memoryRetentionRate   Float    @default(0.8) // Base retention rate for forgetting curves
+  ethicalAlignmentScore Float    @default(100.0) // E.g., helpfulness in discussions, integrity
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// --- Blueprint: Layer 2 - Global Knowledge Graph ---
+model SkillNode {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  type        String // CONCEPT, SKILL, THEOREM, HISTORICAL_EVENT, SCIENTIFIC_PRINCIPLE, COMPETENCY
+  description String?
+  domain      String? // General field, e.g., "Mathematics", "Computer Science"
+
+  // Graph Edges
+  sourceEdges SkillEdge[] @relation("SourceToEdge")
+  targetEdges SkillEdge[] @relation("TargetToEdge")
+
+  credentials SkillCredential[]
+  userNodes   UserSkillNode[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SkillEdge {
+  id           String    @id @default(uuid())
+  sourceId     String
+  sourceNode   SkillNode @relation("SourceToEdge", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetId     String
+  targetNode   SkillNode @relation("TargetToEdge", fields: [targetId], references: [id], onDelete: Cascade)
+  relationType String // PREREQUISITE_FOR, APPLIED_IN, DEPENDS_ON, RELATED_MISCONCEPTION
+  weight       Float     @default(1.0) // Strength or necessity of the relationship
+}
+
+// --- Blueprint: Layer 5 - Assessment Intelligence & Layer 8 - Credential Mesh ---
+model SkillCredential {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillNodeId     String
+  skillNode       SkillNode @relation(fields: [skillNodeId], references: [id], onDelete: Cascade)
+  issuerId        String    @default("SYSTEM") // Could be an institution ID
+  blockchainHash  String?   @unique // Nullable, as it might be pending minting
+  validationScore Float // Based on continuous embedded assessment
+
+  // Phase 7: Global Verification Fields
+  aiSignature          String? // Hash representing AI validation metrics (e.g. adaptive testing, anti-cheating)
+  institutionSignature String? // Nullable until verified by an accredited institution
+  cognitiveDepthRating Float   @default(0.0) // Deep understanding vs surface memorization level
+
+  issuedAt  DateTime  @default(now())
+  expiresAt DateTime?
+
+  @@unique([userId, skillNodeId])
+}
+
+model AssessmentProject {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId          String
+  topic            Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  prompt           String // The complex real-world simulated task given to the user
+  submissionUrl    String? // Code repo, essay doc, etc.
+  gradingRubric    String // JSON representing Bloom's aligned rubric
+  logicScore       Float? // AI evaluation of logic trees
+  originalityScore Float? // AI evaluation of research originality
+  status           String    @default("ASSIGNED") // ASSIGNED, SUBMITTED, EVALUATED
+  evaluatedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// --- Blueprint: Layer 9 - Brain-Inspired Neural Cognitive Modeling ---
+
+model UserSkillNode {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillNodeId String
+  skillNode   SkillNode @relation(fields: [skillNodeId], references: [id], onDelete: Cascade)
+
+  masteryProbability          Float @default(0.1) // 0.0 - 1.0 (Probability of mastery)
+  confidenceWeight            Float @default(0.5) // How stable the mastery estimation is
+  memoryDecayFactor           Float @default(0.05) // Individualized rate of forgetting
+  applicationFlexibilityScore Float @default(0.2) // Ability to transfer this skill to new domains
+
+  lastActivatedAt DateTime?
+
+  // Edges where this node is the source
+  sourceEdges UserSkillEdge[] @relation("UserSourceToEdge")
+  // Edges where this node is the target
+  targetEdges UserSkillEdge[] @relation("UserTargetToEdge")
+
+  @@unique([userId, skillNodeId])
+}
+
+model UserSkillEdge {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sourceId   String
+  sourceNode UserSkillNode @relation("UserSourceToEdge", fields: [sourceId], references: [id], onDelete: Cascade)
+
+  targetId   String
+  targetNode UserSkillNode @relation("UserTargetToEdge", fields: [targetId], references: [id], onDelete: Cascade)
+
+  connectionWeight  Float @default(0.1) // Hebbian connection strength (0.0 to 1.0)
+  transferSuccesses Int   @default(0) // Tracking how many times knowledge was successfully transferred
+
+  @@unique([userId, sourceId, targetId])
+}
+
+model CognitiveStateLog {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // System 1: Working Memory
+  cognitiveLoad  Float // 0-1 (e.g., 0.9 = overwhelmed)
+  stepComplexity Float // Tracked complexity of current task
+
+  // System 2: Long-Term Memory
+  retrievalStrength Float // Base strength of recalled concepts
+
+  // System 3: Executive Control
+  attentionSwitching Float // Rate or effectiveness of task switching
+  impulseControl     Float // E.g., inverse of 'Rapid Answer Change'
+  errorClusterScore  Float // Are mistakes grouped by a specific misconception?
+
+  inferredState String // deep_understanding, surface_memorization, confusion, fatigue, flow
+
+  timestamp DateTime @default(now())
+}
+
+// --- Digital Classroom Phase ---
+
+model LessonPlan {
+  id                String   @id @default(uuid())
+  teacherId         String
+  teacher           User     @relation("TeacherLessonPlans", fields: [teacherId], references: [id])
+  topicId           String?
+  topic             Topic?   @relation(fields: [topicId], references: [id])
+  subject           String
+  topicName         String
+  studentLevel      String // CHILD, TEEN, ADULT etc.
+  learningObjective String
+  durationMinutes   Int
+  preferredMethod   String?
+  status            String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  steps             LessonPlanStep[]
+  worksheets        Worksheet[]
+  classroomSessions DigitalClassroomSession[]
+}
+
+model LessonPlanStep {
+  id              String     @id @default(uuid())
+  lessonPlanId    String
+  lessonPlan      LessonPlan @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
+  order           Int
+  type            String // INTRODUCTION, EXPLANATION, EXAMPLE, GUIDED_PRACTICE, WORKSHEET, DISCUSSION, QUIZ, HOMEWORK
+  title           String
+  content         String // Markdown or JSON
+  durationMinutes Int?
+}
+
+model Worksheet {
+  id               String      @id @default(uuid())
+  teacherId        String
+  teacher          User        @relation("TeacherWorksheets", fields: [teacherId], references: [id])
+  lessonPlanId     String?
+  lessonPlan       LessonPlan? @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
+  topicId          String?
+  topic            Topic?      @relation(fields: [topicId], references: [id])
+  title            String
+  generationMethod String // AI_GENERATED, UPLOADED, MANUAL
+  difficulty       String
+  status           String      @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  questions   WorksheetQuestion[]
+  submissions WorksheetSubmission[]
+}
+
+model WorksheetQuestion {
+  id            String    @id @default(uuid())
+  worksheetId   String
+  worksheet     Worksheet @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
+  order         Int
+  type          String // MCQ, SHORT_ANSWER, PROBLEM_SOLVING, DIAGRAM_LABELING, REASONING
+  content       String
+  options       String? // JSON string if MCQ
+  correctAnswer String?
+  explanation   String?
+  points        Int       @default(1)
+
+  submissionAnswers WorksheetSubmissionAnswer[]
+}
+
+model DigitalClassroomSession {
+  id             String      @id @default(uuid())
+  lessonPlanId   String?
+  lessonPlan     LessonPlan? @relation(fields: [lessonPlanId], references: [id])
+  teacherId      String
+  teacher        User        @relation("TeacherClassrooms", fields: [teacherId], references: [id])
+  studentId      String
+  student        User        @relation("StudentClassrooms", fields: [studentId], references: [id])
+  status         String      @default("SCHEDULED") // SCHEDULED, ACTIVE, COMPLETED
+  scheduledAt    DateTime?
+  startedAt      DateTime?
+  endedAt        DateTime?
+  currentStep    Int         @default(1)
+  whiteboardData String? // JSON string for saved canvas state
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  feedbacks Feedback[]
+}
+
+model WorksheetSubmission {
+  id          String    @id @default(uuid())
+  worksheetId String
+  worksheet   Worksheet @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score       Float?
+  status      String    @default("SUBMITTED") // SUBMITTED, GRADED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  answers WorksheetSubmissionAnswer[]
+}
+
+model WorksheetSubmissionAnswer {
+  id            String              @id @default(uuid())
+  submissionId  String
+  submission    WorksheetSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      WorksheetQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  studentAnswer String
+  isCorrect     Boolean?
+  pointsAwarded Int?
+  feedback      String?
+  createdAt     DateTime            @default(now())
+}
+
+// --- Feedback Tracking ---
+model Feedback {
+  id        String                   @id @default(uuid())
+  userId    String
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String? // Optional reference to a DigitalClassroomSession
+  session   DigitalClassroomSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  rating    Int // 1-5 scale
+  comments  String?
+  context   String // e.g. "POST_SESSION_TEACHER", "POST_SESSION_STUDENT", "GENERAL_BUG"
+  createdAt DateTime                 @default(now())
+}

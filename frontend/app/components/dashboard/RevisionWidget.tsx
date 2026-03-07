@@ -38,7 +38,7 @@ export default function RevisionWidget() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-border p-6 h-full flex flex-col animate-pulse">
+      <div className="clay-card p-6 h-full flex flex-col animate-pulse">
         <div className="h-6 w-1/3 bg-muted rounded mb-4"></div>
         <div className="space-y-3 flex-1">
           <div className="h-12 bg-muted rounded"></div>
@@ -51,7 +51,7 @@ export default function RevisionWidget() {
   // Empty state
   if (suggestions.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-border p-6 h-full flex flex-col items-center justify-center text-center">
+      <div className="clay-card p-6 h-full flex flex-col items-center justify-center text-center">
         <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-3">
           <CheckCircle2 className="w-6 h-6" />
         </div>
@@ -64,7 +64,7 @@ export default function RevisionWidget() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-border p-6 h-full flex flex-col">
+    <div className="clay-card p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-bold text-lg text-foreground flex items-center gap-2">

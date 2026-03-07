@@ -1,11 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class GamificationService {
   private readonly logger = new Logger(GamificationService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationService: NotificationService,
+  ) { }
 
   // Calculate required XP for a given level
   // Formula: XP = (Level - 1)^2 * 100
@@ -74,7 +78,13 @@ export class GamificationService {
 
     if (newLevel > stats.currentLevel) {
       this.logger.log(`User ${userId} leveled up to ${newLevel}!`);
-      // Future: Trigger a websocket event or notification here
+      await this.notificationService.create(
+        userId,
+        'LEVEL_UP',
+        `🎉 Level Up! You're now Level ${newLevel}`,
+        `Amazing work! You've reached Level ${newLevel}. Keep up the momentum!`,
+        { newLevel, previousLevel: stats.currentLevel },
+      );
     }
 
     await this.checkBadges(userId);
@@ -144,6 +154,10 @@ export class GamificationService {
     return userBadges.map((ub) => ub.badge);
   }
 
+  async getAllBadges() {
+    return this.prisma.badge.findMany();
+  }
+
   private async checkBadges(userId: string) {
     const stats = await this.prisma.userStats.findUnique({ where: { userId } });
     if (!stats) return;
@@ -176,6 +190,13 @@ export class GamificationService {
             },
           });
           this.logger.log(`User ${userId} earned badge: ${badge.name}`);
+          await this.notificationService.create(
+            userId,
+            'BADGE_EARNED',
+            `🏅 Badge Unlocked: ${badge.name}`,
+            badge.description,
+            { badgeIcon: badge.icon, badgeName: badge.name },
+          );
         }
       }
     }
@@ -219,5 +240,26 @@ export class GamificationService {
       ],
     });
     this.logger.log('Seeded default badges.');
+  }
+
+  // ── Leaderboard ─────────────────────────────────────────────
+  async getLeaderboard(currentUserId: string) {
+    const rows = await this.prisma.userStats.findMany({
+      orderBy: { totalXp: 'desc' },
+      take: 50,
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    return rows.map((row, index) => ({
+      rank: index + 1,
+      userId: row.userId,
+      name: row.user.name ?? row.user.email,
+      totalXp: row.totalXp,
+      currentLevel: row.currentLevel,
+      currentStreak: row.currentStreak,
+      isCurrentUser: row.userId === currentUserId,
+    }));
   }
 }

@@ -5,10 +5,14 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findOne(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
+  }
+
+  async findById(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: { id } });
   }
 
   async create(data: Prisma.UserCreateInput): Promise<User> {
@@ -23,10 +27,12 @@ export class UsersService {
 
   async updateProfile(
     userId: string,
-    data: { name?: string; hasPassword?: boolean; password?: string },
+    data: { name?: string; hasPassword?: boolean; password?: string; cognitiveLevel?: string; gradeLevel?: string },
   ) {
     const updateData: any = {};
     if (data.name) updateData.name = data.name;
+    if (data.cognitiveLevel) updateData.cognitiveLevel = data.cognitiveLevel;
+    if (data.gradeLevel !== undefined) updateData.gradeLevel = data.gradeLevel;
     if (data.password) {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
@@ -34,7 +40,7 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id: userId },
       data: updateData,
-      select: { id: true, email: true, name: true, role: true },
+      select: { id: true, email: true, name: true, role: true, cognitiveLevel: true, gradeLevel: true },
     });
   }
 }

@@ -19,12 +19,16 @@ export class AntiCheatingService {
         PLAGIARISM_FLAG: 40.0,
     };
 
-    async logAnomaly(sessionId: string, anomalyType: string, metadata?: any) {
+    async logAnomaly(sessionId: string, userId: string, anomalyType: string, metadata?: any) {
         const session = await this.prisma.assessmentSession.findUnique({
             where: { id: sessionId },
         });
 
-        if (!session || session.status !== 'ONGOING') {
+        if (!session || session.userId !== userId) {
+            throw new NotFoundException('Assessment session not found or access denied');
+        }
+
+        if (session.status !== 'ONGOING') {
             throw new NotFoundException('Active assessment session not found');
         }
 
@@ -42,7 +46,7 @@ export class AntiCheatingService {
         // Update session integrity score
         const newScore = Math.max(0, session.integrityScore - severity);
 
-        await this.prisma.assessmentSession.update({
+        const updatedSession = await this.prisma.assessmentSession.update({
             where: { id: sessionId },
             data: {
                 integrityScore: newScore,
@@ -50,10 +54,10 @@ export class AntiCheatingService {
             },
         });
 
-        return log;
+        return { log, integrityScore: updatedSession.integrityScore };
     }
 
-    async analyzePlagiarism(sessionId: string, text: string) {
+    async analyzePlagiarism(sessionId: string, userId: string, text: string) {
         const prompt = `Analyze the following text for AI generation or severe plagiarism markers. Return a single JSON object with a "score" number representing probability of cheating (0.0 to 1.0) and a "reason" string.\n\nText: "${text}"`;
         try {
             const responseData = await this.aiService.generateText(prompt);
@@ -61,7 +65,7 @@ export class AntiCheatingService {
             const result = JSON.parse(cleaned);
 
             if (result.score && result.score > 0.7) {
-                await this.logAnomaly(sessionId, 'PLAGIARISM_FLAG', { textSnippet: text.substring(0, 50), aiScore: result.score, reason: result.reason });
+                await this.logAnomaly(sessionId, userId, 'PLAGIARISM_FLAG', { textSnippet: text.substring(0, 50), aiScore: result.score, reason: result.reason });
             }
             return result;
         } catch (e) {

@@ -72,7 +72,7 @@ export function EngagementTracker({ topicId }: EngagementTrackerProps) {
             };
 
             try {
-                const res = await fetch('http://localhost:3001/api/engagement/telemetry', {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'}/api`}/engagement/telemetry`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

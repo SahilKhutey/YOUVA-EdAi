@@ -32,6 +32,6 @@ export class AssessmentController {
         @Body('anomalyType') anomalyType: string,
         @Body('metadata') metadata?: any,
     ) {
-        return this.antiCheatingService.logAnomaly(sessionId, anomalyType, metadata);
+        return this.antiCheatingService.logAnomaly(sessionId, req.user.id, anomalyType, metadata);
     }
 }

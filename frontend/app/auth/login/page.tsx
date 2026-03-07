@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
@@ -10,6 +10,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => setIsMounted(true), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +26,8 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (!isMounted) return null;
 
   return (
     <div className="min-h-screen w-full flex bg-white font-sans text-slate-900">
@@ -38,7 +43,7 @@ export default function LoginPage() {
             </span>
           </div>
 
-          <div className="max-w-md space-y-8">
+          <div className="w-[448px] max-w-full space-y-8">
             <h1 className="text-5xl font-medium tracking-tight text-slate-900 leading-[1.1]">
               Build your <br />
               <span className="text-[#1a73e8]">knowledge base</span>
@@ -95,8 +100,8 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side - Login Form (Google Sign-in Style) */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-[400px] space-y-8">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 bg-[#E2E8F0]">
+        <div className="w-[400px] max-w-full space-y-8 p-10 clay-card">
           <div className="text-center">
             <h2 className="text-2xl font-medium text-slate-900">Sign in</h2>
             <p className="mt-2 text-base text-slate-600">
@@ -118,14 +123,14 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   required
-                  className="peer w-full h-[52px] px-3.5 rounded-[4px] border border-slate-300 text-base text-slate-900 placeholder-transparent focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] outline-none transition-all bg-white"
+                  className="peer w-full h-[54px] px-4 clay-input text-base text-slate-900 placeholder-transparent focus:outline-none"
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <label
                   htmlFor="email"
-                  className="absolute left-2.5 -top-2.5 bg-white px-1 text-xs text-slate-600 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-500 peer-placeholder-shown:top-3.5 peer-placeholder-shown:left-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-[#1a73e8]"
+                  className="absolute left-4 top-4 text-slate-500 transition-all pointer-events-none peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-translate-y-6 peer-focus:text-xs peer-focus:text-[#1a73e8]"
                 >
                   Email
                 </label>
@@ -136,14 +141,14 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   required
-                  className="peer w-full h-[52px] px-3.5 rounded-[4px] border border-slate-300 text-base text-slate-900 placeholder-transparent focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] outline-none transition-all bg-white"
+                  className="peer w-full h-[54px] px-4 clay-input text-base text-slate-900 placeholder-transparent focus:outline-none"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <label
                   htmlFor="password"
-                  className="absolute left-2.5 -top-2.5 bg-white px-1 text-xs text-slate-600 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-500 peer-placeholder-shown:top-3.5 peer-placeholder-shown:left-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-[#1a73e8]"
+                  className="absolute left-4 top-4 text-slate-500 transition-all pointer-events-none peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-translate-y-6 peer-focus:text-xs peer-focus:text-[#1a73e8]"
                 >
                   Password
                 </label>
@@ -159,21 +164,67 @@ export default function LoginPage() {
               </a>
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Link
-                href="/auth/register"
-                className="mr-auto text-sm font-medium text-[#1a73e8] hover:text-[#1557b0] py-2 px-1"
-              >
-                Create account
-              </Link>
+            <div className="flex flex-col gap-4 pt-4">
+              <div className="flex justify-between items-center w-full">
+                <Link
+                  href="/auth/register"
+                  className="text-sm font-medium text-[#1a73e8] hover:text-[#1557b0] py-2 px-1"
+                >
+                  Create account
+                </Link>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex items-center justify-center px-6 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white text-sm font-medium rounded-[4px] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1a73e8] disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "Signing in..." : "Sign in"}
-              </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex items-center justify-center px-8 py-3 h-[44px] clay-btn text-sm font-medium focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? "Signing in..." : "Sign in"}
+                </button>
+              </div>
+
+              {/* Demo Section */}
+              <div className="relative mt-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-2 text-slate-500">Or try a demo</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail("student@test.com");
+                    setPassword("password123");
+                    // We need a slight delay to let state update before we can submit
+                    setTimeout(() => {
+                      const formEvent = new Event("submit", { cancelable: true, bubbles: true });
+                      const form = document.querySelector("form");
+                      if (form) form.dispatchEvent(formEvent);
+                    }, 10);
+                  }}
+                  className="flex items-center justify-center h-[44px] px-4 font-medium text-slate-700 bg-[#E2E8F0] clay-btn focus:outline-none focus:ring-2 focus:ring-[#1a73e8]/20"
+                >
+                  Demo Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail("teacher@test.com");
+                    setPassword("password123");
+                    setTimeout(() => {
+                      const formEvent = new Event("submit", { cancelable: true, bubbles: true });
+                      const form = document.querySelector("form");
+                      if (form) form.dispatchEvent(formEvent);
+                    }, 10);
+                  }}
+                  className="flex items-center justify-center h-[44px] px-4 font-medium text-slate-700 bg-[#E2E8F0] clay-btn focus:outline-none focus:ring-2 focus:ring-[#1a73e8]/20"
+                >
+                  Demo Teacher
+                </button>
+              </div>
             </div>
           </form>
         </div>

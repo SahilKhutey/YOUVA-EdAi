@@ -5,15 +5,6 @@
 @theme inline {
   --font-sans: var(--font-inter);
 
-  /* Spacing System (8pt Rule) */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
-  --spacing-3xl: 64px;
-
   /* Layout */
   --container-center: true;
   --container-padding: 80px;
@@ -57,33 +48,36 @@
 }
 
 :root {
-  /* Design System Colors (Light Mode) */
-  --background: #F8FAFC;
-  --foreground: #111827;
+  /* Google Workspace / Material Design 3 Colors (Light Mode) */
+  --background: #E2E8F0;
+  /* Slightly darker to make clay highlights pop */
+  --foreground: #202124;
   /* Text-primary */
 
   --card: #FFFFFF;
-  --card-foreground: #111827;
+  --card-foreground: #202124;
 
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
+  --primary: #1A73E8;
+  --primary-hover: #174EA6;
   --primary-foreground: #FFFFFF;
 
-  --secondary: #10B981;
+  --secondary: #1E8E3E;
+  /* Google Green */
   --secondary-foreground: #FFFFFF;
 
-  --accent: #F59E0B;
+  --accent: #F9AB00;
+  /* Google Yellow */
   --accent-foreground: #FFFFFF;
 
-  --destructive: #EF4444;
-  /* Error */
+  --destructive: #D93025;
+  /* Google Red */
   --destructive-foreground: #FFFFFF;
 
-  --border: #E5E7EB;
-  --input: #E5E7EB;
-  --ring: #2563EB;
+  --border: #DADCE0;
+  --input: #DADCE0;
+  --ring: #1A73E8;
 
-  --text-secondary: #6B7280;
+  --text-secondary: #5F6368;
 
   /* Layout Variables */
   --navbar-height: 72px;
@@ -105,33 +99,36 @@
 }
 
 .dark {
-  /* Design System Colors (Dark Mode) */
-  --background: #0F172A;
-  --foreground: #F1F5F9;
+  /* Google Workspace / Material Design 3 Colors (Dark Mode) */
+  --background: #202124;
+  --foreground: #E8EAED;
   /* Text */
 
-  --card: #1E293B;
-  --card-foreground: #F1F5F9;
+  --card: #303134;
+  --card-foreground: #E8EAED;
 
-  --primary: #3B82F6;
-  /* Adjusted for dark mode contrast if needed, keeping similar to base or user spec? User spec didn't specify dark mode primary, using standard tailwind adaptation or sticking to light mode if strict. User only specified Background, Card, Border, Text for Dark Mode. I will use standard or light mode values for others unless they conflict. */
-  --primary-hover: #1D4ED8;
-  --primary-foreground: #FFFFFF;
+  --primary: #8AB4F8;
+  /* Google Blue Light */
+  --primary-hover: #AECBFA;
+  --primary-foreground: #202124;
 
-  --secondary: #10B981;
-  --secondary-foreground: #FFFFFF;
+  --secondary: #81C995;
+  /* Google Green Light */
+  --secondary-foreground: #202124;
 
-  --accent: #F59E0B;
-  --accent-foreground: #FFFFFF;
+  --accent: #FDE293;
+  /* Google Yellow Light */
+  --accent-foreground: #202124;
 
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
+  --destructive: #F28B82;
+  /* Google Red Light */
+  --destructive-foreground: #202124;
 
-  --border: #334155;
-  --input: #334155;
-  --ring: #3B82F6;
+  --border: #5F6368;
+  --input: #5F6368;
+  --ring: #8AB4F8;
 
-  --text-secondary: #94A3B8;
+  --text-secondary: #9AA0A6;
 }
 
 @layer base {
@@ -183,5 +180,76 @@
     margin: 0 auto;
     padding-left: 80px;
     padding-right: 80px;
+  }
+
+  /* Claymorphism Utilities */
+  .clay-card {
+    background: var(--card);
+    border-radius: var(--radius-3xl);
+    box-shadow:
+      12px 12px 24px rgba(163, 177, 198, 0.4),
+      -12px -12px 24px rgba(255, 255, 255, 0.8),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.8),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.05);
+    border: none;
+    transition: all 0.3s ease;
+  }
+
+  .clay-btn {
+    background: var(--primary);
+    border-radius: 9999px;
+    color: var(--primary-foreground);
+    box-shadow:
+      8px 8px 16px rgba(163, 177, 198, 0.4),
+      -8px -8px 16px rgba(255, 255, 255, 0.8),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.2),
+      inset -2px -2px 8px rgba(0, 0, 0, 0.2);
+    border: none;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .clay-btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      10px 10px 20px rgba(163, 177, 198, 0.45),
+      -10px -10px 20px rgba(255, 255, 255, 0.9),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.3),
+      inset -2px -2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .clay-btn:active,
+  .clay-active {
+    transform: scale(0.97) translateY(0);
+    box-shadow:
+      inset 6px 6px 12px rgba(0, 0, 0, 0.2),
+      inset -6px -6px 12px rgba(255, 255, 255, 0.1);
+  }
+
+  .clay-input {
+    background: #F0F4F8;
+    border-radius: var(--radius);
+    box-shadow:
+      inset 4px 4px 8px rgba(163, 177, 198, 0.4),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+    border: none;
+    transition: all 0.2s ease;
+  }
+
+  .clay-input:focus-within {
+    box-shadow:
+      inset 6px 6px 12px rgba(163, 177, 198, 0.5),
+      inset -6px -6px 12px rgba(255, 255, 255, 0.9),
+      0 0 0 2px var(--ring);
+  }
+}
+
+/* AchievementToast countdown progress bar */
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0%;
   }
 }

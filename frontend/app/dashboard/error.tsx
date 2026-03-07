@@ -1,6 +1,7 @@
-"use client"; // Error components must be Client Components
+"use client";
 
 import { useEffect } from "react";
+import { AlertCircle } from "lucide-react";
 
 export default function Error({
   error,
@@ -10,34 +11,27 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
     console.error(error);
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 text-center">
+    <div className="w-full h-full min-h-[60vh] flex items-center justify-center p-8 bg-slate-50">
+      <div className="clay-card p-10 flex flex-col items-center text-center gap-6 max-w-md w-full">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-red-500" />
+        </div>
         <div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Something went wrong!
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            We encountered an unexpected error while loading your dashboard.
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Something went wrong!</h2>
+          <p className="text-sm font-medium text-slate-500">
+            We encountered an unexpected error while loading your dashboard context.
           </p>
         </div>
-        <div className="mt-5 sm:mt-8 sm:flex sm:justify-center">
-          <div className="rounded-md shadow">
-            <button
-              onClick={
-                // Attempt to recover by trying to re-render the segment
-                () => reset()
-              }
-              className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
-            >
-              Try again
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={() => reset()}
+          className="w-full px-8 py-4 clay-btn bg-primary text-white font-bold"
+        >
+          Try Again
+        </button>
       </div>
     </div>
   );

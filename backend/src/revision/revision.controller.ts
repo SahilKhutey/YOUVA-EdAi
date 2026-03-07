@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('revision')
 @UseGuards(JwtAuthGuard)
 export class RevisionController {
-  constructor(private readonly revisionService: RevisionService) {}
+  constructor(private readonly revisionService: RevisionService) { }
 
   @Get('suggestions')
   async getSuggestions(@Request() req: any) {
@@ -15,5 +15,9 @@ export class RevisionController {
   @Post('start')
   async startRevision(@Request() req: any) {
     return this.revisionService.startRevisionSession(req.user.userId);
+  }
+  @Get('schedule')
+  async getSchedule(@Request() req: any) {
+    return this.revisionService.getScheduledRevisions(req.user.userId);
   }
 }

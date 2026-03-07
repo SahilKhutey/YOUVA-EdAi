@@ -1,6 +1,6 @@
-"use client";
-
+import { useState, useEffect } from 'react';
 import { TrendingUp, Clock, Award } from "lucide-react";
+import api from '@/lib/axios';
 
 interface ProgressCardProps {
   stats: {
@@ -17,12 +17,27 @@ interface ProgressCardProps {
 
 export default function ProgressCard({
   stats,
-  gamificationStats,
+  gamificationStats: initialGamificationStats,
 }: ProgressCardProps) {
-  if (!stats) return null; // Or skeleton
+  const [liveStats, setLiveStats] = useState(initialGamificationStats);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get('/gamification/stats');
+        setLiveStats(res.data);
+      } catch (e) {
+        console.error('Failed to fetch gamification stats:', e);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  if (!stats) return null;
+  const currentStats = liveStats || initialGamificationStats;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col md:flex-row items-center justify-between relative overflow-hidden gap-6 md:gap-8">
+    <div className="clay-card p-6 flex flex-col md:flex-row items-center justify-between relative overflow-hidden gap-6 md:gap-8">
       <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
 
       <div className="flex flex-col md:flex-row gap-8 z-10 w-full">
@@ -73,18 +88,18 @@ export default function ProgressCard({
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <Award className="h-4 w-4 text-accent" />
             <span className="text-xs font-semibold uppercase tracking-wider">
-              Level {gamificationStats?.currentLevel || 1}
+              Level {currentStats?.currentLevel || 1}
             </span>
           </div>
           <div className="text-3xl md:text-4xl font-bold text-foreground">
-            {gamificationStats?.totalXp || 0}{" "}
+            {currentStats?.totalXp || 0}{" "}
             <span className="text-xl text-muted-foreground font-medium">
               XP
             </span>
           </div>
           <div className="flex items-center gap-1 mt-1">
             <span className="text-xs font-medium px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full w-fit">
-              {gamificationStats?.currentStreak || 0} Day Streak 🔥
+              {currentStats?.currentStreak || 0} Day Streak 🔥
             </span>
           </div>
         </div>

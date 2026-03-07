@@ -7,6 +7,12 @@ import Heatmap from "@/app/components/dashboard/Heatmap";
 import UpcomingTests from "@/app/components/dashboard/UpcomingTests";
 import AIRecommendations from "@/app/components/dashboard/AIRecommendations";
 import RevisionWidget from "@/app/components/dashboard/RevisionWidget";
+import StreakBanner from "@/app/components/dashboard/StreakBanner";
+import AchievementShowcase from "@/app/components/dashboard/AchievementShowcase";
+import GoalProgressWidget from "@/app/components/dashboard/GoalProgressWidget";
+import AnnouncementBanner from "@/app/components/dashboard/AnnouncementBanner";
+import SmartSchedule from "@/app/components/dashboard/SmartSchedule";
+
 import api from "@/lib/axios";
 import { useAuth } from "@/context/AuthContext";
 
@@ -19,11 +25,16 @@ export default function DashboardPage() {
   const [upcomingTests, setUpcomingTests] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
 
+  const [isMounted, setIsMounted] = useState(false);
+
   useEffect(() => {
+    setIsMounted(true);
     if (user) {
       fetchDashboardData();
     }
   }, [user]);
+
+  if (!isMounted) return null;
 
   const fetchDashboardData = async () => {
     try {
@@ -50,8 +61,9 @@ export default function DashboardPage() {
 
   return (
     <MainLayout>
-      <div className="p-8 max-w-[1600px] mx-auto space-y-8">
-        <div className="flex flex-col gap-2">
+      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-hover w-fit">
             Welcome back, {user?.name || "Alex"}!
           </h1>
@@ -60,34 +72,31 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        {/* ── Streak + Level Banner (loads independently) ── */}
+        <StreakBanner />
+
+        {/* ── Teacher Announcements ── */}
+        <AnnouncementBanner />
+
         {loading ? (
           <div className="flex items-center justify-center h-64 text-muted-foreground">
             Loading dashboard...
           </div>
         ) : (
-          /* Grid Layout */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column (Main Stats) - Span 8 */}
+            {/* ── Left Column — span 8 ── */}
             <div className="lg:col-span-8 flex flex-col gap-6">
-              {/* 1. Learning Progress Card */}
-              <ProgressCard
-                stats={stats}
-                gamificationStats={gamificationStats}
-              />
-
-              {/* 2. Weak Topics Heatmap (Full width of left col) */}
+              <ProgressCard stats={stats} gamificationStats={gamificationStats} />
               <Heatmap topics={weakTopics} />
             </div>
 
-            {/* Right Column (Side Panels) - Span 4 */}
+            {/* ── Right Column — span 4 ── */}
             <div className="lg:col-span-4 flex flex-col gap-6">
-              {/* 3. Daily Revision */}
+              <SmartSchedule />
+              <AchievementShowcase />
+              <GoalProgressWidget />
               <RevisionWidget />
-
-              {/* 4. Upcoming Tests */}
               <UpcomingTests tests={upcomingTests} />
-
-              {/* 4. AI Recommendations */}
               <AIRecommendations recommendations={recommendations} />
             </div>
           </div>

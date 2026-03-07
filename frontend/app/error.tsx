@@ -1,6 +1,7 @@
-"use client"; // Error components must be Client Components
+"use client";
 
 import { useEffect } from "react";
+import { AlertCircle } from "lucide-react";
 
 export default function Error({
   error,
@@ -14,17 +15,22 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-foreground mb-4">Oops!</h1>
-        <p className="text-lg text-muted-foreground mb-8">
-          Something went wrong. Please try again later.
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="clay-card p-10 flex flex-col items-center text-center gap-6 max-w-md w-full">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-red-500" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Oops! Let's try that again.</h1>
+          <p className="text-sm font-medium text-slate-500">
+            An unexpected error has occurred in the application.
+          </p>
+        </div>
         <button
           onClick={() => reset()}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
+          className="w-full px-8 py-4 clay-btn bg-primary text-white font-bold"
         >
-          Try again
+          Recover Session
         </button>
       </div>
     </div>

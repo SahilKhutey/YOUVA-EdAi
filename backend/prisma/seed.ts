@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -78,6 +79,35 @@ async function main() {
         });
         console.log(`Created or Updated subject: ${subject.name}`);
     }
+
+    // Provision Demo Accounts
+    const hashedPassword = await bcrypt.hash('password123', 10);
+
+    await prisma.user.upsert({
+        where: { email: 'student@test.com' },
+        update: {},
+        create: {
+            email: 'student@test.com',
+            password: hashedPassword,
+            name: 'Demo Student',
+            role: 'STUDENT',
+            onboardingComplete: true
+        }
+    });
+    console.log('Created Demo Student');
+
+    await prisma.user.upsert({
+        where: { email: 'teacher@test.com' },
+        update: {},
+        create: {
+            email: 'teacher@test.com',
+            password: hashedPassword,
+            name: 'Demo Teacher',
+            role: 'TEACHER',
+            onboardingComplete: true
+        }
+    });
+    console.log('Created Demo Teacher');
 }
 
 main()

@@ -120,7 +120,7 @@ export default function LearningPage() {
     <div className="grid grid-cols-1 lg:grid-cols-2 h-screen bg-muted/20 gap-4 p-4">
 
       {/* Existing Chat Area */}
-      <div className="flex flex-col bg-card rounded-xl border border-border overflow-hidden h-full shadow-sm">
+      <div className="flex flex-col bg-card overflow-hidden h-full clay-card">
         {/* Header */}
         <header className="bg-card shadow-sm px-4 py-3 flex items-center justify-between border-b border-border">
           <button
@@ -174,7 +174,7 @@ export default function LearningPage() {
             <button
               type="submit"
               disabled={sending || !input.trim()}
-              className={`px-4 py-2 rounded-md font-medium text-primary-foreground transition-colors ${sending || !input.trim()
+              className={`px-4 py-2 font-medium text-primary-foreground transition-colors clay-btn ${sending || !input.trim()
                 ? "bg-primary/50 cursor-not-allowed"
                 : "bg-primary hover:bg-primary/90"
                 }`}

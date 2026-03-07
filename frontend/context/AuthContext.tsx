@@ -9,6 +9,9 @@ interface User {
     role: string;
     name?: string;
     avatarUrl?: string;
+    onboardingComplete?: boolean;
+    gradeLevel?: string;
+    cognitiveLevel?: string;
 }
 
 interface AuthContextType {
@@ -27,15 +30,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        const initializeAuth = () => {
+        const initializeAuth = async () => {
             const token = localStorage.getItem('token');
-            // In a real app, you would validate the token here
-            // For now, if there is a token, we assume user is logged in (persisted via localStorage)
             if (!token) {
-                // No token, ensure user is null
                 setUser(null);
+                setIsLoading(false);
+                return;
             }
-            setIsLoading(false);
+            try {
+                // Restore session by fetching profile
+                const res = await api.get('/users/me');
+                setUser(res.data);
+            } catch (err) {
+                console.error("Failed to restore session:", err);
+                localStorage.removeItem('token');
+                setUser(null);
+            } finally {
+                setIsLoading(false);
+            }
         };
         initializeAuth();
     }, []);

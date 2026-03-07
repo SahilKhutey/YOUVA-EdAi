@@ -20,6 +20,21 @@ import { LearningEngineModule } from './learning-engine/learning-engine.module';
 import { AiMentorModule } from './ai-mentor/ai-mentor.module';
 import { AssessmentModule } from './assessment/assessment.module';
 import { EngagementModule } from './engagement/engagement.module';
+import { ContentGenModule } from './content-gen/content-gen.module';
+import { TeacherAnalyticsModule } from './teacher-analytics/teacher-analytics.module';
+import { NotificationModule } from './notification/notification.module';
+import { ForumModule } from './forum/forum.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
+import { GoalModule } from './goal/goal.module';
+import { AnnouncementModule } from './announcement/announcement.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { CognitiveTwinModule } from './cognitive-twin/cognitive-twin.module';
+import { KnowledgeGraphModule } from './knowledge-graph/knowledge-graph.module';
+import { CredentialMeshModule } from './credential-mesh/credential-mesh.module';
+import { AssessmentIntelligenceModule } from './assessment-intelligence/assessment-intelligence.module';
+import { EdgeSyncModule } from './edge-sync/edge-sync.module';
+import { ClassroomModule } from './classroom/classroom.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -42,8 +57,22 @@ import { EngagementModule } from './engagement/engagement.module';
     AiMentorModule,
     AssessmentModule,
     EngagementModule,
+    ContentGenModule,
+    TeacherAnalyticsModule,
+    NotificationModule,
+    ForumModule,
+    SchedulerModule,
+    GoalModule,
+    AnnouncementModule,
+    NotificationsModule,
+    CognitiveTwinModule,
+    KnowledgeGraphModule,
+    CredentialMeshModule,
+    AssessmentIntelligenceModule,
+    ClassroomModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

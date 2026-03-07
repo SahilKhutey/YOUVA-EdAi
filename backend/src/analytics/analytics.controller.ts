@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('analytics')
 @UseGuards(JwtAuthGuard)
 export class AnalyticsController {
-  constructor(private readonly analyticsService: AnalyticsService) {}
+  constructor(private readonly analyticsService: AnalyticsService) { }
 
   @Get('summary')
   async getSummary(@Request() req: any) {
@@ -35,5 +35,20 @@ export class AnalyticsController {
   @Get('ai-report')
   async getAiReport(@Request() req: any) {
     return this.analyticsService.generateAIPerformanceReport(req.user.userId);
+  }
+
+  @Get('subject-breakdown')
+  async getSubjectBreakdown(@Request() req: any) {
+    return this.analyticsService.getSubjectBreakdown(req.user.userId);
+  }
+
+  @Get('recent-sessions')
+  async getRecentSessions(@Request() req: any) {
+    return this.analyticsService.getRecentSessions(req.user.userId);
+  }
+
+  @Get('heatmap')
+  async getHeatmap(@Request() req: any) {
+    return this.analyticsService.getActivityHeatmap(req.user.userId);
   }
 }

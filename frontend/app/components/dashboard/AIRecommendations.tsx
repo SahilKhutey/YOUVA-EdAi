@@ -16,7 +16,7 @@ export default function AIRecommendations({
   recommendations = [],
 }: AIRecommendationsProps) {
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl shadow-sm border border-blue-100 p-6 flex flex-col gap-4 relative overflow-hidden">
+    <div className="clay-card bg-gradient-to-br from-[#E2E8F0] to-blue-50/50 p-6 flex flex-col gap-4 relative overflow-hidden">
       {/* Decorative Background */}
       <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
 

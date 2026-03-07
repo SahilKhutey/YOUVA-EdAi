@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Sparkles, Loader2, BrainCircuit } from "lucide-react";
+import { Sparkles, Loader2, BrainCircuit, Download } from "lucide-react";
 import Link from "next/link";
 
 export default function ReportPage() {
@@ -90,9 +90,18 @@ export default function ReportPage() {
           <span className="text-sm font-medium text-muted-foreground">
             Generated on {new Date().toLocaleDateString()}
           </span>
-          <span className="px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full uppercase tracking-wider">
-            Powered by Gemini AI
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full uppercase tracking-wider">
+              Powered by Gemini AI
+            </span>
+            <button
+              onClick={() => window.print()}
+              className="print:hidden flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border rounded-xl text-xs font-semibold hover:bg-muted transition-colors"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Download PDF
+            </button>
+          </div>
         </div>
         <div className="p-8 prose prose-indigo max-w-none prose-h1:text-2xl prose-h1:font-bold prose-h1:border-b prose-h1:pb-2 prose-h2:text-xl prose-h2:text-primary prose-a:text-primary">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>

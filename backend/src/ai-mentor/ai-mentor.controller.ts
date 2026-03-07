@@ -60,4 +60,30 @@ AI Tutor:`;
             isValid: validation.isValid,
         };
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('study-buddy')
+    async studyBuddy(
+        @Req() req: any,
+        @Body() body: { message: string; history?: { role: string; content: string }[] },
+    ) {
+        const { message, history = [] } = body;
+
+        const historyText = history
+            .map((h) => `${h.role === 'user' ? 'Student' : 'AI Tutor'}: ${h.content}`)
+            .join('\n');
+
+        const prompt = `You are Youva, a friendly and encouraging AI study buddy for students. 
+You help students understand concepts, answer homework questions, explain topics clearly, and keep them motivated.
+Be concise, warm, and use simple language appropriate for secondary school students.
+If a student asks something unrelated to studying, gently redirect them.
+
+${historyText ? `Chat History:\n${historyText}\n` : ''}
+Student: ${message}
+AI Tutor:`;
+
+        const aiResponse = await this.aiService.generateText(prompt);
+
+        return { message: aiResponse };
+    }
 }

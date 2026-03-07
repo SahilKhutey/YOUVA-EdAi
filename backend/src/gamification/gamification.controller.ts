@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('gamification')
 @UseGuards(JwtAuthGuard)
 export class GamificationController {
-  constructor(private readonly gamificationService: GamificationService) {}
+  constructor(private readonly gamificationService: GamificationService) { }
 
   @Get('stats')
   async getStats(@Request() req: any) {
@@ -15,6 +15,16 @@ export class GamificationController {
   @Get('badges')
   async getBadges(@Request() req: any) {
     return this.gamificationService.getUserBadges(req.user.userId);
+  }
+
+  @Get('badges/list')
+  async getBadgesList() {
+    return this.gamificationService.getAllBadges();
+  }
+
+  @Get('leaderboard')
+  async getLeaderboard(@Request() req: any) {
+    return this.gamificationService.getLeaderboard(req.user.userId);
   }
 
   // Temporary endpoint to trigger seeding for testing
