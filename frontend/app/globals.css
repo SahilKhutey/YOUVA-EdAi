@@ -1,0 +1,255 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-inter);
+
+  /* Layout */
+  --container-center: true;
+  --container-padding: 80px;
+  --breakpoint-xl: 1440px;
+
+  /* Color Palette Maps */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--card-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--text-secondary);
+
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--primary);
+
+  /* Border Radius */
+  --radius: 0.5rem;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+}
+
+:root {
+  /* Google Workspace / Material Design 3 Colors (Light Mode) */
+  --background: #E2E8F0;
+  /* Slightly darker to make clay highlights pop */
+  --foreground: #202124;
+  /* Text-primary */
+
+  --card: #FFFFFF;
+  --card-foreground: #202124;
+
+  --primary: #1A73E8;
+  --primary-hover: #174EA6;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #1E8E3E;
+  /* Google Green */
+  --secondary-foreground: #FFFFFF;
+
+  --accent: #F9AB00;
+  /* Google Yellow */
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #D93025;
+  /* Google Red */
+  --destructive-foreground: #FFFFFF;
+
+  --border: #DADCE0;
+  --input: #DADCE0;
+  --ring: #1A73E8;
+
+  --text-secondary: #5F6368;
+
+  /* Layout Variables */
+  --navbar-height: 72px;
+  --sidebar-width: 240px;
+  --input-bar-height: 88px;
+
+  /* Typography Sizes (Moved from @theme for reliable var usage) */
+  --text-h1: 32px;
+  --text-h2: 24px;
+  --text-h3: 20px;
+  --text-body: 16px;
+  --text-small: 14px;
+  --text-caption: 12px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+.dark {
+  /* Google Workspace / Material Design 3 Colors (Dark Mode) */
+  --background: #202124;
+  --foreground: #E8EAED;
+  /* Text */
+
+  --card: #303134;
+  --card-foreground: #E8EAED;
+
+  --primary: #8AB4F8;
+  /* Google Blue Light */
+  --primary-hover: #AECBFA;
+  --primary-foreground: #202124;
+
+  --secondary: #81C995;
+  /* Google Green Light */
+  --secondary-foreground: #202124;
+
+  --accent: #FDE293;
+  /* Google Yellow Light */
+  --accent-foreground: #202124;
+
+  --destructive: #F28B82;
+  /* Google Red Light */
+  --destructive-foreground: #202124;
+
+  --border: #5F6368;
+  --input: #5F6368;
+  --ring: #8AB4F8;
+
+  --text-secondary: #9AA0A6;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1 {
+    @apply text-[length:var(--text-h1)] font-bold;
+  }
+
+  h2 {
+    @apply text-[length:var(--text-h2)] font-semibold;
+  }
+
+  h3 {
+    @apply text-[length:var(--text-h3)] font-semibold;
+  }
+
+  p {
+    @apply text-[length:var(--text-body)] font-normal;
+  }
+
+  small {
+    @apply text-[length:var(--text-small)] font-normal;
+  }
+
+  /* Custom utility for caption if needed, or use class */
+}
+
+@layer utilities {
+  .text-caption {
+    font-size: var(--text-caption);
+    font-weight: var(--font-weight-regular);
+    /* This variable is in :root, should work for raw CSS */
+  }
+
+  /* Grid System Helper */
+  .layout-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 24px;
+    max-width: 1280px;
+    /* Max Content Width */
+    margin: 0 auto;
+    padding-left: 80px;
+    padding-right: 80px;
+  }
+
+  /* Claymorphism Utilities */
+  .clay-card {
+    background: var(--card);
+    border-radius: var(--radius-3xl);
+    box-shadow:
+      12px 12px 24px rgba(163, 177, 198, 0.4),
+      -12px -12px 24px rgba(255, 255, 255, 0.8),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.8),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.05);
+    border: none;
+    transition: all 0.3s ease;
+  }
+
+  .clay-btn {
+    background: var(--primary);
+    border-radius: 9999px;
+    color: var(--primary-foreground);
+    box-shadow:
+      8px 8px 16px rgba(163, 177, 198, 0.4),
+      -8px -8px 16px rgba(255, 255, 255, 0.8),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.2),
+      inset -2px -2px 8px rgba(0, 0, 0, 0.2);
+    border: none;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .clay-btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      10px 10px 20px rgba(163, 177, 198, 0.45),
+      -10px -10px 20px rgba(255, 255, 255, 0.9),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.3),
+      inset -2px -2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .clay-btn:active,
+  .clay-active {
+    transform: scale(0.97) translateY(0);
+    box-shadow:
+      inset 6px 6px 12px rgba(0, 0, 0, 0.2),
+      inset -6px -6px 12px rgba(255, 255, 255, 0.1);
+  }
+
+  .clay-input {
+    background: #F0F4F8;
+    border-radius: var(--radius);
+    box-shadow:
+      inset 4px 4px 8px rgba(163, 177, 198, 0.4),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+    border: none;
+    transition: all 0.2s ease;
+  }
+
+  .clay-input:focus-within {
+    box-shadow:
+      inset 6px 6px 12px rgba(163, 177, 198, 0.5),
+      inset -6px -6px 12px rgba(255, 255, 255, 0.9),
+      0 0 0 2px var(--ring);
+  }
+}
+
+/* AchievementToast countdown progress bar */
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0%;
+  }
+}
