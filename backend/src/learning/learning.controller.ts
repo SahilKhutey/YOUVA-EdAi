@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Body,
+  Param,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -38,6 +39,33 @@ export class LearningController {
 
   @Get('history')
   async getHistory(@Request() req: any) {
-    return this.learningService.getHistory(req.user.userId);
+    return this.learningService.getHistory(req.user.id || req.user.userId);
+  }
+
+  // --- Phase P2 Student Operations Endpoints ---
+
+  @Get('today')
+  async getToday(@Request() req: any) {
+    return this.learningService.getToday(req.user.id || req.user.userId);
+  }
+
+  @Get('sessions')
+  async getSessions(@Request() req: any) {
+    return this.learningService.getSessions(req.user.id || req.user.userId);
+  }
+
+  @Get('sessions/:id')
+  async getSession(@Request() req: any, @Param('id') id: string) {
+    return this.learningService.getSession(req.user.id || req.user.userId, id);
+  }
+
+  @Get('recommendations')
+  async getRecommendations(@Request() req: any) {
+    return this.learningService.getRecommendations(req.user.id || req.user.userId);
+  }
+
+  @Get('mastery')
+  async getMastery(@Request() req: any) {
+    return this.learningService.getMastery(req.user.id || req.user.userId);
   }
 }

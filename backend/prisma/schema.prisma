@@ -57,6 +57,25 @@ model User {
   worksheetSubmissions WorksheetSubmission[]
 
   feedbacks Feedback[]
+
+  // Human–AI Learning Loop (P1 Production)
+  learningEvidenceLogs     LearningEvidenceLog[]
+  personalizationDecisions PersonalizationDecision[]
+  policyGateDecisions      PolicyGateDecision[]
+  studentInterventions     TeacherIntervention[]     @relation("StudentInterventions")
+  teacherInterventions     TeacherIntervention[]     @relation("TeacherInterventions")
+  escalationEvents         EscalationEvent[]         @relation("UserEscalations")
+  resolvedEscalations      EscalationEvent[]         @relation("ResolverEscalations")
+  learningLoopAudits       LearningLoopAuditLog[]
+
+  // Phase P2: Teacher + Learning Operations
+  taughtClasses            TeacherClass[]             @relation("TeacherClasses")
+  enrolledClasses          TeacherClassEnrollment[]   @relation("EnrolledClasses")
+  assignedStudents         TeacherStudentAssignment[] @relation("AssignedTeacher")
+  assignedTeachers         TeacherStudentAssignment[] @relation("AssignedStudent")
+  authoredContentVersions  ContentVersion[]           @relation("AuthoredContentVersions")
+  receivedAssignments      ContentAssignment[]        @relation("ReceivedAssignments")
+  givenAssignments         ContentAssignment[]        @relation("AssignedByTeacher")
 }
 
 model Subject {
@@ -150,6 +169,10 @@ model Topic {
   assessmentProjects AssessmentProject[]
   LessonPlan         LessonPlan[]
   Worksheet          Worksheet[]
+
+  // Human–AI Learning Loop (P1 Production)
+  learningEvidenceLogs     LearningEvidenceLog[]
+  personalizationDecisions PersonalizationDecision[]
 }
 
 model TopicPrerequisite {
@@ -410,6 +433,10 @@ model GeneratedContent {
   status              String   @default("DRAFT") // DRAFT, PUBLISHED
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  // Phase P2: Content Versioning and Assignment
+  versions    ContentVersion[]
+  assignments ContentAssignment[]
 }
 
 // --- Blueprint: Layer 1 - Cognitive Digital Twin ---
@@ -685,3 +712,194 @@ model Feedback {
   context   String // e.g. "POST_SESSION_TEACHER", "POST_SESSION_STUDENT", "GENERAL_BUG"
   createdAt DateTime                 @default(now())
 }
+
+// ==========================================
+// Phase P1: Core Human–AI Learning Loop Domain
+// ==========================================
+
+model LearningEvidenceLog {
+  id              String   @id @default(uuid())
+  idempotencyKey  String   @unique
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId         String
+  topic           Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  answer          String
+  accuracy        Float    // 0.0 - 1.0
+  attemptNumber   Int      @default(1)
+  hintCount       Int      @default(0)
+  misconception   String?
+  engagementScore Float    @default(1.0)
+  metadata        String?  // JSON string
+  createdAt       DateTime @default(now())
+
+  @@index([userId, topicId])
+}
+
+model PersonalizationDecision {
+  id                      String   @id @default(uuid())
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId                 String
+  topic                   Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  activityType            String   // EXPLANATION, PRACTICE, SOCRATIC_DIALOGUE, REMEDIATION, CHALLENGE
+  difficulty              Float    // 0.0 - 1.0
+  modality                String   // TEXT, VISUAL, INTERACTIVE, AUDIO
+  pacing                  String   // ACCELERATED, STANDARD, SLOW
+  recommendationRationale String
+  isCertifiedMastery      Boolean  @default(false) // Strict Invariant: AI cannot certify mastery!
+  status                  String   @default("PROPOSED") // PROPOSED, ACCEPTED, OVERRIDDEN
+  createdAt               DateTime @default(now())
+
+  policyGates   PolicyGateDecision[]
+  interventions TeacherIntervention[]
+
+  @@index([userId, topicId])
+}
+
+model PolicyGateDecision {
+  id             String                   @id @default(uuid())
+  decisionId     String?
+  decision       PersonalizationDecision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  userId         String
+  user           User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gateState      String                   // AI_CONTINUE, TEACHER_REVIEW_REQUIRED, SAFETY_ESCALATION
+  reason         String
+  triggeredRules String                   // JSON string of rules evaluated
+  createdAt      DateTime                 @default(now())
+
+  @@index([userId, gateState])
+}
+
+model TeacherIntervention {
+  id              String                   @id @default(uuid())
+  teacherId       String
+  teacher         User                     @relation("TeacherInterventions", fields: [teacherId], references: [id], onDelete: Cascade)
+  studentId       String
+  student         User                     @relation("StudentInterventions", fields: [studentId], references: [id], onDelete: Cascade)
+  decisionId      String?
+  decision        PersonalizationDecision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  action          String                   // APPROVE, OVERRIDE, INTERVENE
+  overrideDetails String?                  // JSON string if OVERRIDE
+  feedback        String?
+  status          String                   @default("PENDING") // PENDING, RESOLVED
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@index([teacherId, studentId, status])
+}
+
+model EscalationEvent {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation("UserEscalations", fields: [userId], references: [id], onDelete: Cascade)
+  severity        String   // LOW, MEDIUM, HIGH, CRITICAL
+  reason          String
+  status          String   @default("OPEN") // OPEN, IN_REVIEW, RESOLVED
+  resolvedById    String?
+  resolvedBy      User?    @relation("ResolverEscalations", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolutionNotes String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
+model LearningLoopAuditLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actorType   String   // STUDENT, AI, TEACHER, SYSTEM
+  actorId     String
+  action      String   // EVIDENCE_SUBMITTED, MASTERY_UPDATED, DECISION_PROPOSED, TEACHER_OVERRIDE, SAFETY_ESCALATED, SAFETY_RESOLVED
+  stateBefore String?  // JSON string
+  stateAfter  String   // JSON string
+  metadata    String?  // JSON string
+  timestamp   DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([actorType, action])
+}
+
+// ==========================================
+// Phase P2: Teacher + Learning Operations Domain
+// ==========================================
+
+model TeacherClass {
+  id         String   @id @default(uuid())
+  teacherId  String
+  teacher    User     @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  name       String
+  subject    String
+  gradeLevel String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  enrollments TeacherClassEnrollment[]
+  assignments ContentAssignment[]
+
+  @@index([teacherId])
+}
+
+model TeacherClassEnrollment {
+  id         String       @id @default(uuid())
+  classId    String
+  class      TeacherClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  studentId  String
+  student    User         @relation("EnrolledClasses", fields: [studentId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime     @default(now())
+
+  @@unique([classId, studentId])
+  @@index([studentId])
+}
+
+model TeacherStudentAssignment {
+  id           String   @id @default(uuid())
+  teacherId    String
+  teacher      User     @relation("AssignedTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      User     @relation("AssignedStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  academicYear String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@unique([teacherId, studentId])
+  @@index([teacherId, isActive])
+  @@index([studentId])
+}
+
+model ContentVersion {
+  id            String           @id @default(uuid())
+  contentId     String
+  content       GeneratedContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  versionNumber Int
+  data          String           // JSON string of content snapshot
+  authorId      String
+  author        User             @relation("AuthoredContentVersions", fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime         @default(now())
+
+  @@unique([contentId, versionNumber])
+  @@index([contentId])
+}
+
+model ContentAssignment {
+  id          String           @id @default(uuid())
+  contentId   String
+  content     GeneratedContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  studentId   String?
+  student     User?            @relation("ReceivedAssignments", fields: [studentId], references: [id], onDelete: Cascade)
+  classId     String?
+  class       TeacherClass?    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacherId   String
+  teacher     User             @relation("AssignedByTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  dueDate     DateTime?
+  status      String           @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED
+  completedAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@index([studentId, status])
+  @@index([classId])
+  @@index([teacherId])
+}
+
+

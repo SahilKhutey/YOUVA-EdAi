@@ -143,4 +143,90 @@ export class LearningService {
 
     return { message: 'Session ended successfully', durationMinutes, xpEarned };
   }
+
+  // --- Phase P2: Student Operational Learning Loop Methods ---
+
+  async getToday(userId: string) {
+    const [user, goals, assignments, masteries] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: userId }, include: { stats: true } }),
+      this.prisma.studyGoal.findMany({ where: { userId, status: 'IN_PROGRESS' }, take: 3 }),
+      this.prisma.contentAssignment.findMany({
+        where: { studentId: userId, status: { in: ['ASSIGNED', 'IN_PROGRESS'] } },
+        include: { content: true },
+        take: 5,
+      }),
+      this.prisma.userTopicMastery.findMany({
+        where: { userId },
+        include: { topic: { include: { subject: true } } },
+        orderBy: { masteryProbability: 'asc' },
+        take: 1,
+      }),
+    ]);
+
+    const targetTopic = masteries[0]?.topic;
+
+    return {
+      student: {
+        id: user?.id,
+        name: user?.name,
+        streak: user?.stats?.streakDays || 0,
+        xp: user?.stats?.totalXp || 0,
+      },
+      goals: goals.map((g) => ({ id: g.id, title: g.title, targetScore: g.targetScore })),
+      assignments: assignments.map((a) => ({
+        id: a.id,
+        title: a.content.learningObjective,
+        type: a.content.type,
+        dueDate: a.dueDate,
+        status: a.status,
+      })),
+      recommendedFocus: targetTopic
+        ? {
+            topicId: targetTopic.id,
+            topicTitle: targetTopic.title,
+            subjectName: targetTopic.subject.name,
+            currentMastery: masteries[0].masteryProbability,
+          }
+        : null,
+    };
+  }
+
+  async getSessions(userId: string) {
+    return this.prisma.learningSession.findMany({
+      where: { userId },
+      include: { topic: { include: { subject: true } } },
+      orderBy: { startTime: 'desc' },
+      take: 25,
+    });
+  }
+
+  async getSession(userId: string, sessionId: string) {
+    const session = await this.prisma.learningSession.findUnique({
+      where: { id: sessionId },
+      include: { topic: true },
+    });
+
+    if (!session || session.userId !== userId) {
+      throw new NotFoundException('Session not found or unauthorized');
+    }
+
+    return session;
+  }
+
+  async getRecommendations(userId: string) {
+    return this.prisma.personalizationDecision.findMany({
+      where: { userId },
+      include: { topic: { include: { subject: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+  }
+
+  async getMastery(userId: string) {
+    return this.prisma.userTopicMastery.findMany({
+      where: { userId },
+      include: { topic: { include: { subject: true } } },
+      orderBy: { masteryProbability: 'desc' },
+    });
+  }
 }

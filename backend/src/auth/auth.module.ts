@@ -9,6 +9,9 @@ import { JwtStrategy } from './jwt.strategy';
 import { LocalStrategy } from './local.strategy';
 import { PrismaModule } from '../prisma/prisma.module';
 
+import { ScopeAuthorizationService } from './services/scope-authorization.service';
+import { ResourceScopeGuard } from './guards/resource-scope.guard';
+
 @Module({
   imports: [
     UsersModule,
@@ -23,8 +26,8 @@ import { PrismaModule } from '../prisma/prisma.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, ScopeAuthorizationService, ResourceScopeGuard],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, ScopeAuthorizationService, ResourceScopeGuard],
 })
 export class AuthModule { }

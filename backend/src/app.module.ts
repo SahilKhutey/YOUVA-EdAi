@@ -35,6 +35,8 @@ import { AssessmentIntelligenceModule } from './assessment-intelligence/assessme
 import { EdgeSyncModule } from './edge-sync/edge-sync.module';
 import { ClassroomModule } from './classroom/classroom.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { LearningLoopModule } from './learning-loop/learning-loop.module';
+import { TeacherOpsModule } from './teacher-ops/teacher-ops.module';
 
 @Module({
   imports: [
@@ -71,6 +73,8 @@ import { FeedbackModule } from './feedback/feedback.module';
     AssessmentIntelligenceModule,
     ClassroomModule,
     FeedbackModule,
+    LearningLoopModule,
+    TeacherOpsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
