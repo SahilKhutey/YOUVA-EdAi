@@ -1,0 +1,65 @@
+export enum ProductPlan {
+  FREE = 'FREE',
+  FAMILY = 'FAMILY',
+  FAMILY_PLUS = 'FAMILY_PLUS',
+  SCHOOL = 'SCHOOL',
+  SCHOOL_ENTERPRISE = 'SCHOOL_ENTERPRISE',
+}
+
+export enum Entitlement {
+  BASIC_LEARNING = 'BASIC_LEARNING',
+  AI_TUTOR = 'AI_TUTOR',
+  ADAPTIVE_PRACTICE = 'ADAPTIVE_PRACTICE',
+  PARENT_PROGRESS = 'PARENT_PROGRESS',
+  ADVANCED_PERSONALIZATION = 'ADVANCED_PERSONALIZATION',
+  ADVANCED_ANALYTICS = 'ADVANCED_ANALYTICS',
+  TEACHER_WORKSPACE = 'TEACHER_WORKSPACE',
+  CLASSROOM_MANAGEMENT = 'CLASSROOM_MANAGEMENT',
+  SCHOOL_ANALYTICS = 'SCHOOL_ANALYTICS',
+  ENTERPRISE_GOVERNANCE = 'ENTERPRISE_GOVERNANCE',
+}
+
+export const PLAN_ENTITLEMENTS: Record<ProductPlan, Entitlement[]> = {
+  [ProductPlan.FREE]: [
+    Entitlement.BASIC_LEARNING,
+  ],
+
+  [ProductPlan.FAMILY]: [
+    Entitlement.BASIC_LEARNING,
+    Entitlement.AI_TUTOR,
+    Entitlement.ADAPTIVE_PRACTICE,
+    Entitlement.PARENT_PROGRESS,
+  ],
+
+  [ProductPlan.FAMILY_PLUS]: [
+    Entitlement.BASIC_LEARNING,
+    Entitlement.AI_TUTOR,
+    Entitlement.ADAPTIVE_PRACTICE,
+    Entitlement.PARENT_PROGRESS,
+    Entitlement.ADVANCED_PERSONALIZATION,
+    Entitlement.ADVANCED_ANALYTICS,
+  ],
+
+  [ProductPlan.SCHOOL]: [
+    Entitlement.BASIC_LEARNING,
+    Entitlement.AI_TUTOR,
+    Entitlement.ADAPTIVE_PRACTICE,
+    Entitlement.PARENT_PROGRESS,
+    Entitlement.TEACHER_WORKSPACE,
+    Entitlement.CLASSROOM_MANAGEMENT,
+    Entitlement.SCHOOL_ANALYTICS,
+  ],
+
+  [ProductPlan.SCHOOL_ENTERPRISE]: [
+    Entitlement.BASIC_LEARNING,
+    Entitlement.AI_TUTOR,
+    Entitlement.ADAPTIVE_PRACTICE,
+    Entitlement.PARENT_PROGRESS,
+    Entitlement.ADVANCED_PERSONALIZATION,
+    Entitlement.ADVANCED_ANALYTICS,
+    Entitlement.TEACHER_WORKSPACE,
+    Entitlement.CLASSROOM_MANAGEMENT,
+    Entitlement.SCHOOL_ANALYTICS,
+    Entitlement.ENTERPRISE_GOVERNANCE,
+  ],
+};

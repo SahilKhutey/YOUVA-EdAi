@@ -1,0 +1,13 @@
+/**
+ * Exponential backoff with jitter and ceiling limits.
+ */
+export function calculateBackoff(
+  attempt: number,
+  baseMs = 1000,
+  maxMs = 60000,
+): number {
+  return Math.min(
+    maxMs,
+    baseMs * Math.pow(2, attempt),
+  );
+}

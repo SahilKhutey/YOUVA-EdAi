@@ -47,8 +47,11 @@ const studentNavItems = [
 ];
 
 const teacherNavItems = [
-  { name: "Analytics Hub", icon: BarChart2, href: "/dashboard/teacher/analytics" },
+  { name: "Teacher Workspace", icon: LayoutDashboard, href: "/dashboard/teacher" },
+  { name: "Lesson Builder", icon: BookOpen, href: "/dashboard/teacher/lesson-builder" },
+  { name: "Worksheet Builder", icon: FileText, href: "/dashboard/teacher/worksheet-builder" },
   { name: "AI Content Studio", icon: Wand2, href: "/dashboard/teacher/content-gen" },
+  { name: "Analytics Hub", icon: BarChart2, href: "/dashboard/teacher/analytics" },
   { name: "Announcements", icon: Megaphone, href: "/dashboard/teacher/announcements" },
 ];
 
@@ -112,7 +115,11 @@ export default function Sidebar() {
               href={item.href}
               icon={item.icon}
               name={item.name}
-              isActive={pathname.startsWith(item.href)}
+              isActive={
+                item.href === "/dashboard/teacher"
+                  ? pathname === "/dashboard/teacher" || pathname.startsWith("/dashboard/teacher/students")
+                  : pathname.startsWith(item.href)
+              }
             />
           ))}
         </div>

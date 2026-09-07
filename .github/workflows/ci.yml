@@ -34,9 +34,12 @@ jobs:
         working-directory: backend
         run: npm run build
 
-      - name: Run Core Human–AI Learning Loop Verification Suite
+      - name: Run Core Human–AI Learning Loop & Security Verification Suites
         working-directory: backend
-        run: npm test -- --coverage src/learning-loop
+        env:
+          JWT_SECRET: test-secret-key-that-is-at-least-32-characters-long
+          DATABASE_URL: postgresql://user:pass@localhost:5432/testdb
+        run: npm test -- src/learning-loop src/teacher-ops src/parent src/safety src/health src/security
 
   frontend-verification:
     name: Frontend Typecheck & Build

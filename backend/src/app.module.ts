@@ -37,6 +37,32 @@ import { ClassroomModule } from './classroom/classroom.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { LearningLoopModule } from './learning-loop/learning-loop.module';
 import { TeacherOpsModule } from './teacher-ops/teacher-ops.module';
+import { ParentModule } from './parent/parent.module';
+import { ConsentModule } from './consent/consent.module';
+import { SafetyModule } from './safety/safety.module';
+import { EscalationModule } from './escalation/escalation.module';
+import { AuditModule } from './audit/audit.module';
+import { HealthModule } from './health/health.module';
+import { SecurityModule } from './security/security.module';
+import { ObservabilityModule } from './observability/observability.module';
+import { EventsModule } from './events/events.module';
+import { TenantsModule } from './tenants/tenants.module';
+import { LearnerStateModule } from './learner-state/learner-state.module';
+import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
+import { CommercialModule } from './commercial/commercial.module';
+import { GlobalLearningModule } from './global-learning/global-learning.module';
+import { AutonomyModule } from './autonomy/autonomy.module';
+import { WorkflowsModule } from './workflows/workflows.module';
+import { AIGovernanceModule } from './governance/ai-governance.module';
+import { EcosystemModule } from './ecosystem/ecosystem.module';
+import { LearningOSModule } from './learning-os/learning-os.module';
+import { VerifiedLearningModule } from './verified-learning/verified-learning.module';
+import { LearningInteroperabilityModule } from './learning-interoperability/learning-interoperability.module';
+import { LearningOperationsModule } from './learning-operations/learning-operations.module';
+import { AutonomousLearningModule } from './autonomous-learning/autonomous-learning.module';
+import { CredentialNetworkModule } from './credential-network/credential-network.module';
+
+
 
 @Module({
   imports: [
@@ -75,6 +101,30 @@ import { TeacherOpsModule } from './teacher-ops/teacher-ops.module';
     FeedbackModule,
     LearningLoopModule,
     TeacherOpsModule,
+    ParentModule,
+    ConsentModule,
+    SafetyModule,
+    EscalationModule,
+    AuditModule,
+    HealthModule,
+    SecurityModule,
+    ObservabilityModule,
+    EventsModule,
+    TenantsModule,
+    LearnerStateModule,
+    FeatureFlagsModule,
+    CommercialModule,
+    GlobalLearningModule,
+    AutonomyModule,
+    WorkflowsModule,
+    AIGovernanceModule,
+    EcosystemModule,
+    LearningOSModule,
+    VerifiedLearningModule,
+    LearningInteroperabilityModule,
+    LearningOperationsModule,
+    AutonomousLearningModule,
+    CredentialNetworkModule,
   ],
   controllers: [AppController],
   providers: [AppService],

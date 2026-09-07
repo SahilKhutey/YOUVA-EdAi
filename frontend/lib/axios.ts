@@ -1,7 +1,14 @@
 import axios from 'axios';
 
+const isProduction = process.env.NODE_ENV === 'production';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+if (isProduction && !apiUrl && typeof window !== 'undefined') {
+    console.error('[CRITICAL] Missing NEXT_PUBLIC_API_URL environment variable in production.');
+}
+
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+    baseURL: apiUrl || (isProduction ? '' : 'http://localhost:3001'),
     headers: {
         'Content-Type': 'application/json',
     },

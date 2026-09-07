@@ -76,6 +76,20 @@ model User {
   authoredContentVersions  ContentVersion[]           @relation("AuthoredContentVersions")
   receivedAssignments      ContentAssignment[]        @relation("ReceivedAssignments")
   givenAssignments         ContentAssignment[]        @relation("AssignedByTeacher")
+
+  // Phase P3: Safety, Parent, Trust & Compliance Operations
+  parentStudents           ParentStudent[]            @relation("ParentStudents")
+  studentParents           ParentStudent[]            @relation("StudentParents")
+  parentConsents           ConsentRecord[]            @relation("ConsentParent")
+  studentConsents          ConsentRecord[]            @relation("ConsentStudent")
+  studentEscalations       SafetyEscalation[]         @relation("StudentEscalations")
+  assignedEscalations      SafetyEscalation[]         @relation("AssignedEscalations")
+  resolvedEscalations      SafetyEscalation[]         @relation("ResolvedEscalations")
+  auditEvents              AuditEvent[]               @relation("AuditActor")
+
+  // Phase P6: Scale, Intelligence & Institutional Learning Platform
+  tenantMemberships        TenantMembership[]
+  cohortMemberships        CohortMembership[]
 }
 
 model Subject {
@@ -97,6 +111,8 @@ model Notification {
   metadata  String? // JSON string
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  deliveries NotificationDelivery[]
 }
 
 model DiscussionPost {
@@ -901,5 +917,1407 @@ model ContentAssignment {
   @@index([classId])
   @@index([teacherId])
 }
+
+// ==============================================================
+// Phase P3: Safety, Parent, Trust & Compliance Operations Domain
+// ==============================================================
+
+model ParentStudent {
+  id        String   @id @default(uuid())
+  parentId  String
+  studentId String
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent  User @relation("ParentStudents", fields: [parentId], references: [id], onDelete: Cascade)
+  student User @relation("StudentParents", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@index([parentId])
+  @@index([studentId])
+}
+
+model ConsentRecord {
+  id          String    @id @default(uuid())
+  parentId    String
+  studentId   String
+  consentType String
+  status      String
+  version     String
+  grantedAt   DateTime?
+  revokedAt   DateTime?
+  evidence    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  parent  User @relation("ConsentParent", fields: [parentId], references: [id], onDelete: Cascade)
+  student User @relation("ConsentStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId, consentType])
+  @@index([parentId, studentId])
+  @@index([studentId, consentType])
+}
+
+model SafetyEscalation {
+  id           String    @id @default(uuid())
+  studentId    String
+  severity     String
+  category     String
+  status       String    @default("OPEN")
+  source       String
+  summary      String
+  metadata     String?
+  assignedToId String?
+  resolvedById String?
+  resolution   String?
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+
+  student    User  @relation("StudentEscalations", fields: [studentId], references: [id], onDelete: Cascade)
+  assignedTo User? @relation("AssignedEscalations", fields: [assignedToId], references: [id])
+  resolvedBy User? @relation("ResolvedEscalations", fields: [resolvedById], references: [id])
+
+  @@index([studentId, status])
+  @@index([severity, status])
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorRole  String?
+  action     String
+  resource   String
+  resourceId String?
+  outcome    String
+  metadata   String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([resource, resourceId])
+  @@index([action, createdAt])
+}
+
+model NotificationDelivery {
+  id             String    @id @default(uuid())
+  notificationId String
+  channel        String
+  status         String    @default("PENDING")
+  attempts       Int       @default(0)
+  lastAttemptAt  DateTime?
+  deliveredAt    DateTime?
+  errorMessage   String?
+  createdAt      DateTime  @default(now())
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, channel])
+}
+
+// ==============================================================
+// Phase P5: Production Hardening, Security & Observability
+// ==============================================================
+
+model IdempotencyRecord {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  userId       String?
+  requestHash  String
+  statusCode   Int?
+  responseBody String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model SystemAuditEvent {
+  id           String   @id @default(uuid())
+  requestId    String?
+  actorId      String?
+  action       String
+  resourceType String
+  resourceId   String?
+  outcome      String
+  reason       String?
+  metadata     String?
+  createdAt    DateTime @default(now())
+
+  @@index([actorId])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+  @@index([requestId])
+}
+
+model AIExecutionRecord {
+  id           String   @id @default(uuid())
+  requestId    String?
+  userId       String?
+  provider     String
+  model        String
+  modelVersion String?
+  operation    String
+  status       String
+  latencyMs    Int?
+  inputHash    String?
+  outputHash   String?
+  safetyStatus String
+  errorCode    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([provider, model])
+}
+
+// ============================================================================
+// Phase P6: Scale, Intelligence & Institutional Learning Platform
+// ============================================================================
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  type      String   @default("SCHOOL") // SCHOOL, DISTRICT, ACADEMY, PLATFORM
+  status    String   @default("ACTIVE") // ACTIVE, SUSPENDED, TRIAL
+  settings  String?  // JSON string for institutional configuration
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships  TenantMembership[]
+  cohorts      Cohort[]
+  outboxEvents OutboxEvent[]
+
+  @@index([status])
+  @@index([type])
+}
+
+model TenantMembership {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  role      String   @default("STUDENT") // TENANT_ADMIN, PRINCIPAL, TEACHER, STUDENT, PARENT, CURRICULUM_DIRECTOR
+  status    String   @default("ACTIVE") // ACTIVE, INVITED, SUSPENDED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId, status])
+  @@index([tenantId, role])
+}
+
+model Cohort {
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  academicYear String
+  gradeLevel   String?
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  memberships CohortMembership[]
+
+  @@index([tenantId, academicYear])
+}
+
+model CohortMembership {
+  id         String   @id @default(uuid())
+  cohortId   String
+  studentId  String
+  status     String   @default("ACTIVE")
+  enrolledAt DateTime @default(now())
+
+  cohort  Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([cohortId, studentId])
+  @@index([studentId])
+}
+
+model OutboxEvent {
+  id            String    @id @default(uuid())
+  eventType     String
+  aggregateType String
+  aggregateId   String
+  tenantId      String?
+  payload       String    // Serialized JSON payload
+  status        String    @default("PENDING") // PENDING, PROCESSING, PROCESSED, FAILED, DEAD_LETTER
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(5)
+  availableAt   DateTime  @default(now())
+  processedAt   DateTime?
+  lastError     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([status, availableAt])
+  @@index([aggregateType, aggregateId])
+  @@index([tenantId, eventType])
+}
+
+model FeatureFlag {
+  id                String   @id @default(uuid())
+  key               String   @unique
+  name              String
+  description       String?
+  isEnabled         Boolean  @default(false)
+  rolloutPercentage Int      @default(0) // 0 to 100
+  tenantWhitelist   String?  // Comma-separated tenant IDs or slugs
+  userWhitelist     String?  // Comma-separated user IDs
+  targetRoles       String?  // Comma-separated roles
+  metadata          String?  // JSON string
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([key])
+}
+
+model AIModelEvaluationRecord {
+  id                String   @id @default(uuid())
+  modelName         String
+  modelVersion      String
+  promptKey         String
+  teacherAgreed     Boolean?
+  teacherOverridden Boolean?
+  accuracyScore     Float?
+  safetyPassed      Boolean  @default(true)
+  latencyMs         Int?
+  feedback          String?
+  metadata          String?  // JSON string
+  createdAt         DateTime @default(now())
+
+  @@index([modelName, modelVersion])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// Phase P7: Productization, Commercialization & Launch Operations
+// ============================================================================
+
+model CommercialProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  onboardingVersion String   @default("v1")
+  onboardingStatus  String   @default("NOT_STARTED")
+  acquisitionSource String?
+  referralCode      String?
+  metadata          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([onboardingStatus])
+}
+
+model BillingAccount {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  stripeCustomerId      String?  @unique
+  stripeSubscriptionId  String?  @unique
+  provider              String   @default("STRIPE")
+  status                String   @default("ACTIVE")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model BillingEvent {
+  id                    String    @id @default(uuid())
+  provider              String
+  providerEventId       String    @unique
+  eventType             String
+  userId                String?
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  payload               String
+  processed             Boolean   @default(false)
+  processedAt           DateTime?
+  error                 String?
+  createdAt             DateTime  @default(now())
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([processed])
+}
+
+model ProductEvent {
+  id          String   @id @default(uuid())
+  userId      String?
+  tenantId    String?
+  sessionId   String?
+  eventName   String
+  properties  String?
+  occurredAt  DateTime @default(now())
+
+  @@index([userId, occurredAt])
+  @@index([tenantId, occurredAt])
+  @@index([eventName, occurredAt])
+}
+
+model SupportTicket {
+  id          String    @id @default(uuid())
+  userId      String
+  category    String
+  priority    String    @default("NORMAL")
+  status      String    @default("OPEN")
+  subject     String
+  description String
+  metadata    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  resolvedAt  DateTime?
+
+  @@index([userId, status])
+  @@index([priority, status])
+}
+
+model ProductFeedback {
+  id          String   @id @default(uuid())
+  userId      String
+  category    String
+  rating      Int?
+  message     String
+  contextJson String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([category, createdAt])
+}
+
+// ============================================================================
+// Phase P8: Global AI Learning Network
+// ============================================================================
+
+model LearningConcept {
+  id                String   @id @default(uuid())
+  canonicalKey      String   @unique
+  name              String
+  description       String?
+  subject           String
+  domain            String?
+  ageMin            Int?
+  ageMax            Int?
+  metadataJson      String?
+  status            String   @default("ACTIVE")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  outgoingRelations LearningConceptRelation[] @relation("ConceptFrom")
+  incomingRelations LearningConceptRelation[] @relation("ConceptTo")
+  alignments        CurriculumAlignment[]
+
+  @@index([subject])
+  @@index([domain])
+}
+
+model LearningConceptRelation {
+  id            String   @id @default(uuid())
+  fromConceptId String
+  toConceptId   String
+  relationType  String
+  weight        Float    @default(1)
+  metadataJson  String?
+  createdAt     DateTime @default(now())
+
+  fromConcept LearningConcept @relation("ConceptFrom", fields: [fromConceptId], references: [id], onDelete: Cascade)
+  toConcept   LearningConcept @relation("ConceptTo", fields: [toConceptId], references: [id], onDelete: Cascade)
+
+  @@unique([fromConceptId, toConceptId, relationType])
+  @@index([fromConceptId])
+  @@index([toConceptId])
+}
+
+model CurriculumAlignment {
+  id           String   @id @default(uuid())
+  conceptId    String
+  curriculum   String
+  region       String?
+  grade        String?
+  code         String?
+  source       String?
+  confidence   Float    @default(1)
+  metadataJson String?
+  createdAt    DateTime @default(now())
+
+  concept LearningConcept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@index([conceptId])
+  @@index([curriculum, grade])
+}
+
+model LearningExperiment {
+  id             String   @id @default(uuid())
+  key            String   @unique
+  name           String
+  description    String?
+  status         String   @default("DRAFT")
+  allocationJson String
+  metricsJson    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  assignments  ExperimentAssignment[]
+  observations ExperimentObservation[]
+
+  @@index([status])
+}
+
+model ExperimentAssignment {
+  id           String   @id @default(uuid())
+  experimentId String
+  subjectId    String
+  variant      String
+  assignedAt   DateTime @default(now())
+
+  experiment LearningExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@unique([experimentId, subjectId])
+  @@index([subjectId])
+}
+
+model ExperimentObservation {
+  id           String   @id @default(uuid())
+  experimentId String
+  subjectId    String
+  metric       String
+  value        Float
+  occurredAt   DateTime @default(now())
+
+  experiment LearningExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@index([experimentId, metric])
+  @@index([subjectId, occurredAt])
+}
+
+model AIInteractionEvaluation {
+  id               String   @id @default(uuid())
+  interactionId    String
+  evaluatorType    String
+  evaluatorId      String?
+  correctness      Float?
+  helpfulness      Float?
+  safety           Float?
+  ageAppropriate   Float?
+  teacherAlignment Float?
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  @@index([interactionId])
+  @@index([evaluatorType])
+}
+
+// ==========================================
+// PHASE P9: AUTONOMOUS LEARNING OPERATIONS & AI GOVERNANCE
+// ==========================================
+
+model AIAgent {
+  id            String   @id @default(uuid())
+  key           String   @unique
+  name          String
+  description   String?
+  version       String   @default("1.0.0")
+  status        String   @default("ACTIVE") // ACTIVE, INACTIVE, DEPRECATED, SUSPENDED
+  autonomyLevel String   @default("SUPERVISED") // ASSISTIVE, SUPERVISED, BOUNDED_AUTONOMOUS, FULLY_AUTONOMOUS
+  policyVersion String   @default("1.0.0")
+  configJson    Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  executions AIAgentExecution[]
+
+  @@index([status])
+  @@index([autonomyLevel])
+}
+
+model AIAgentExecution {
+  id              String    @id @default(uuid())
+  agentId         String
+  tenantId        String?
+  learnerId       String?
+  requestId       String    @unique
+  action          String
+  autonomyLevel   String
+  status          String    @default("PENDING") // PENDING, APPROVED, EXECUTED, REJECTED, FAILED, BLOCKED
+  inputHash       String
+  outputHash      String?
+  policyVersion   String
+  humanApprovedBy String?
+  approvedAt      DateTime?
+  errorCode       String?
+  errorDetails    String?
+  metadataJson    Json?
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  agent AIAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, status])
+  @@index([learnerId, createdAt])
+  @@index([tenantId])
+  @@index([action])
+}
+
+model LearningWorkflow {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?
+  version     String   @default("1.0.0")
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  definition  Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  executions WorkflowExecution[]
+
+  @@index([status])
+}
+
+model WorkflowExecution {
+  id          String    @id @default(uuid())
+  workflowId  String
+  tenantId    String?
+  learnerId   String?
+  status      String    @default("PENDING") // PENDING, RUNNING, WAITING_APPROVAL, COMPLETED, FAILED, CANCELLED
+  state       String
+  contextJson Json?
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  workflow LearningWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId, status])
+  @@index([learnerId])
+  @@index([tenantId])
+}
+
+model AIUsageRecord {
+  id             String   @id @default(uuid())
+  tenantId       String?
+  learnerId      String?
+  agentId        String?
+  modelVersionId String?
+  requestCount   Int      @default(1)
+  inputTokens    Int      @default(0)
+  outputTokens   Int      @default(0)
+  estimatedCost  Float    @default(0.0)
+  currency       String   @default("USD")
+  latencyMs      Int?
+  status         String   @default("SUCCESS")
+  createdAt      DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([agentId])
+  @@index([learnerId])
+}
+
+model Integration {
+  id             String    @id @default(uuid())
+  tenantId       String?
+  provider       String    // CANVAS_LMS, GOOGLE_CLASSROOM, CLEVER, ONEROSTER, CUSTOM_WEBHOOK
+  integrationKey String
+  status         String    @default("ACTIVE") // ACTIVE, INACTIVE, ERROR, SYNCING
+  configJson     Json?
+  lastSyncAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([tenantId, provider])
+  @@index([integrationKey])
+}
+
+// ============================================================================
+// PHASE P10: GLOBAL LEARNING OS & CONTINUOUS GOVERNED EVOLUTION
+// ============================================================================
+
+model LearningSystemSnapshot {
+  id           String   @id @default(uuid())
+  tenantId     String?
+  snapshotType String
+  version      Int      @default(1)
+  stateJson    String
+  generatedAt  DateTime @default(now())
+
+  @@index([tenantId, generatedAt])
+  @@index([snapshotType, generatedAt])
+}
+
+model ImprovementProposal {
+  id              String    @id @default(uuid())
+  tenantId        String?
+  source          String
+  title           String
+  description     String
+  hypothesis      String
+  expectedOutcome String
+  riskLevel       String
+  status          String    @default("DETECTED")
+  affectedSystems String
+  rollbackPlan    String
+  proposedBy      String?
+  approvedBy      String?
+  createdAt       DateTime  @default(now())
+  approvedAt      DateTime?
+  completedAt     DateTime?
+
+  @@index([status, createdAt])
+  @@index([tenantId, status])
+}
+
+model LearningOutcome {
+  id              String   @id @default(uuid())
+  tenantId        String
+  learnerId       String
+  conceptId       String
+  interventionId  String?
+  experimentId    String?
+  baselineMastery Float
+  finalMastery    Float
+  retentionScore  Float?
+  transferScore   Float?
+  independence    Float?
+  measuredAt      DateTime @default(now())
+
+  @@index([tenantId, measuredAt])
+  @@index([learnerId, conceptId])
+  @@index([experimentId])
+}
+
+model ExperimentGovernance {
+  id              String    @id @default(uuid())
+  experimentId    String    @unique
+  riskLevel       String
+  safetyReviewed  Boolean   @default(false)
+  teacherReviewed Boolean   @default(false)
+  privacyReviewed Boolean   @default(false)
+  approvedBy      String?
+  approvedAt      DateTime?
+  decision        String?
+  decisionReason  String?
+  createdAt       DateTime  @default(now())
+}
+
+model ReleaseArtifact {
+  id             String    @id @default(uuid())
+  artifactType   String
+  artifactKey    String
+  version        String
+  status         String    @default("DRAFT")
+  riskLevel      String
+  checksum       String
+  validationJson String?
+  createdAt      DateTime  @default(now())
+  approvedAt     DateTime?
+  activatedAt    DateTime?
+
+  @@unique([artifactType, artifactKey, version])
+  @@index([status])
+}
+
+model ResearchDataset {
+  id            String    @id @default(uuid())
+  name          String
+  purpose       String
+  sourceScope   String
+  privacyMethod String
+  schemaVersion String
+  status        String    @default("DRAFT")
+  approvedBy    String?
+  approvedAt    DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([status])
+}
+
+model LearningPattern {
+  id            String   @id @default(uuid())
+  patternKey    String   @unique
+  conceptScope  String
+  evidenceCount Int
+  effectiveness Float?
+  confidence    Float?
+  sourceVersion String
+  status        String   @default("CANDIDATE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PolicyVersion {
+  id         String    @id @default(uuid())
+  policyKey  String
+  version    String
+  definition String
+  status     String    @default("DRAFT")
+  approvedBy String?
+  approvedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([policyKey, version])
+  @@index([policyKey, status])
+}
+
+// ============================================================================
+// PHASE P11: GLOBAL EDUCATION INTELLIGENCE & VERIFIED LEARNING NETWORK
+// ============================================================================
+
+model EvidenceProvenance {
+  id              String   @id @default(uuid())
+  evidenceId      String   @unique
+  tenantId        String
+  learnerId       String
+  conceptId       String?
+  contentId       String?
+  curriculumId    String?
+  modelVersion    String?
+  agentVersion    String?
+  policyVersion   String?
+  teacherId       String?
+  interventionId  String?
+  experimentId    String?
+  source          String   // STUDENT, TEACHER, AI, ASSESSMENT, SYSTEM, EXTERNAL
+  integrityHash   String
+  occurredAt      DateTime
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId, occurredAt])
+  @@index([learnerId, occurredAt])
+  @@index([conceptId, occurredAt])
+}
+
+model EvidenceCorrection {
+  id            String    @id @default(uuid())
+  evidenceId    String
+  requestedBy   String
+  reason        String
+  replacementId String?
+  status        String    @default("PENDING") // PENDING, APPROVED, REJECTED, APPLIED
+  createdAt     DateTime  @default(now())
+  resolvedAt    DateTime?
+
+  @@index([evidenceId])
+  @@index([status])
+}
+
+model LearningClaim {
+  id            String    @id @default(uuid())
+  claimType     String    // CONTENT_EFFECTIVENESS, INTERVENTION_EFFECTIVENESS, MODEL_EFFECTIVENESS, CURRICULUM_ALIGNMENT, LEARNING_PATTERN
+  statement     String
+  scopeJson     String
+  confidence    Float     @default(0)
+  status        String    @default("CANDIDATE") // CANDIDATE, UNDER_REVIEW, VERIFIED, REJECTED, EXPIRED
+  evidenceCount Int       @default(0)
+  createdBy     String?
+  createdAt     DateTime  @default(now())
+  reviewedAt    DateTime?
+
+  @@index([claimType, status])
+  @@index([status, confidence])
+}
+
+model ClaimEvidence {
+  id         String   @id @default(uuid())
+  claimId    String
+  evidenceId String
+  weight     Float    @default(1)
+  createdAt  DateTime @default(now())
+
+  @@unique([claimId, evidenceId])
+  @@index([claimId])
+  @@index([evidenceId])
+}
+
+model VerifiedLearningKnowledge {
+  id               String   @id @default(uuid())
+  claimId          String   @unique
+  knowledgeType    String
+  statement        String
+  confidence       Float
+  evidenceCount    Int
+  replicationCount Int
+  scopeJson        String
+  version          Int      @default(1)
+  status           String   @default("ACTIVE") // ACTIVE, MONITORED, EXPIRED, RETIRED
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([knowledgeType, status])
+}
+
+model CausalStudy {
+  id              String    @id @default(uuid())
+  hypothesis      String
+  treatment       String
+  control         String?
+  outcome         String
+  populationJson  String
+  confoundersJson String
+  design          String    // RANDOMIZED, QUASI_EXPERIMENTAL, OBSERVATIONAL
+  status          String    @default("DRAFT") // DRAFT, APPROVED, RUNNING, ANALYSIS, COMPLETED, REJECTED
+  approvedBy      String?
+  approvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  @@index([status])
+}
+
+model InterventionEffectiveness {
+  id               String   @id @default(uuid())
+  interventionType String
+  conceptId        String?
+  sampleSize       Int
+  baselineMastery  Float
+  postMastery      Float
+  retention        Float?
+  transfer         Float?
+  effectSize       Float?
+  confidence       Float?
+  createdAt        DateTime @default(now())
+
+  @@index([interventionType])
+  @@index([conceptId])
+}
+
+model AIDecisionTrace {
+  id              String   @id @default(uuid())
+  requestId       String   @unique
+  tenantId        String
+  learnerId       String?
+  modelVersion    String
+  promptVersion   String
+  policyVersion   String
+  inputHash       String
+  outputHash      String
+  contextRefsJson String
+  toolCallsJson   String?
+  action          String
+  decision        String
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([learnerId, createdAt])
+  @@index([modelVersion, createdAt])
+}
+
+model AIPromptVersion {
+  id           String    @id @default(uuid())
+  key          String
+  version      String
+  templateHash String
+  status       String    @default("DRAFT")
+  approvedBy   String?
+  approvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([key, version])
+  @@index([key, status])
+}
+
+model KnowledgeContribution {
+  id               String    @id @default(uuid())
+  tenantId         String
+  claimId          String
+  contributionType String
+  evidenceCount    Int
+  privacyMethod    String
+  status           String    @default("PENDING")
+  createdAt        DateTime  @default(now())
+  approvedAt       DateTime?
+
+  @@index([tenantId])
+  @@index([claimId])
+  @@index([status])
+}
+
+model VerifiedContent {
+  id                 String    @id @default(uuid())
+  contentId          String    @unique
+  curriculumScore    Float
+  safetyScore        Float
+  accessibilityScore Float
+  teacherScore       Float
+  effectivenessScore Float
+  provenanceScore    Float
+  status             String    @default("CANDIDATE")
+  verifiedAt         DateTime?
+
+  @@index([status])
+}
+
+model ResearchStudyVersion {
+  id           String   @id @default(uuid())
+  studyId      String
+  version      Int
+  protocolHash String
+  datasetId    String
+  analysisHash String
+  status       String   @default("DRAFT")
+  createdAt    DateTime @default(now())
+
+  @@unique([studyId, version])
+}
+
+model ResearchResult {
+  id             String   @id @default(uuid())
+  studyId        String
+  version        Int
+  metric         String
+  estimate       Float
+  lowerBound     Float?
+  upperBound     Float?
+  sampleSize     Int
+  interpretation String?
+  createdAt      DateTime @default(now())
+
+  @@index([studyId])
+}
+
+model GovernanceDecision {
+  id            String   @id @default(uuid())
+  resourceType  String
+  resourceId    String
+  decision      String
+  reason        String
+  reviewerId    String
+  policyVersion String
+  createdAt     DateTime @default(now())
+
+  @@index([resourceType, resourceId])
+}
+
+// ============================================================================
+// PHASE P12: GLOBAL LEARNING OPERATING SYSTEM 2.0 — INTEROPERABILITY & ULR
+// ============================================================================
+
+model UnifiedLearnerSnapshot {
+  id            String   @id @default(uuid())
+  learnerId     String
+  tenantId      String
+  version       Int
+  snapshotJson  String
+  sourceEventId String?
+  generatedAt   DateTime @default(now())
+
+  @@unique([learnerId, version])
+  @@index([tenantId, learnerId])
+}
+
+model LearningPassport {
+  id           String                @id @default(uuid())
+  learnerId    String                @unique
+  issuer       String
+  version      Int                   @default(1)
+  status       String                @default("ACTIVE")
+  metadataJson String?
+  achievements PassportAchievement[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([learnerId])
+}
+
+model PassportAchievement {
+  id                 String           @id @default(uuid())
+  passportId         String
+  achievementType    String
+  title              String
+  description        String?
+  conceptId          String?
+  competencyId       String?
+  verificationStatus String           @default("UNVERIFIED")
+  evidenceRefJson    String?
+  issuedAt           DateTime         @default(now())
+
+  passport           LearningPassport @relation(fields: [passportId], references: [id], onDelete: Cascade)
+
+  @@index([passportId])
+  @@index([verificationStatus])
+}
+
+model LearningCompetency {
+  id                  String              @id @default(uuid())
+  key                 String              @unique
+  name                String
+  description         String?
+  level               String
+  metadataJson        String?
+  status              String              @default("ACTIVE")
+  learnerCompetencies LearnerCompetency[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model LearnerCompetency {
+  id              String             @id @default(uuid())
+  learnerId       String
+  competencyId    String
+  level           String
+  confidence      Float
+  evidenceCount   Int                @default(0)
+  lastEvaluatedAt DateTime?
+
+  competency      LearningCompetency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+
+  @@unique([learnerId, competencyId])
+  @@index([learnerId])
+  @@index([competencyId])
+}
+
+model ExternalLearningEvent {
+  id               String    @id @default(uuid())
+  providerId       String
+  tenantId         String
+  externalEventId  String
+  eventType        String
+  learnerReference String
+  payloadJson      String
+  signatureValid   Boolean   @default(false)
+  processed        Boolean   @default(false)
+  receivedAt       DateTime  @default(now())
+  processedAt      DateTime?
+
+  @@unique([providerId, externalEventId])
+  @@index([tenantId, learnerReference])
+}
+
+model LearningDataShare {
+  id            String    @id @default(uuid())
+  learnerId     String
+  tenantId      String
+  recipientType String
+  recipientId   String
+  purpose       String
+  scopeJson     String
+  status        String    @default("PENDING")
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  approvedAt    DateTime?
+  revokedAt     DateTime?
+
+  @@index([learnerId])
+  @@index([tenantId, status])
+}
+
+// ============================================================================
+// PHASE P13: ADAPTIVE LEARNING OPERATIONS & INSTITUTIONAL INTELLIGENCE
+// ============================================================================
+
+model LearningSignal {
+  id              String    @id @default(uuid())
+  learnerId       String
+  tenantId        String
+  type            String
+  severity        String
+  score           Float
+  conceptId       String?
+  evidenceIdsJson String
+  status          String    @default("OPEN")
+  detectedAt      DateTime  @default(now())
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId, learnerId])
+  @@index([tenantId, type, status])
+  @@index([conceptId])
+}
+
+model LearningIntervention {
+  id                      String    @id @default(uuid())
+  learnerId               String
+  tenantId                String
+  signalId                String
+  type                    String
+  targetConceptId         String?
+  priority                Float
+  rationale               String
+  status                  String    @default("PROPOSED")
+  requiresTeacherApproval Boolean   @default(true)
+  plannedAt               DateTime  @default(now())
+  startedAt               DateTime?
+  completedAt             DateTime?
+  outcomeJson             String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([tenantId, learnerId, status])
+  @@index([signalId])
+}
+
+model InterventionEvaluation {
+  id             String   @id @default(uuid())
+  interventionId String
+  baselineValue  Float?
+  outcomeValue   Float?
+  effectSize     Float?
+  confidence     Float?
+  methodology    String
+  evaluatorType  String
+  notes          String?
+  evaluatedAt    DateTime @default(now())
+
+  @@index([interventionId])
+}
+
+model PolicyRecommendation {
+  id                    String    @id @default(uuid())
+  tenantId              String?
+  scope                 String
+  category              String
+  recommendation        String
+  evidenceIdsJson       String
+  confidence            Float
+  status                String    @default("PROPOSED")
+  requiresHumanApproval Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  reviewedAt            DateTime?
+
+  @@index([tenantId, status])
+  @@index([category])
+}
+
+model OperationsEventProcessing {
+  id          String    @id @default(uuid())
+  eventId     String    @unique
+  eventType   String
+  status      String
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+}
+
+// ============================================================================
+// PHASE P14: TRUSTWORTHY AUTONOMOUS LEARNING OS
+// ============================================================================
+
+model LearningAction {
+  id              String    @id @default(uuid())
+  learnerId       String
+  tenantId        String
+  type            String
+  parametersJson  String
+  rationale       String
+  evidenceIdsJson String
+  confidence      Float
+  autonomyLevel   String
+  reversible      Boolean   @default(false)
+  status          String    @default("PROPOSED")
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId, learnerId, status])
+  @@index([tenantId, type])
+}
+
+model PolicyDecision {
+  id            String   @id @default(uuid())
+  actionId      String
+  decision      String
+  autonomyLevel String
+  policyVersion String
+  reasonsJson   String
+  decidedAt     DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([actionId])
+  @@index([decision, decidedAt])
+}
+
+model ActionExecution {
+  id          String    @id @default(uuid())
+  actionId    String
+  status      String
+  attempt     Int       @default(1)
+  resultJson  String?
+  error       String?
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([actionId])
+  @@index([status, startedAt])
+}
+
+model HumanApproval {
+  id          String    @id @default(uuid())
+  actionId    String
+  tenantId    String
+  requestedBy String
+  reviewerId  String?
+  decision    String    @default("PENDING")
+  rationale   String?
+  requestedAt DateTime  @default(now())
+  reviewedAt  DateTime?
+
+  @@index([tenantId, decision])
+  @@index([actionId])
+}
+
+model LearningTwinSnapshot {
+  id         String   @id @default(uuid())
+  learnerId  String
+  tenantId   String
+  version    Int
+  stateJson  String
+  confidence Float
+  createdAt  DateTime @default(now())
+
+  @@unique([learnerId, version])
+  @@index([tenantId, learnerId, createdAt])
+}
+
+model DecisionProvenance {
+  id              String   @id @default(uuid())
+  decisionId      String
+  tenantId        String
+  actorType       String
+  actorId         String?
+  modelVersion    String?
+  policyVersion   String
+  inputHash       String
+  decisionJson    String
+  evidenceIdsJson String
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([decisionId])
+}
+
+// ============================================================================
+// PHASE P15: TRUSTED LEARNING IDENTITY, SKILLS PASSPORT & CREDENTIAL NETWORK
+// ============================================================================
+
+model LearningCredential {
+  id                String   @id @default(uuid())
+  learnerId         String
+  tenantId          String
+
+  credentialType    String
+  title             String
+  description       String?
+
+  status            String   @default("DRAFT")
+  verificationLevel String
+
+  issuerId          String?
+  issuerName        String?
+
+  evidenceIdsJson   String
+  skillIdsJson      String
+  curriculumJson    String?
+
+  criteriaJson      String
+  metadataJson      String?
+
+  issuedAt          DateTime?
+  expiresAt         DateTime?
+  revokedAt         DateTime?
+  revocationReason  String?
+
+  version           Int      @default(1)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId, learnerId])
+  @@index([tenantId, status])
+  @@index([issuerId])
+}
+
+model CredentialVerification {
+  id                String   @id @default(uuid())
+  credentialId      String
+  verificationLevel String
+  verifierType      String
+  verifierId        String?
+  decision          String
+  evidenceJson      String?
+  notes             String?
+  verifiedAt        DateTime @default(now())
+
+  @@index([credentialId])
+  @@index([verifierType, verifierId])
+}
+
+model CredentialEvent {
+  id            String   @id @default(uuid())
+  credentialId  String
+  tenantId      String
+  eventType     String
+  actorId       String?
+  actorType     String
+  metadataJson  String?
+  createdAt     DateTime @default(now())
+
+  @@index([credentialId, createdAt])
+  @@index([tenantId, createdAt])
+}
+
+model CredentialShare {
+  id           String    @id @default(uuid())
+  credentialId String
+  tokenHash    String    @unique
+  expiresAt    DateTime?
+  revoked      Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  @@index([credentialId])
+}
+
+model CredentialVersion {
+  id           String   @id @default(uuid())
+  credentialId String
+  version      Int
+  criteriaJson String
+  metadataJson String?
+  createdAt    DateTime @default(now())
+
+  @@unique([credentialId, version])
+}
+
+model CredentialTemplate {
+  id              String   @id @default(uuid())
+  tenantId        String?
+  key             String
+  title           String
+  description     String?
+  credentialType  String
+  criteriaJson    String
+  skillIdsJson    String
+  curriculumJson  String?
+  minimumMastery  Float?
+  minimumEvidence Int?
+  requiresTeacher Boolean  @default(true)
+  active          Boolean  @default(true)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, key, version])
+  @@index([tenantId, active])
+}
+
+model CredentialOperation {
+  id            String   @id @default(uuid())
+  credentialId  String
+  operationKey  String   @unique
+  operationType String
+  createdAt     DateTime @default(now())
+
+  @@index([credentialId])
+}
+
 
 
