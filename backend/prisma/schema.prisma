@@ -2319,5 +2319,221 @@ model CredentialOperation {
   @@index([credentialId])
 }
 
+// ==========================================
+// P16: Global Learning Intelligence & Institutional Interoperability Core
+// ==========================================
+
+model P16Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  memberships  P16TenantMembership[]
+  integrations P16ExternalIntegration[]
+
+  @@map("p16_tenants")
+}
+
+model P16TenantMembership {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  userId    String   @map("user_id")
+  role      String
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant P16Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId], map: "p16_tenant_memberships_user_idx")
+  @@map("p16_tenant_memberships")
+}
+
+model P16ExternalIntegration {
+  id               String    @id @default(uuid())
+  tenantId         String    @map("tenant_id")
+  provider         String
+  name             String
+  status           String    @default("ACTIVE")
+  configJson       String?   @map("config_json")
+  capabilitiesJson String?   @map("capabilities_json")
+  lastSyncAt       DateTime? @map("last_sync_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  tenant P16Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider])
+  @@index([tenantId, status], map: "p16_integrations_tenant_status_idx")
+  @@map("p16_external_integrations")
+}
+
+model P16IntegrationCredential {
+  id             String    @id @default(uuid())
+  integrationId  String    @map("integration_id")
+  credentialType String    @map("credential_type")
+  secretRef      String    @map("secret_ref")
+  expiresAt      DateTime? @map("expires_at")
+  status         String    @default("ACTIVE")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@index([integrationId, status], map: "p16_credentials_integration_status_idx")
+  @@map("p16_integration_credentials")
+}
+
+model P16IntegrationMapping {
+  id             String   @id @default(uuid())
+  integrationId  String   @map("integration_id")
+  entityType     String   @map("entity_type")
+  externalType   String   @map("external_type")
+  mappingVersion Int      @default(1) @map("mapping_version")
+  mappingJson    String   @map("mapping_json")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([integrationId, entityType, externalType, mappingVersion])
+  @@index([integrationId, entityType], map: "p16_mappings_integration_entity_idx")
+  @@map("p16_integration_mappings")
+}
+
+model P16ExternalRecord {
+  id               String   @id @default(uuid())
+  integrationId    String   @map("integration_id")
+  tenantId         String   @map("tenant_id")
+  externalRecordId String   @map("external_record_id")
+  externalType     String   @map("external_type")
+  sourceVersion    String?  @map("source_version")
+  canonicalType    String?  @map("canonical_type")
+  payloadJson      String   @map("payload_json")
+  checksum         String
+  status           String   @default("IMPORTED")
+  firstSeenAt      DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt       DateTime @default(now()) @map("last_seen_at")
+
+  @@unique([integrationId, externalRecordId, externalType])
+  @@index([tenantId, canonicalType], map: "p16_external_records_tenant_canonical_idx")
+  @@index([integrationId, lastSeenAt], map: "p16_external_records_integration_seen_idx")
+  @@map("p16_external_records")
+}
+
+model P16IntegrationImportJob {
+  id              String    @id @default(uuid())
+  integrationId   String    @map("integration_id")
+  tenantId        String    @map("tenant_id")
+  status          String    @default("PENDING")
+  cursor          String?
+  recordsRead     Int       @default(0) @map("records_read")
+  recordsCreated  Int       @default(0) @map("records_created")
+  recordsUpdated  Int       @default(0) @map("records_updated")
+  recordsRejected Int       @default(0) @map("records_rejected")
+  errorJson       String?   @map("error_json")
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId, status], map: "p16_import_jobs_tenant_status_idx")
+  @@map("p16_integration_import_jobs")
+}
+
+model P16IntegrationExportJob {
+  id              String    @id @default(uuid())
+  integrationId   String    @map("integration_id")
+  tenantId        String    @map("tenant_id")
+  entityType      String    @map("entity_type")
+  status          String    @default("PENDING")
+  cursor          String?
+  recordsExported Int       @default(0) @map("records_exported")
+  recordsRejected Int       @default(0) @map("records_rejected")
+  errorJson       String?   @map("error_json")
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("p16_integration_export_jobs")
+}
+
+model P16SyncCursor {
+  id            String    @id @default(uuid())
+  integrationId String    @map("integration_id")
+  resource      String
+  cursor        String?
+  version       Int       @default(1)
+  lastSyncedAt  DateTime? @map("last_synced_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([integrationId, resource])
+  @@map("p16_sync_cursors")
+}
+
+model P16DataProvenance {
+  id             String   @id @default(uuid())
+  tenantId       String   @map("tenant_id")
+  canonicalType  String   @map("canonical_type")
+  canonicalId    String   @map("canonical_id")
+  sourceType     String   @map("source_type")
+  sourceId       String   @map("source_id")
+  transformation String?
+  mappingVersion Int?     @map("mapping_version")
+  importedAt     DateTime @default(now()) @map("imported_at")
+  metadataJson   String?  @map("metadata_json")
+
+  @@index([tenantId, canonicalType, canonicalId], map: "p16_provenance_lookup_idx")
+  @@map("p16_data_provenance")
+}
+
+model P16IntegrationConflict {
+  id                String    @id @default(uuid())
+  integrationId     String    @map("integration_id")
+  tenantId          String    @map("tenant_id")
+  entityType        String    @map("entity_type")
+  entityId          String    @map("entity_id")
+  externalValueJson String    @map("external_value_json")
+  internalValueJson String    @map("internal_value_json")
+  conflictType      String    @map("conflict_type")
+  status            String    @default("OPEN")
+  resolutionJson    String?   @map("resolution_json")
+  resolvedBy        String?   @map("resolved_by")
+  resolvedAt        DateTime? @map("resolved_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId, status], map: "p16_conflicts_tenant_status_idx")
+  @@index([integrationId, entityId], map: "p16_conflicts_integration_entity_idx")
+  @@map("p16_integration_conflicts")
+}
+
+model P16ExternalInstitution {
+  id                 String   @id @default(uuid())
+  externalKey        String   @unique @map("external_key")
+  name               String
+  type               String
+  region             String?
+  verificationStatus String   @default("UNVERIFIED") @map("verification_status")
+  metadataJson       String?  @map("metadata_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("p16_external_institutions")
+}
+
+model P16ExternalIdentityMapping {
+  id             String   @id @default(uuid())
+  integrationId  String   @map("integration_id")
+  externalUserId String   @map("external_user_id")
+  userId         String   @map("user_id")
+  status         String   @default("ACTIVE")
+  confidence     Float    @default(1)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([integrationId, externalUserId])
+  @@index([userId], map: "p16_identity_user_idx")
+  @@map("p16_external_identity_mappings")
+}
+
+
 
 

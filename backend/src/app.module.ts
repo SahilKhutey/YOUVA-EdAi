@@ -61,6 +61,7 @@ import { LearningInteroperabilityModule } from './learning-interoperability/lear
 import { LearningOperationsModule } from './learning-operations/learning-operations.module';
 import { AutonomousLearningModule } from './autonomous-learning/autonomous-learning.module';
 import { CredentialNetworkModule } from './credential-network/credential-network.module';
+import { InteroperabilityModule } from './interoperability/p16.module';
 
 
 
@@ -125,6 +126,7 @@ import { CredentialNetworkModule } from './credential-network/credential-network
     LearningOperationsModule,
     AutonomousLearningModule,
     CredentialNetworkModule,
+    InteroperabilityModule,
   ],
   controllers: [AppController],
   providers: [AppService],
