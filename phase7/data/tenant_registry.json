@@ -1,0 +1,34 @@
+{
+  "tenants": [
+    {
+      "tenantId": "tenant-dps-rkpuram",
+      "name": "Delhi Public School, R.K. Puram",
+      "tier": "ENTERPRISE",
+      "status": "ACTIVE",
+      "jurisdiction": "IN_DPDP",
+      "isolationLevel": "STRICT_ROW_LEVEL",
+      "contractId": "CONTRACT-DPSRKP-2026-SCALE",
+      "createdAt": "2026-08-01T00:00:00Z"
+    },
+    {
+      "tenantId": "tenant-modern-school",
+      "name": "Modern School, Barakhamba Road",
+      "tier": "ENTERPRISE",
+      "status": "ACTIVE",
+      "jurisdiction": "IN_DPDP",
+      "isolationLevel": "STRICT_ROW_LEVEL",
+      "contractId": "CONTRACT-MODERN-2026-SCALE",
+      "createdAt": "2026-08-15T00:00:00Z"
+    },
+    {
+      "tenantId": "tenant-sanskriti-school",
+      "name": "Sanskriti School, Chanakyapuri",
+      "tier": "STANDARD",
+      "status": "ACTIVE",
+      "jurisdiction": "IN_DPDP",
+      "isolationLevel": "STRICT_ROW_LEVEL",
+      "contractId": "CONTRACT-SANSKRITI-2026-SCALE",
+      "createdAt": "2026-08-20T00:00:00Z"
+    }
+  ]
+}

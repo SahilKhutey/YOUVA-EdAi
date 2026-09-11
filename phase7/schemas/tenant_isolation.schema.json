@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TenantIsolationConfig",
+  "description": "Schema for multi-tenant boundary configuration and isolation enforcement.",
+  "type": "object",
+  "required": [
+    "tenantId",
+    "isolationLevel",
+    "enforceRowLevelSecurity",
+    "cacheNamespacePrefix",
+    "dedicatedQueuePartition"
+  ],
+  "properties": {
+    "tenantId": {
+      "type": "string",
+      "pattern": "^tenant-[a-z0-9-]+$"
+    },
+    "isolationLevel": {
+      "type": "string",
+      "enum": ["STRICT_ROW_LEVEL", "SCHEMA_ISOLATED", "DEDICATED_DATABASE"]
+    },
+    "enforceRowLevelSecurity": {
+      "type": "boolean"
+    },
+    "cacheNamespacePrefix": {
+      "type": "string",
+      "minLength": 3
+    },
+    "dedicatedQueuePartition": {
+      "type": "boolean"
+    },
+    "maxConcurrentWorkers": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "additionalProperties": false
+}

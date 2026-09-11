@@ -1,0 +1,30 @@
+{
+  "contractId": "CONTRACT-DPSRKP-2026-SCALE",
+  "tenantId": "tenant-dps-rkpuram",
+  "institutionName": "Delhi Public School, R.K. Puram",
+  "minCommittedSeats": 250,
+  "status": "ACTIVE",
+  "validFrom": "2026-08-01T00:00:00Z",
+  "validUntil": "2027-07-31T23:59:59Z",
+  "authorizedSigners": [
+    {
+      "name": "Padma Bandopadhyay",
+      "role": "Principal & Institutional Head",
+      "email": "principal@dpsrkp.net",
+      "signedAt": "2026-07-28T10:30:00Z"
+    },
+    {
+      "name": "Dr. Alok Verma",
+      "role": "Director of Educational Technology",
+      "email": "edtech.director@dpsrkp.net",
+      "signedAt": "2026-07-28T11:15:00Z"
+    }
+  ],
+  "slaUptimePercent": 99.9,
+  "jurisdiction": "IN_DPDP",
+  "allowedLmsHosts": [
+    "canvas.dpsrkp.net",
+    "moodle.dpsrkp.net",
+    "sis.dpsrkp.edu.in"
+  ]
+}
