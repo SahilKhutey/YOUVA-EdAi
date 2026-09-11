@@ -1,0 +1,60 @@
+{
+  "document": {
+    "name": "YOUVA EdAI MVP Scope Lock",
+    "version": "1.0.0",
+    "status": "draft",
+    "dateLocked": null
+  },
+
+  "launchTier": {
+    "tier": "middle_school",
+    "gradeBand": null,
+    "deferredTiers": [
+      "kindergarten_junior",
+      "high_school"
+    ],
+    "rationale": null
+  },
+
+  "jurisdiction": {
+    "country": null,
+    "region": null,
+    "regulation": null,
+    "reviewRequired": true,
+    "reviewedBy": null,
+    "reviewDate": null,
+    "deferredJurisdictions": []
+  },
+
+  "launchModel": {
+    "model": null,
+    "pilotPartner": null,
+    "pilotRecruitmentPlan": null,
+    "rationale": null
+  },
+
+  "mvpSubject": {
+    "subject": null,
+    "grade": null,
+    "curriculumStandard": null,
+    "units": [],
+    "contentSourcingApproach": null,
+    "contentOwner": null,
+    "estimatedTimelineWeeks": null,
+    "estimatedBudget": null
+  },
+
+  "outOfScope": [
+    "billing",
+    "stripe",
+    "multi_tenant_lms_sis_interoperability",
+    "autonomous_ai_policy_engine",
+    "skills_passport",
+    "additional_tiers"
+  ],
+
+  "nextPhase": {
+    "target": "phase_1",
+    "requiresPhase0Gate": true
+  }
+}

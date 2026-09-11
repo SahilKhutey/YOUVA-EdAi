@@ -1,0 +1,27 @@
+{
+  "status": "pending",
+
+  "requiredSignoffs": [
+    {
+      "role": "founder",
+      "required": true,
+      "name": null,
+      "date": null,
+      "status": "pending"
+    },
+    {
+      "role": "pilot_partner",
+      "required": false,
+      "name": null,
+      "date": null,
+      "status": "pending"
+    },
+    {
+      "role": "legal_compliance_advisor",
+      "required": true,
+      "name": null,
+      "date": null,
+      "status": "pending"
+    }
+  ]
+}

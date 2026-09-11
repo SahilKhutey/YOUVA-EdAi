@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "YOUVA EdAI MVP Scope Lock",
+  "type": "object",
+  "required": [
+    "document",
+    "launchTier",
+    "jurisdiction",
+    "launchModel",
+    "mvpSubject",
+    "outOfScope",
+    "nextPhase"
+  ],
+  "properties": {
+    "document": {
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "status"
+      ],
+      "properties": {
+        "name": {
+          "const": "YOUVA EdAI MVP Scope Lock"
+        },
+        "version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "review",
+            "locked"
+          ]
+        },
+        "dateLocked": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+
+    "launchTier": {
+      "type": "object",
+      "required": [
+        "tier",
+        "gradeBand",
+        "deferredTiers",
+        "rationale"
+      ],
+      "properties": {
+        "tier": {
+          "enum": [
+            "kindergarten_junior",
+            "middle_school",
+            "high_school"
+          ]
+        },
+        "gradeBand": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "deferredTiers": {
+          "type": "array",
+          "minItems": 2
+        },
+        "rationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+
+    "jurisdiction": {
+      "type": "object",
+      "required": [
+        "country",
+        "regulation",
+        "reviewRequired"
+      ],
+      "properties": {
+        "country": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "region": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "regulation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reviewRequired": {
+          "const": true
+        },
+        "reviewedBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reviewDate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "deferredJurisdictions": {
+          "type": "array"
+        }
+      }
+    },
+
+    "launchModel": {
+      "type": "object",
+      "required": [
+        "model",
+        "rationale"
+      ],
+      "properties": {
+        "model": {
+          "enum": [
+            "b2b_school_first",
+            "b2c_family_first"
+          ]
+        },
+        "pilotPartner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pilotRecruitmentPlan": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+
+    "mvpSubject": {
+      "type": "object",
+      "required": [
+        "subject",
+        "grade",
+        "curriculumStandard",
+        "units",
+        "contentSourcingApproach",
+        "contentOwner",
+        "estimatedTimelineWeeks",
+        "estimatedBudget"
+      ],
+      "properties": {
+        "subject": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "grade": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "curriculumStandard": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "units": {
+          "type": "array",
+          "minItems": 1
+        },
+        "contentSourcingApproach": {
+          "enum": [
+            "build",
+            "license",
+            "oer",
+            "hybrid"
+          ]
+        },
+        "contentOwner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "estimatedTimelineWeeks": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "estimatedBudget": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+
+    "outOfScope": {
+      "type": "array",
+      "minItems": 1
+    },
+
+    "nextPhase": {
+      "type": "object",
+      "required": [
+        "target",
+        "requiresPhase0Gate"
+      ],
+      "properties": {
+        "target": {
+          "const": "phase_1"
+        },
+        "requiresPhase0Gate": {
+          "const": true
+        }
+      }
+    }
+  }
+}
