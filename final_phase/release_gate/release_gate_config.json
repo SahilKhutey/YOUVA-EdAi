@@ -9,7 +9,7 @@
       "category": "TECHNICAL_RELIABILITY",
       "mandatory": true,
       "status": "PASS",
-      "verifiedEvidence": "phase0/tests (21/21), phase9/tests (25/25), final_phase/tests (34/34)"
+      "verifiedEvidence": "phase0/tests (21/21), phase9/tests (48/48), final_phase/tests (35/35)"
     },
     {
       "id": "COND_02_ZERO_CRITICAL_DEFECTS",

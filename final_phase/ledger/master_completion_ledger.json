@@ -160,7 +160,7 @@
       "completed": "2026-09-10",
       "verified": "2026-09-11",
       "reviewer": "External Legal Counsel & ISO Auditor",
-      "evidence": "phase9/scripts/validate_phase9_gate.py, data room index, 25/25 tests pass",
+      "evidence": "phase9/scripts/validate_phase9_gate.py, run_p9_execution_procedure.py (18/18 PASS), 48/48 tests pass",
       "evidenceVersion": "2.0.0",
       "expiration": "2027-09-01",
       "notes": "Supports DPDP 2023, US COPPA/FERPA, with fail-closed SLA boundaries."
