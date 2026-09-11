@@ -21,7 +21,27 @@ export class AssessmentService {
             }
         });
 
-        // Generate randomized questions specifically for this secure assessment
+        // 1. Prioritize verified questions from the database
+        const verifiedQuestions = await this.prisma.question.findMany({
+            where: { topicId },
+            take: 5,
+        });
+
+        if (verifiedQuestions.length >= 5) {
+            const formatted = verifiedQuestions.map((q) => ({
+                id: q.id,
+                content: q.content,
+                options: q.options ? JSON.parse(q.options) : [],
+                correctAnswer: q.correctAnswer,
+                explanation: q.explanation,
+            }));
+            return {
+                session,
+                questions: formatted,
+            };
+        }
+
+        // 2. Fallback to AI generation only if database has insufficient verified questions
         const prompt = `Generate a high-security certification-style exam of 5 multiple-choice questions for the topic "${topic.title}" (${topic.description || ''}). 
       Ensure questions are extremely randomized and distinct from standard practice banks.
       Format the output as a strictly valid JSON array of objects.

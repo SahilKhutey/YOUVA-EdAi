@@ -36,7 +36,30 @@ export class PracticeService {
     if (targetDifficulty <= 0.3) difficultyString = 'easy';
     else if (targetDifficulty >= 0.7) difficultyString = 'hard';
 
-    // Generate questions via AI
+    // 1. Check if verified questions already exist for this topic
+    const existingQuestions = await this.prisma.question.findMany({
+      where: { topicId },
+    });
+
+    if (existingQuestions.length > 0) {
+      // Sort candidates by proximity to target difficulty (Zone of Proximal Development)
+      const sorted = existingQuestions.sort(
+        (a, b) =>
+          Math.abs(a.difficulty - targetDifficulty) -
+          Math.abs(b.difficulty - targetDifficulty),
+      );
+      const selected = sorted.slice(0, Math.min(5, sorted.length));
+      return {
+        sessionId: session.id,
+        questions: selected.map((q) => ({
+          id: q.id,
+          content: q.content,
+          options: q.options ? JSON.parse(q.options) : [],
+        })),
+      };
+    }
+
+    // 2. Fallback to AI generation only if no verified questions exist
     let questionsData = [];
     try {
       questionsData = await this.aiService.generateQuiz(
@@ -51,22 +74,21 @@ export class PracticeService {
       // Fallback to mock questions for testing/dev without API key
       questionsData = [
         {
-          content: 'What is the speed of light? (Mock)',
-          options: ['300,000 km/s', '150,000 km/s', 'Unknown', 'Infinite'],
-          correctAnswer: '300,000 km/s',
-          explanation:
-            'Light travels at approximately 299,792 km/s in a vacuum.',
+          content: 'Solve for x: 2x - 3 = 7',
+          options: ['x = 2', 'x = 5', 'x = 4', 'x = 10'],
+          correctAnswer: 'x = 5',
+          explanation: 'Add 3 to both sides: 2x = 10. Divide by 2: x = 5.',
         },
         {
-          content: 'What is 2 + 2? (Mock)',
-          options: ['3', '4', '5', '22'],
-          correctAnswer: '4',
-          explanation: 'Basic arithmetic.',
+          content: 'Solve for y: y + 3 = 10',
+          options: ['y = 7', 'y = 13', 'y = 3', 'y = 30'],
+          correctAnswer: 'y = 7',
+          explanation: 'Subtract 3 from both sides: y = 10 - 3 = 7.',
         },
       ];
     }
 
-    // Save questions to DB
+    // Save generated fallback questions to DB
     const questions = [];
     for (const q of questionsData) {
       const question = await this.prisma.question.create({
