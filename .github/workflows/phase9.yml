@@ -1,40 +1,48 @@
-name: YOUVA EdAI Phase 9
+name: Phase 9 — Institutional & Market Scale Gate
 
 on:
   push:
+    branches: [ main ]
     paths:
-      - "phase9/**"
-      - "docs/phase9/**"
-      - ".github/workflows/phase9.yml"
-
+      - 'phase9/**'
+      - 'docs/phase9/**'
+      - '.github/workflows/phase9.yml'
   pull_request:
+    branches: [ main ]
     paths:
-      - "phase9/**"
-      - "docs/phase9/**"
-      - ".github/workflows/phase9.yml"
+      - 'phase9/**'
+      - 'docs/phase9/**'
+      - '.github/workflows/phase9.yml'
 
 jobs:
-  phase9:
+  validate-phase9:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
+          cache: 'pip'
 
-      - name: Install test dependencies
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest jsonschema
+          pip install pytest jsonschema hypothesis
 
-      - name: Run Phase 9 unit tests
-        run: |
-          python -m pytest phase9/tests -v
-
-      - name: Run Phase 9 Institutional Readiness Gate
+      - name: Run Phase 9 Readiness Gate
         run: |
           python phase9/scripts/validate_phase9_gate.py
+
+      - name: Run Phase 9 18-Step Execution Procedure
+        run: |
+          python phase9/scripts/run_p9_execution_procedure.py
+
+      - name: Run Phase 9 Unit & Invariant Test Suite
+        run: |
+          pytest phase9/tests/ -v
+
+      - name: Run Full Regression Suite (Phase 0 - 9, Final)
+        run: |
+          pytest -v

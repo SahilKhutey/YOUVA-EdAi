@@ -30,8 +30,8 @@ Expiration Date: [YYYY-MM-DD or null if permanent]
 | `TASK-P5-HIGH-SCHOOL` | Phase 5 | High School Tier & Skills Passport W3C VC 2.0 | Lead Credential Architect | `THIRD_PARTY_VERIFIED` | 2026-09-05 | 1EdTech Standards Panel | `phase9/credentials/`, zero-PII SHA-256 tokens |
 | `TASK-P6-KINDERGARTEN` | Phase 6 | Early Childhood Voice UI & AI Quarantine Sandbox | Early Education Specialist | `THIRD_PARTY_VERIFIED` | 2026-09-06 | Child Safeguarding Board | Zero generative text in child path |
 | `TASK-P7-SCALE-INFRA` | Phase 7 | Multi-Tenant DB Isolation & School Licensing | Principal Architect | `THIRD_PARTY_VERIFIED` | 2026-09-08 | Penetration Testing Auditor | `validate_phase7_gate.py`, 36/36 tests pass, RLS & SSRF audited |
-| `TASK-P8-AUTONOMOUS-AI` | Phase 8 | Bounded Autonomy, 5% Drift Rollback & FinOps | AI Safety Engineer | `VERIFIED` | 2026-09-09 | AI Safety Officer | `model-drift.service.ts` circuit breaker |
-| `TASK-P9-INSTITUTIONAL` | Phase 9 | Multi-Jurisdiction Routing & Procurement Data Room | Regulatory Affairs Director | `THIRD_PARTY_VERIFIED` | 2026-09-10 | External Legal & ISO Auditor | `validate_phase9_gate.py`, 25/25 tests pass |
+| `TASK-P8-AUTONOMOUS-AI` | Phase 8 | Bounded Autonomy, 5% Drift Rollback & FinOps | AI Safety Engineer | `VERIFIED` | 2026-09-09 | AI Safety Officer | `validate_phase8_gate.py`, 30/30 tests, 5% drift circuit breaker |
+| `TASK-P9-INSTITUTIONAL` | Phase 9 | Multi-Jurisdiction Routing & Procurement Data Room | Regulatory Affairs Director | `THIRD_PARTY_VERIFIED` | 2026-09-10 | External Legal & ISO Auditor | `run_p9_execution_procedure.py` (18/18 PASS), 48/48 tests, 291/291 repo tests |
 | `TASK-FP-OPERATIONS` | Final Phase | Continuous Governance & 8 Permanent Human Invariants | CISO & Safeguarding Lead | `VERIFIED` | 2026-09-11 | Executive Committee | `validate_release_gate.py` (GO authorized) |
 
 ---
