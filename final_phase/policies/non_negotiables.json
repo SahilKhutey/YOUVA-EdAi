@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Eternal Non-Negotiables That Never Sunset",
+  "principles": [
+    {
+      "id": "NN-01",
+      "statement": "AI recommends, humans authorize.",
+      "rationale": "Mastery certification, consent changes, role changes, and safety-incident closure remain human-only, forever — not just through Phase 8, but for the life of the product.",
+      "enforcementMechanism": "Deterministic code assertion and cryptographic signature verification on all consequential API endpoints.",
+      "immutable": true
+    },
+    {
+      "id": "NN-02",
+      "statement": "No infrastructure without demand.",
+      "rationale": "Every new feature, market, or integration gets a named, demand-backed reason before it's built — this discipline doesn't expire once the company is bigger.",
+      "enforcementMechanism": "Demand gate validation script and institutional letter-of-intent / contract verification before feature activation.",
+      "immutable": true
+    },
+    {
+      "id": "NN-03",
+      "statement": "No safety claim without independent verification.",
+      "rationale": "Internal test scripts passing is never sufficient evidence on its own for anything touching child safety, security, or compliance.",
+      "enforcementMechanism": "Dual-attestation requirement: internal automated tests plus signed external auditor/counsel attestation artifact.",
+      "immutable": true
+    },
+    {
+      "id": "NN-04",
+      "statement": "Depth before breadth, at every scale.",
+      "rationale": "The instinct that governed tier-by-tier expansion (Middle School -> High School -> Kindergarten) should govern every future expansion too — new subjects, new markets, new age bands — one at a time, validated before the next.",
+      "enforcementMechanism": "Sequential gate validator blocking multi-tier or multi-subject expansion until prerequisite tier exit metrics pass.",
+      "immutable": true
+    }
+  ]
+}

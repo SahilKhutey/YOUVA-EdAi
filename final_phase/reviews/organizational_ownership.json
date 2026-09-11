@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Explicit Organizational Ownership Directory",
+  "description": "Defines explicit, named non-founder roles for steady-state safety and governance operations.",
+  "ownershipAssignments": [
+    {
+      "functionId": "OWN_SAFETY_ESCALATION",
+      "functionName": "Safety Escalation System Monitoring & Incident Response",
+      "assignedRole": "Head of Child Safeguarding & Educational Safety",
+      "delegateRole": "On-Call Operations Incident Commander",
+      "isFounderDefault": false,
+      "accountability": "24/7 triaging of child distress flags, crisis routing, and dual-channel dispatch SLAs."
+    },
+    {
+      "functionId": "OWN_INDEPENDENT_REVIEWS",
+      "functionName": "Independent Review Scheduling & Auditor Follow-Through",
+      "assignedRole": "Chief Information Security Officer (CISO)",
+      "delegateRole": "Compliance Engineering Lead",
+      "isFounderDefault": false,
+      "accountability": "Engaging external security and child safety auditors; remediating findings within contractual SLAs."
+    },
+    {
+      "functionId": "OWN_JURISDICTION_MATRIX",
+      "functionName": "Jurisdiction Compliance Matrix & Cross-Border Routing Maintenance",
+      "assignedRole": "Director of Regulatory & Legal Affairs",
+      "delegateRole": "Senior Legal Counsel",
+      "isFounderDefault": false,
+      "accountability": "Monitoring global privacy statutory changes (DPDP, COPPA, FERPA, GDPR) and updating jurisdiction profiles."
+    },
+    {
+      "functionId": "OWN_AUTONOMY_GOVERNANCE",
+      "functionName": "Autonomy Governance Log & Circuit Breaker Maintenance",
+      "assignedRole": "AI Safety & Governance Officer",
+      "delegateRole": "Lead Machine Learning Platform Engineer",
+      "isFounderDefault": false,
+      "accountability": "Tracking drift rollback events, LLM token spending budgets, prompt sandboxing, and human-in-the-loop invariants."
+    },
+    {
+      "functionId": "OWN_CONTENT_QUALITY",
+      "functionName": "Content Quality & Age-Appropriateness Review",
+      "assignedRole": "Chief Curriculum & Pedagogical Specialist",
+      "delegateRole": "Senior Subject Matter Expert (Grade Band Lead)",
+      "isFounderDefault": false,
+      "accountability": "Peer-reviewing 100% of question banks and curriculum units before release to adaptive recommendation engines."
+    }
+  ]
+}

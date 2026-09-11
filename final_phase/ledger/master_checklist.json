@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Master Roadmap Consolidated Checklist",
+  "phases": [
+    {
+      "phaseId": "PHASE_0",
+      "phaseName": "Phase 0 — Scope Lock & Compliance Foundation",
+      "items": [
+        { "id": "P0-01", "description": "Launch tier locked (Middle School)", "status": "COMPLETE" },
+        { "id": "P0-02", "description": "Launch jurisdiction locked, compliance checklist reviewed by legal advisor", "status": "COMPLETE" },
+        { "id": "P0-03", "description": "Launch model locked (B2B or B2C)", "status": "COMPLETE" },
+        { "id": "P0-04", "description": "MVP subject/grade/curriculum-standard scope locked", "status": "COMPLETE" },
+        { "id": "P0-05", "description": "Scope Lock Document signed off by all stakeholders", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "PHASE_1",
+      "phaseName": "Phase 1 — Core Learning Loop MVP",
+      "items": [
+        { "id": "P1-01", "description": "Backend diagnostic + adaptive practice loop functional (P1 audited)", "status": "COMPLETE" },
+        { "id": "P1-02", "description": "Minimum viable content library complete, subject-matter reviewed", "status": "COMPLETE" },
+        { "id": "P1-03", "description": "Student UI functional for locked tier", "status": "COMPLETE" },
+        { "id": "P1-04", "description": "Teacher dashboard functional with consequential override controls (P2 audited)", "status": "COMPLETE" },
+        { "id": "P1-05", "description": "Full manual end-to-end walkthrough completed", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "PHASE_2",
+      "phaseName": "Phase 2 — Safety & Trust Hardening",
+      "items": [
+        { "id": "P2-01", "description": "Verifiable parental/guardian consent mechanism implemented (P3 audited)", "status": "COMPLETE" },
+        { "id": "P2-02", "description": "Consent withdrawal + data deletion flow tested", "status": "COMPLETE" },
+        { "id": "P2-03", "description": "Safety escalation trigger list defined and reviewed by child-safety professional", "status": "COMPLETE" },
+        { "id": "P2-04", "description": "Dual-channel escalation implemented, AI-cannot-close-alone rule enforced", "status": "COMPLETE" },
+        { "id": "P2-05", "description": "Tamper-evident audit logging verified against real tamper attempts", "status": "COMPLETE" },
+        { "id": "P2-06", "description": "Independent security review completed", "status": "COMPLETE" },
+        { "id": "P2-07", "description": "Independent child-safety review completed", "status": "COMPLETE" },
+        { "id": "P2-08", "description": "Legal/compliance sign-off obtained", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "PHASE_3",
+      "phaseName": "Phase 3 — Closed Pilot",
+      "items": [
+        { "id": "P3-01", "description": "Pilot recruited and fully consented", "status": "COMPLETE" },
+        { "id": "P3-02", "description": "Pilot teacher onboarded on override system", "status": "COMPLETE" },
+        { "id": "P3-03", "description": "Minimum-necessary instrumentation live", "status": "COMPLETE" },
+        { "id": "P3-04", "description": "Mid-pilot check-in conducted", "status": "COMPLETE" },
+        { "id": "P3-05", "description": "Pilot report written; trust signal (not routing-around) confirmed", "status": "COMPLETE" },
+        { "id": "P3-06", "description": "Honest go/no-go decision documented", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "PHASE_4",
+      "phaseName": "Phase 4 — Personalization Depth",
+      "items": [
+        { "id": "P4-01", "description": "P4 code audited against real pilot data", "status": "COMPLETE" },
+        { "id": "P4-02", "description": "Concept/prerequisite map validated and corrected", "status": "COMPLETE" },
+        { "id": "P4-03", "description": "At least one new, explainable personalization signal built", "status": "COMPLETE" },
+        { "id": "P4-04", "description": "Override-pattern review loop established (human-reviewed)", "status": "COMPLETE" },
+        { "id": "P4-05", "description": "Content library expanded within locked tier/subject", "status": "COMPLETE" },
+        { "id": "P4-06", "description": "Evidence-based keep/cut decisions made on personalization features", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "PHASE_5",
+      "phaseName": "Phase 5 — High School Expansion",
+      "items": [
+        { "id": "P5-01", "description": "Mini scope-lock completed", "status": "COMPLETE" },
+        { "id": "P5-02", "description": "High School UX built (reduced gamification, increased autonomy)", "status": "COMPLETE" },
+        { "id": "P5-03", "description": "Skills Passport MVP built and audited (P15), zero-PII claim independently verified", "status": "COMPLETE" },
+        { "id": "P5-04", "description": "Credential issuance gated behind human sign-off", "status": "COMPLETE" },
+        { "id": "P5-05", "description": "High School content library built, subject-matter reviewed", "status": "COMPLETE" },
+        { "id": "P5-06", "description": "Second closed pilot run, trust signal validated independently", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "PHASE_6",
+      "phaseName": "Phase 6 — Kindergarten & Junior Tier",
+      "items": [
+        { "id": "P6-01", "description": "Full scope-lock completed, jurisdiction re-verified for younger age band", "status": "COMPLETE" },
+        { "id": "P6-02", "description": "Voice-first, minimal-reading UI built and usability-tested with real children", "status": "COMPLETE" },
+        { "id": "P6-03", "description": "Strict AI content constraints implemented as hard technical limits", "status": "COMPLETE" },
+        { "id": "P6-04", "description": "Parent co-pilot mode built and validated", "status": "COMPLETE" },
+        { "id": "P6-05", "description": "Age-appropriate content library built by early-childhood specialist", "status": "COMPLETE" },
+        { "id": "P6-06", "description": "Dedicated age-specific child-safety review completed", "status": "COMPLETE" },
+        { "id": "P6-07", "description": "Small, closely-monitored pilot run with no concerning gaps found", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "PHASE_7",
+      "phaseName": "Phase 7 — Scale Infrastructure",
+      "items": [
+        { "id": "P7-01", "description": "Demand validation completed before any infrastructure investment", "status": "COMPLETE" },
+        { "id": "P7-02", "description": "Multi-tenant isolation audited and independently reviewed at real scale (P6)", "status": "COMPLETE" },
+        { "id": "P7-03", "description": "Billing or contract/license tooling matched to actual B2B/B2C model (P7)", "status": "COMPLETE" },
+        { "id": "P7-04", "description": "LMS/SIS interoperability built only on named customer demand, reviewed before go-live (P16)", "status": "COMPLETE" },
+        { "id": "P7-05", "description": "Support/escalation-monitoring processes established beyond pilot scale", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "PHASE_8",
+      "phaseName": "Phase 8 — Autonomous AI Maturity",
+      "items": [
+        { "id": "P8-01", "description": "Governing principle (bounded autonomy, human authorization for consequential actions) documented and signed off", "status": "COMPLETE" },
+        { "id": "P8-02", "description": "P9/P14 code audited, including adversarial testing of drift rollback and sandboxing", "status": "COMPLETE" },
+        { "id": "P8-03", "description": "First bounded autonomy expansion deployed, monitored, validated", "status": "COMPLETE" },
+        { "id": "P8-04", "description": "Governance log established and maintained", "status": "COMPLETE" },
+        { "id": "P8-05", "description": "FinOps/token accounting hardened with spending caps", "status": "COMPLETE" },
+        { "id": "P8-06", "description": "LLM provider abstraction layer built and outage-tested", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "PHASE_9",
+      "phaseName": "Phase 9 — Institutional & Market Scale",
+      "items": [
+        { "id": "P9-01", "description": "Next jurisdiction(s) prioritized by real demand, compliance re-verified per market", "status": "COMPLETE" },
+        { "id": "P9-02", "description": "Skills Passport matured beyond MVP, anti-gaming/PII claims re-verified at scale", "status": "COMPLETE" },
+        { "id": "P9-03", "description": "Repeatable institutional sales process formalized with security/compliance data room", "status": "COMPLETE" },
+        { "id": "P9-04", "description": "District-level features built only against specific deals", "status": "COMPLETE" },
+        { "id": "P9-05", "description": "Recurring security and child-safety review cadences actually running", "status": "COMPLETE" },
+        { "id": "P9-06", "description": "Explicit organizational ownership assigned for all governance functions", "status": "COMPLETE" }
+      ]
+    },
+    {
+      "phaseId": "FINAL_PHASE",
+      "phaseName": "Final Phase — Ongoing Operations & Continuous Governance",
+      "items": [
+        { "id": "FP-01", "description": "Recurring operating rhythm (Part 1.2 table) actually in practice, not just documented", "status": "COMPLETE" },
+        { "id": "FP-02", "description": "All governance ownership items (Part 1.3) assigned to named roles, not defaulting to founder", "status": "COMPLETE" },
+        { "id": "FP-03", "description": "Non-negotiables (Part 1.1) reaffirmed as still fully intact at current scale", "status": "COMPLETE" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Recurring Operating Rhythm",
+  "schedules": [
+    {
+      "cadenceId": "OP_CONTINUOUS",
+      "cadence": "Continuous",
+      "activity": "Safety escalation monitoring, telemetry health checks, and support incident triage.",
+      "owner": "Operations & Support Function Lead",
+      "frequencyType": "REAL_TIME",
+      "status": "ACTIVE"
+    },
+    {
+      "cadenceId": "OP_BIWEEKLY",
+      "cadence": "Bi-weekly",
+      "activity": "Review of AI override patterns, teacher feedback sentiment, and autonomy governance log entries.",
+      "owner": "Head of Product & Pedagogical Lead",
+      "frequencyType": "BI_WEEKLY",
+      "status": "ACTIVE"
+    },
+    {
+      "cadenceId": "OP_QUARTERLY",
+      "cadence": "Quarterly",
+      "activity": "Review of jurisdiction compliance matrix for any statutory or regulatory changes.",
+      "owner": "Legal & Regulatory Compliance Counsel",
+      "frequencyType": "QUARTERLY",
+      "status": "ACTIVE"
+    },
+    {
+      "cadenceId": "OP_ANNUAL_SECURITY",
+      "cadence": "Annually (minimum)",
+      "activity": "Independent comprehensive third-party security penetration testing and threat model audit.",
+      "owner": "External Independent Security Reviewer",
+      "frequencyType": "ANNUAL",
+      "status": "ACTIVE"
+    },
+    {
+      "cadenceId": "OP_ANNUAL_SAFETY",
+      "cadence": "Annually (minimum)",
+      "activity": "Independent child-safety & safeguarding audit covering all active age bands.",
+      "owner": "External Independent Child Safety Specialist",
+      "frequencyType": "ANNUAL",
+      "status": "ACTIVE"
+    },
+    {
+      "cadenceId": "OP_PER_FEATURE",
+      "cadence": "Per major feature/architecture change",
+      "activity": "Targeted independent review scoped specifically to the architectural change.",
+      "owner": "External Specialized Reviewer",
+      "frequencyType": "EVENT_TRIGGERED",
+      "status": "ACTIVE"
+    },
+    {
+      "cadenceId": "OP_PER_JURISDICTION",
+      "cadence": "Per new jurisdiction",
+      "activity": "Full jurisdiction-specific compliance verification and privacy impact assessment.",
+      "owner": "Legal Counsel & Executive Leadership",
+      "frequencyType": "EVENT_TRIGGERED",
+      "status": "ACTIVE"
+    },
+    {
+      "cadenceId": "OP_PER_INSTITUTION_LMS",
+      "cadence": "Per new institutional customer with LMS/SIS needs",
+      "activity": "Integration-specific security and tenant isolation review before production go-live.",
+      "owner": "External Security Reviewer & Lead Systems Engineer",
+      "frequencyType": "EVENT_TRIGGERED",
+      "status": "ACTIVE"
+    }
+  ]
+}

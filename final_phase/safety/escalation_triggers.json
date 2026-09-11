@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Safety Escalation Triggers and Notification Protocol",
+  "triggers": [
+    {
+      "triggerId": "TRIG_SELF_HARM",
+      "severity": "CRITICAL_P0",
+      "description": "Indicators of self-harm, suicidal ideation, or immediate bodily danger.",
+      "channels": ["SMS_URGENT", "DIRECT_PHONE_CALL", "IN_APP_BANNER"],
+      "recipientRoles": ["DESIGNATED_SAFEGUARDING_LEAD", "SCHOOL_COUNSELOR"],
+      "slaAckMinutes": 5,
+      "slaResolveHours": 1,
+      "aiAutonomousAction": "DISPLAY_CRISIS_HOTLINE_AND_FREEZE_PROMPT"
+    },
+    {
+      "triggerId": "TRIG_BULLYING_HARASSMENT",
+      "severity": "HIGH_P1",
+      "description": "Indicators of predatory behavior, cyberbullying, harassment, or severe distress.",
+      "channels": ["SMS_URGENT", "EMAIL_SECURE", "IN_APP_BANNER"],
+      "recipientRoles": ["DESIGNATED_SAFEGUARDING_LEAD", "CLASSROOM_TEACHER"],
+      "slaAckMinutes": 15,
+      "slaResolveHours": 4,
+      "aiAutonomousAction": "REDIRECT_TO_RESILIENCE_CONTENT_AND_FLAG"
+    },
+    {
+      "triggerId": "TRIG_PII_DISCLOSURE",
+      "severity": "HIGH_P1",
+      "description": "Attempted sharing or extraction of student PII (addresses, phone numbers, credentials).",
+      "channels": ["EMAIL_SECURE", "IN_APP_BANNER"],
+      "recipientRoles": ["SCHOOL_DATA_OFFICER", "SECURITY_ADMIN"],
+      "slaAckMinutes": 30,
+      "slaResolveHours": 6,
+      "aiAutonomousAction": "REDACT_STRING_AND_BLOCK_TRANSMISSION"
+    },
+    {
+      "triggerId": "TRIG_PROMPT_INJECTION",
+      "severity": "MEDIUM_P2",
+      "description": "Jailbreak attempts, system prompt exfiltration, or adversarial instruction overrides.",
+      "channels": ["EMAIL_SECURE"],
+      "recipientRoles": ["AI_SAFETY_ENGINEER"],
+      "slaAckMinutes": 60,
+      "slaResolveHours": 12,
+      "aiAutonomousAction": "RESET_CONVERSATION_CONTEXT_AND_CIRCUIT_BREAK"
+    }
+  ]
+}

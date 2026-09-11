@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Continuous Safety Operations Protocol",
+  "loop": {
+    "stages": [
+      { "step": 1, "name": "SIGNAL_INGESTION", "actor": "SYSTEM", "automated": true },
+      { "step": 2, "name": "DETECTION_AND_CLASSIFICATION", "actor": "AI_DETECTOR_AND_REGEX", "automated": true },
+      { "step": 3, "name": "INCIDENT_CREATION", "actor": "SYSTEM", "automated": true },
+      { "step": 4, "name": "DUAL_CHANNEL_HUMAN_NOTIFICATION", "actor": "DISPATCHER_SMS_EMAIL_WEBHOOK", "automated": true },
+      { "step": 5, "name": "HUMAN_ACKNOWLEDGEMENT", "actor": "SAFEGUARDING_OFFICER", "automated": false, "slaMinutes": 15 },
+      { "step": 6, "name": "HUMAN_INVESTIGATION", "actor": "SAFEGUARDING_OFFICER", "automated": false },
+      { "step": 7, "name": "HUMAN_RESOLUTION_OR_ESCALATION", "actor": "SAFEGUARDING_OFFICER", "automated": false },
+      { "step": 8, "name": "HASH_CHAINED_AUDIT_LOGGING", "actor": "SYSTEM", "automated": true },
+      { "step": 9, "name": "POST_INCIDENT_REVIEW", "actor": "CHILD_SAFETY_PANEL", "automated": false, "slaDays": 7 }
+    ],
+    "closureRules": {
+      "aiClosureAllowed": false,
+      "requiresHumanSignature": true,
+      "mandatoryResolutionNotes": true,
+      "autoCloseOnTimeout": false
+    },
+    "monitoringMetrics": [
+      { "id": "METRIC_UNACK_INCIDENTS", "name": "Unacknowledged Safety Incidents", "threshold": 0, "alertSeverity": "CRITICAL" },
+      { "id": "METRIC_NOTIF_FAILURES", "name": "Notification Dispatch Failures", "threshold": 0, "alertSeverity": "CRITICAL" },
+      { "id": "METRIC_SLA_BREACHES", "name": "Escalation SLA Breaches (>4h)", "threshold": 0, "alertSeverity": "CRITICAL" },
+      { "id": "METRIC_QUEUE_BACKLOG", "name": "Safety Review Backlog Depth", "threshold": 5, "alertSeverity": "WARNING" },
+      { "id": "METRIC_VOLUME_SPIKE", "name": "Abnormal Safety Event Volume (>3x baseline)", "threshold": 3.0, "alertSeverity": "WARNING" }
+    ]
+  }
+}

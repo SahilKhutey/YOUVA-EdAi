@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Permanent Human-Only Policy Controls",
+  "description": "Defines the 8 immutable human-only controls where automated AI execution is permanently forbidden.",
+  "controls": [
+    {
+      "controlId": "MASTERY_CERTIFICATION",
+      "name": "Student Mastery Certification",
+      "description": "Formal attestation that a student has mastered a curriculum unit or competency standard.",
+      "aiAutonomousAllowed": false,
+      "aiRole": "RECOMMEND_AND_EVIDENCE",
+      "authorizedHumanRoles": ["CERTIFIED_TEACHER", "HEAD_OF_DEPARTMENT"],
+      "auditRequired": true,
+      "requiresSignature": true
+    },
+    {
+      "controlId": "CONSENT_CHANGE",
+      "name": "Parental/Guardian Consent Scope Modification",
+      "description": "Any change to the scope, permissions, or boundaries of parental or guardian consent.",
+      "aiAutonomousAllowed": false,
+      "aiRole": "NONE",
+      "authorizedHumanRoles": ["VERIFIED_GUARDIAN", "SCHOOL_DATA_OFFICER"],
+      "auditRequired": true,
+      "requiresSignature": true
+    },
+    {
+      "controlId": "CONSENT_WITHDRAWAL",
+      "name": "Parental/Guardian Consent Revocation & Data Erasure Request",
+      "description": "Revocation of consent initiating immediate session termination and scheduled cryptographic purge.",
+      "aiAutonomousAllowed": false,
+      "aiRole": "NONE",
+      "authorizedHumanRoles": ["VERIFIED_GUARDIAN", "SCHOOL_DATA_OFFICER"],
+      "auditRequired": true,
+      "requiresSignature": true
+    },
+    {
+      "controlId": "ROLE_CHANGE",
+      "name": "User Role & RBAC Privilege Elevation",
+      "description": "Elevation or modification of user persona or permission tier (e.g., student to teacher, teacher to admin).",
+      "aiAutonomousAllowed": false,
+      "aiRole": "NONE",
+      "authorizedHumanRoles": ["INSTITUTIONAL_ADMIN", "SECURITY_ADMIN"],
+      "auditRequired": true,
+      "requiresSignature": true
+    },
+    {
+      "controlId": "SAFETY_INCIDENT_CLOSURE",
+      "name": "Child Safety Escalation Incident Resolution & Closure",
+      "description": "Closure, dismissal, or resolution of any flagged child safety, self-harm, or safeguarding incident.",
+      "aiAutonomousAllowed": false,
+      "aiRole": "FLAG_AND_LOG",
+      "authorizedHumanRoles": ["SAFEGUARDING_LEAD", "CHILD_SAFETY_OFFICER"],
+      "auditRequired": true,
+      "requiresSignature": true
+    },
+    {
+      "controlId": "CREDENTIAL_AUTHORIZATION",
+      "name": "Verifiable Credential & Open Badge Issuance Authorization",
+      "description": "Final authorization and signing of portable W3C VC 2.0 credentials and Skills Passports.",
+      "aiAutonomousAllowed": false,
+      "aiRole": "GENERATE_CANDIDATE_PAYLOAD",
+      "authorizedHumanRoles": ["CERTIFIED_TEACHER", "PRINCIPAL"],
+      "auditRequired": true,
+      "requiresSignature": true
+    },
+    {
+      "controlId": "AUTONOMY_POLICY_CHANGE",
+      "name": "AI Model Autonomy Boundary & Budget Allocation Modification",
+      "description": "Expanding model action space, raising FinOps token budget limits, or altering drift thresholds.",
+      "aiAutonomousAllowed": false,
+      "aiRole": "PROPOSE_OPTIMIZATION",
+      "authorizedHumanRoles": ["AI_SAFETY_OFFICER", "FOUNDER", "CHIEF_TECHNOLOGY_OFFICER"],
+      "auditRequired": true,
+      "requiresSignature": true
+    },
+    {
+      "controlId": "JURISDICTION_ACTIVATION",
+      "name": "Multi-Jurisdiction Regulatory Profile Activation",
+      "description": "Promoting a jurisdiction profile from draft/review to active status for live tenant routing.",
+      "aiAutonomousAllowed": false,
+      "aiRole": "NONE",
+      "authorizedHumanRoles": ["LEGAL_COMPLIANCE_COUNSEL", "FOUNDER"],
+      "auditRequired": true,
+      "requiresSignature": true
+    }
+  ]
+}
