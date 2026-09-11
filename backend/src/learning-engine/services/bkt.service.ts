@@ -46,27 +46,28 @@ export class BktService {
 
       const pLnMinus1 = masteryRecord.masteryProbability;
 
-      // 2. Bayesian Update Math (Simplified for MVP)
-      // Standard BKT involves calculating P(Ln|Action) then P(Ln+1).
-      // Here we use a heuristic based on Reinforcement principles combined with P(learn):
-      // If correct: shift closer to 1.0
-      // If incorrect: heavily penalize back towards 0.0
-
-      let pLn: number;
+      // 2. Standard 4-Parameter Bayesian Knowledge Tracing (Corbett & Anderson, 1995)
+      // Step A: Posterior Update P(L_t | Observation)
+      let pObsGivenL: number;
+      let pObsGivenNotL: number;
 
       if (isCorrect) {
-        // P(Ln) = P(Ln-1) + (1 - P(Ln-1)) * P(learn)
-        pLn = pLnMinus1 + (1 - pLnMinus1) * this.P_LEARN;
+        pObsGivenL = 1.0 - this.P_SLIP; // P(Obs=1 | L=1)
+        pObsGivenNotL = this.P_GUESS;   // P(Obs=1 | L=0)
       } else {
-        // Penalty factor (slip/incorrect)
-        // P(Ln) = P(Ln-1) - P(Ln-1) * (some penalty factor, e.g. 0.5 * P_LEARN)
-        // We drop mastery faster than we gain it to ensure students really know it.
-        pLn = pLnMinus1 - pLnMinus1 * (this.P_LEARN * 1.5);
+        pObsGivenL = this.P_SLIP;       // P(Obs=0 | L=1)
+        pObsGivenNotL = 1.0 - this.P_GUESS; // P(Obs=0 | L=0)
       }
 
-      // Clamp values between 0.01 and 0.99
-      // (Never 100% sure they know, never 0% sure they don't know)
-      pLn = Math.max(0.01, Math.min(0.99, pLn));
+      const numerator = pLnMinus1 * pObsGivenL;
+      const denominator = numerator + (1.0 - pLnMinus1) * pObsGivenNotL;
+      const posterior = denominator === 0 ? pLnMinus1 : numerator / denominator;
+
+      // Step B: Learning Transition for Next Opportunity P(L_{t+1})
+      let pLn = posterior + (1.0 - posterior) * this.P_LEARN;
+
+      // Clamp values between 0.001 and 0.999
+      pLn = Math.max(0.001, Math.min(0.999, pLn));
 
       // 3. Persist new mastery
       await this.prisma.userTopicMastery.update({

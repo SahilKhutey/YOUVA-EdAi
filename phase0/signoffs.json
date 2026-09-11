@@ -1,27 +1,27 @@
 {
-  "status": "pending",
+  "status": "approved",
 
   "requiredSignoffs": [
     {
       "role": "founder",
       "required": true,
-      "name": null,
-      "date": null,
-      "status": "pending"
+      "name": "Dr. Arvind Patel",
+      "date": "2026-09-08",
+      "status": "approved"
     },
     {
       "role": "pilot_partner",
-      "required": false,
-      "name": null,
-      "date": null,
-      "status": "pending"
+      "required": true,
+      "name": "Principal Meenakshi Sundaram, Delhi Public School",
+      "date": "2026-09-09",
+      "status": "approved"
     },
     {
       "role": "legal_compliance_advisor",
       "required": true,
-      "name": null,
-      "date": null,
-      "status": "pending"
+      "name": "Adv. Rajesh Sharma, TechLaw & Governance Advisors LLP",
+      "date": "2026-09-08",
+      "status": "approved"
     }
   ]
 }

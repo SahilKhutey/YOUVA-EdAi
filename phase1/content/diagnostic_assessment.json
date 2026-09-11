@@ -1,0 +1,50 @@
+{
+  "assessmentId": "DIAG-G8-ALG-01",
+  "title": "Grade 8 Linear Equations Diagnostic Assessment",
+  "itemCount": 5,
+  "scoring": {
+    "0_correct_prior_pl": 0.05,
+    "1_correct_prior_pl": 0.15,
+    "2_correct_prior_pl": 0.30,
+    "3_correct_prior_pl": 0.50,
+    "4_correct_prior_pl": 0.70,
+    "5_correct_prior_pl": 0.85
+  },
+  "questions": [
+    {
+      "id": "DIAG-01",
+      "text": "Simplify by combining like terms: 4x + 7 - 2x + 3",
+      "options": ["2x + 10", "6x + 10", "2x + 4", "12x"],
+      "correctOptionIndex": 0,
+      "competency": "PREREQ-COMBINING-LIKE-TERMS"
+    },
+    {
+      "id": "DIAG-02",
+      "text": "Solve the one-step equation: x - 9 = 15",
+      "options": ["x = 6", "x = 24", "x = 135", "x = 14"],
+      "correctOptionIndex": 1,
+      "competency": "PREREQ-ONE-STEP-ADD-SUB"
+    },
+    {
+      "id": "DIAG-03",
+      "text": "Solve: 4m = 28",
+      "options": ["m = 7", "m = 24", "m = 32", "m = 112"],
+      "correctOptionIndex": 0,
+      "competency": "PREREQ-ONE-STEP-MULT-DIV"
+    },
+    {
+      "id": "DIAG-04",
+      "text": "Apply the distributive property: 3(2x - 5)",
+      "options": ["6x - 15", "6x - 5", "5x - 8", "6x + 15"],
+      "correctOptionIndex": 0,
+      "competency": "PREREQ-DISTRIBUTIVE-PROPERTY"
+    },
+    {
+      "id": "DIAG-05",
+      "text": "What is the inverse operation of adding 8?",
+      "options": ["Multiplying by 8", "Subtracting 8", "Dividing by 8", "Adding -8"],
+      "correctOptionIndex": 1,
+      "competency": "PREREQ-INVERSE-OPERATIONS"
+    }
+  ]
+}

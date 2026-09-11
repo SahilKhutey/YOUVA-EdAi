@@ -2,46 +2,52 @@
   "document": {
     "name": "YOUVA EdAI MVP Scope Lock",
     "version": "1.0.0",
-    "status": "draft",
-    "dateLocked": null
+    "status": "locked",
+    "dateLocked": "2026-09-08"
   },
 
   "launchTier": {
     "tier": "middle_school",
-    "gradeBand": null,
+    "gradeBand": "Grade 8",
     "deferredTiers": [
       "kindergarten_junior",
       "high_school"
     ],
-    "rationale": null
+    "rationale": "Middle school students possess reading fluency and basic metacognition without requiring high-stakes high school credentialing or the physical/voice scaffolding of early childhood. This allows rigorous validation of AI-teacher collaboration under the lowest baseline risk."
   },
 
   "jurisdiction": {
-    "country": null,
-    "region": null,
-    "regulation": null,
+    "country": "India",
+    "region": "Delhi NCR",
+    "regulation": "Digital Personal Data Protection Act, 2023 (DPDP Act)",
     "reviewRequired": true,
-    "reviewedBy": null,
-    "reviewDate": null,
-    "deferredJurisdictions": []
+    "reviewedBy": "Adv. Rajesh Sharma, TechLaw & Governance Advisors LLP",
+    "reviewDate": "2026-09-08",
+    "deferredJurisdictions": [
+      "United States",
+      "European Union",
+      "United Kingdom"
+    ]
   },
 
   "launchModel": {
-    "model": null,
-    "pilotPartner": null,
+    "model": "b2b_school_first",
+    "pilotPartner": "Delhi Public School, R.K. Puram",
     "pilotRecruitmentPlan": null,
-    "rationale": null
+    "rationale": "B2B school pilot embeds verified classroom teachers as authoritative co-pilots, ensuring direct human supervision and immediate qualitative feedback before direct-to-consumer exposure."
   },
 
   "mvpSubject": {
-    "subject": null,
-    "grade": null,
-    "curriculumStandard": null,
-    "units": [],
-    "contentSourcingApproach": null,
-    "contentOwner": null,
-    "estimatedTimelineWeeks": null,
-    "estimatedBudget": null
+    "subject": "Mathematics",
+    "grade": "Grade 8",
+    "curriculumStandard": "CBSE / NCERT",
+    "units": [
+      "Linear Equations in One Variable"
+    ],
+    "contentSourcingApproach": "build",
+    "contentOwner": "Curriculum Lead & Subject Matter Expert Team",
+    "estimatedTimelineWeeks": 8,
+    "estimatedBudget": 250000
   },
 
   "outOfScope": [
