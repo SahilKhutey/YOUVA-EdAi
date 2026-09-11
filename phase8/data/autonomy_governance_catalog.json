@@ -1,0 +1,72 @@
+{
+  "catalogVersion": "1.0.0",
+  "updatedAt": "2026-09-09T00:00:00Z",
+  "capabilities": [
+    {
+      "capabilityId": "CAP-001",
+      "name": "Adaptive Hint Disclosure Tiering",
+      "version": "v1.2",
+      "status": "ACTIVE",
+      "riskLevel": "AUTO_LOW_RISK",
+      "bounds": {
+        "maxStepSize": 1.0,
+        "reversible": true,
+        "allowedActions": ["GENERATE_HINT", "DISCLOSE_HINT_TIER"],
+        "forbiddenActions": ["CERTIFY_MASTERY", "MODIFY_CONSENT", "ALTER_GRADE"]
+      },
+      "rollbackPolicy": {
+        "automaticOnDrift": true,
+        "fallbackVersion": "v1.0",
+        "maxSafetyDrift": 0.05
+      },
+      "monitoringPolicy": {
+        "telemetryRequired": true,
+        "metrics": ["hintHelpfulness", "safetyScore", "teacherOverrideRate"]
+      }
+    },
+    {
+      "capabilityId": "CAP-002",
+      "name": "Adaptive Practice Difficulty Pacing",
+      "version": "v1.0",
+      "status": "ACTIVE",
+      "riskLevel": "AUTO_LOW_RISK",
+      "bounds": {
+        "maxStepSize": 1.0,
+        "reversible": true,
+        "allowedActions": ["ADJUST_DIFFICULTY", "RECOMMEND_ACTIVITY"],
+        "forbiddenActions": ["MODIFY_MASTERY", "FORCE_FAIL", "LOCK_LEARNER"]
+      },
+      "rollbackPolicy": {
+        "automaticOnDrift": true,
+        "fallbackVersion": "v0.9",
+        "maxSafetyDrift": 0.05
+      },
+      "monitoringPolicy": {
+        "telemetryRequired": true,
+        "metrics": ["pedagogicalAccuracy", "frustrationIndex", "latencyMs"]
+      }
+    },
+    {
+      "capabilityId": "CAP-003",
+      "name": "Autonomous Mastery Certification",
+      "version": "v0.0",
+      "status": "DISABLED",
+      "riskLevel": "BLOCKED",
+      "bounds": {
+        "maxStepSize": 0.0,
+        "reversible": false,
+        "allowedActions": [],
+        "forbiddenActions": ["ALL_ACTIONS"]
+      },
+      "rollbackPolicy": {
+        "automaticOnDrift": true,
+        "fallbackVersion": "NONE",
+        "maxSafetyDrift": 0.0
+      },
+      "monitoringPolicy": {
+        "telemetryRequired": true,
+        "metrics": []
+      }
+    }
+  ]
+}

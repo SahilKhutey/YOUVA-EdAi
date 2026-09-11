@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FinOpsBudgetConfig",
+  "description": "Schema for multi-tier FinOps token limits and spending caps.",
+  "type": "object",
+  "required": [
+    "tenantId",
+    "monthlyTokenLimit",
+    "maxSessionTokens",
+    "maxTokensPerCall",
+    "maxAutonomousLoopsPerGoal",
+    "hardCapEnforced"
+  ],
+  "properties": {
+    "tenantId": { "type": "string" },
+    "monthlyTokenLimit": { "type": "integer", "minimum": 1000 },
+    "maxSessionTokens": { "type": "integer", "minimum": 100 },
+    "maxTokensPerCall": { "type": "integer", "minimum": 10 },
+    "maxAutonomousLoopsPerGoal": { "type": "integer", "minimum": 1, "maximum": 10, "default": 5 },
+    "hardCapEnforced": { "type": "boolean", "default": true }
+  },
+  "additionalProperties": false
+}
