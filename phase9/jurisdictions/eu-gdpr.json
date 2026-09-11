@@ -1,0 +1,33 @@
+{
+  "$schema": "./jurisdiction.schema.json",
+  "jurisdictionId": "eu-gdpr",
+  "name": "European Union - General Data Protection Regulation (GDPR Art. 8)",
+  "status": "draft",
+  "governingRegulation": "Regulation (EU) 2016/679 (General Data Protection Regulation)",
+  "minimumAgeRules": {
+    "childAgeThreshold": 16,
+    "parentalConsentRequiredUnder": 16
+  },
+  "consentRules": {
+    "mechanism": "double_opt_in_parental_consent",
+    "verifiableParentalConsentRequired": true,
+    "withdrawalPurgeSLAHours": 24
+  },
+  "retentionRules": {
+    "maxInactiveStudentDataRetentionDays": 365,
+    "allowAnonymizedResearchTelemetry": false
+  },
+  "safetyEscalationSLAHours": 4,
+  "crossBorderTransferAllowed": false,
+  "legalReview": {
+    "reviewedBy": null,
+    "firm": null,
+    "reviewDate": null,
+    "approved": false
+  },
+  "childSafetyReview": {
+    "reviewerRole": null,
+    "reviewDate": null,
+    "approved": false
+  }
+}

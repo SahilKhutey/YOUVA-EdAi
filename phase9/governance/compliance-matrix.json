@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Cross-Jurisdiction Institutional Compliance Matrix",
+  "domains": [
+    {
+      "domain": "Access Control & Identity",
+      "controls": [
+        {
+          "controlId": "AC-01",
+          "name": "Role-Based Access Control (RBAC)",
+          "implementation": "Strict fail-closed RBAC with Student, Teacher, Parent, Admin personas",
+          "standards": {
+            "ISO27001": "A.9.1.1",
+            "SOC2": "CC6.1, CC6.2",
+            "FERPA": "34 CFR 99.31",
+            "COPPA": "16 CFR 312.8",
+            "DPDP": "Section 8(5)"
+          },
+          "status": "COMPLIANT"
+        },
+        {
+          "controlId": "AC-02",
+          "name": "Multi-Factor Authentication (MFA)",
+          "implementation": "Mandatory MFA for all administrative and institutional staff accounts",
+          "standards": {
+            "ISO27001": "A.9.4.2",
+            "SOC2": "CC6.1",
+            "FERPA": "Best Practice",
+            "COPPA": "N/A",
+            "DPDP": "Section 8(5)"
+          },
+          "status": "COMPLIANT"
+        }
+      ]
+    },
+    {
+      "domain": "Data Encryption & Protection",
+      "controls": [
+        {
+          "controlId": "CRYPTO-01",
+          "name": "Encryption in Transit",
+          "implementation": "TLS 1.3 enforced across all public and internal endpoints with HSTS",
+          "standards": {
+            "ISO27001": "A.10.1.1",
+            "SOC2": "CC6.6",
+            "FERPA": "Security Rule",
+            "COPPA": "16 CFR 312.8",
+            "DPDP": "Section 8(5)"
+          },
+          "status": "COMPLIANT"
+        },
+        {
+          "controlId": "CRYPTO-02",
+          "name": "Encryption at Rest",
+          "implementation": "AES-256 with tenant-scoped encryption keys and envelope encryption",
+          "standards": {
+            "ISO27001": "A.10.1.2",
+            "SOC2": "CC6.6",
+            "FERPA": "Security Rule",
+            "COPPA": "16 CFR 312.8",
+            "DPDP": "Section 8(5)"
+          },
+          "status": "COMPLIANT"
+        }
+      ]
+    },
+    {
+      "domain": "Auditability & Ledger Integrity",
+      "controls": [
+        {
+          "controlId": "AUDIT-01",
+          "name": "Tamper-Evident Hash-Chained Audit Ledger",
+          "implementation": "Cryptographic SHA-256 HMAC hash chaining for all consent, learning, and credential events",
+          "standards": {
+            "ISO27001": "A.12.4.1, A.12.4.3",
+            "SOC2": "CC7.2, CC7.3",
+            "FERPA": "34 CFR 99.32",
+            "COPPA": "Recordkeeping Rule",
+            "DPDP": "Section 8(4)"
+          },
+          "status": "COMPLIANT"
+        }
+      ]
+    },
+    {
+      "domain": "Child Safety & Privacy Rights",
+      "controls": [
+        {
+          "controlId": "CHILD-01",
+          "name": "Verifiable Parental Consent (VPC)",
+          "implementation": "Fail-closed VPC gate prior to any student profile activation under jurisdiction threshold",
+          "standards": {
+            "ISO27001": "A.18.1.4",
+            "SOC2": "CC6.3",
+            "FERPA": "34 CFR 99.30",
+            "COPPA": "16 CFR 312.5",
+            "DPDP": "Section 9(1)"
+          },
+          "status": "COMPLIANT"
+        },
+        {
+          "controlId": "CHILD-02",
+          "name": "Right to Erasure / Consent Withdrawal",
+          "implementation": "Immediate session invalidation and verifiable cryptographic purge within jurisdiction SLA",
+          "standards": {
+            "ISO27001": "A.18.1.4",
+            "SOC2": "CC6.5",
+            "FERPA": "34 CFR 99.10",
+            "COPPA": "16 CFR 312.6",
+            "DPDP": "Section 12(1)"
+          },
+          "status": "COMPLIANT"
+        },
+        {
+          "controlId": "CHILD-03",
+          "name": "Prohibition on Behavioral Tracking & Targeted Advertising",
+          "implementation": "Zero third-party trackers, zero advertising SDKs, zero behavioral profiling for commercial use",
+          "standards": {
+            "ISO27001": "A.18.1.4",
+            "SOC2": "CC6.3",
+            "FERPA": "34 CFR 99.31",
+            "COPPA": "16 CFR 312.7",
+            "DPDP": "Section 9(2)"
+          },
+          "status": "COMPLIANT"
+        }
+      ]
+    },
+    {
+      "domain": "AI Safety & Human Governance",
+      "controls": [
+        {
+          "controlId": "AI-01",
+          "name": "Human-Authorization Invariant for Consequential Decisions",
+          "implementation": "AI models generate recommendations only; credentialing and grade decisions require verified human teacher signature",
+          "standards": {
+            "ISO27001": "A.18.1.1",
+            "SOC2": "CC5.2",
+            "FERPA": "Teacher Discretion Protection",
+            "COPPA": "N/A",
+            "DPDP": "Section 9(3)"
+          },
+          "status": "COMPLIANT"
+        },
+        {
+          "controlId": "AI-02",
+          "name": "Automated Safety Drift Circuit Breaker",
+          "implementation": "Continuous evaluation with automatic fail-closed rollback if safety/accuracy drift exceeds 5%",
+          "standards": {
+            "ISO27001": "A.12.1.2",
+            "SOC2": "CC7.1",
+            "FERPA": "Accuracy Guarantees",
+            "COPPA": "N/A",
+            "DPDP": "Section 8(5)"
+          },
+          "status": "COMPLIANT"
+        }
+      ]
+    }
+  ]
+}

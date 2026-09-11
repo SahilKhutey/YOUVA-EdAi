@@ -1,0 +1,40 @@
+name: YOUVA EdAI Phase 9
+
+on:
+  push:
+    paths:
+      - "phase9/**"
+      - "docs/phase9/**"
+      - ".github/workflows/phase9.yml"
+
+  pull_request:
+    paths:
+      - "phase9/**"
+      - "docs/phase9/**"
+      - ".github/workflows/phase9.yml"
+
+jobs:
+  phase9:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest jsonschema
+
+      - name: Run Phase 9 unit tests
+        run: |
+          python -m pytest phase9/tests -v
+
+      - name: Run Phase 9 Institutional Readiness Gate
+        run: |
+          python phase9/scripts/validate_phase9_gate.py
