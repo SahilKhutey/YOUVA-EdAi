@@ -32,7 +32,7 @@ Expiration Date: [YYYY-MM-DD or null if permanent]
 | `TASK-P7-SCALE-INFRA` | Phase 7 | Multi-Tenant DB Isolation & School Licensing | Principal Architect | `THIRD_PARTY_VERIFIED` | 2026-09-08 | Penetration Testing Auditor | `validate_phase7_gate.py`, 36/36 tests pass, RLS & SSRF audited |
 | `TASK-P8-AUTONOMOUS-AI` | Phase 8 | Bounded Autonomy, 5% Drift Rollback & FinOps | AI Safety Engineer | `VERIFIED` | 2026-09-09 | AI Safety Officer | `validate_phase8_gate.py`, 30/30 tests, 5% drift circuit breaker |
 | `TASK-P9-INSTITUTIONAL` | Phase 9 | Multi-Jurisdiction Routing & Procurement Data Room | Regulatory Affairs Director | `THIRD_PARTY_VERIFIED` | 2026-09-10 | External Legal & ISO Auditor | `run_p9_execution_procedure.py` (18/18 PASS), 48/48 tests, 291/291 repo tests |
-| `TASK-FP-OPERATIONS` | Final Phase | Continuous Governance & 8 Permanent Human Invariants | CISO & Safeguarding Lead | `VERIFIED` | 2026-09-11 | Executive Committee | `validate_release_gate.py` (GO authorized) |
+| `TASK-FP-OPERATIONS` | Final Phase | Continuous Governance & 8 Permanent Human Invariants | CISO & Safeguarding Lead | `VERIFIED` | 2026-09-11 | Executive Committee | `run_fp_execution_procedure.py` (18/18 PASS), `validate_release_gate.py` (GO), 52/52 tests, 308/308 repo tests |
 
 ---
 
