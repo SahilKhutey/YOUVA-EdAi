@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JuniorPilotCohortSchema",
+  "type": "object",
+  "required": [
+    "pilotId",
+    "tier",
+    "ageBand",
+    "institution",
+    "startDate",
+    "endDate",
+    "facilitators",
+    "cohortSize",
+    "students"
+  ],
+  "properties": {
+    "pilotId": { "type": "string" },
+    "tier": { "type": "string", "enum": ["KINDERGARTEN_JUNIOR"] },
+    "ageBand": { "type": "string" },
+    "institution": {
+      "type": "object",
+      "required": ["name", "campus", "city"],
+      "properties": {
+        "name": { "type": "string" },
+        "campus": { "type": "string" },
+        "city": { "type": "string" }
+      }
+    },
+    "startDate": { "type": "string" },
+    "endDate": { "type": "string" },
+    "facilitators": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["facilitatorId", "name", "role", "earlyChildhoodCertified"],
+        "properties": {
+          "facilitatorId": { "type": "string" },
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "earlyChildhoodCertified": { "type": "boolean" }
+        }
+      }
+    },
+    "cohortSize": { "type": "integer", "minimum": 10 },
+    "students": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["childToken", "ageYears", "parentToken", "consentStatus", "consentVerifiedAt", "copilotPairingKey"],
+        "properties": {
+          "childToken": { "type": "string", "pattern": "^anon_[0-9a-fA-F]{12}$" },
+          "ageYears": { "type": "number", "minimum": 4, "maximum": 6 },
+          "parentToken": { "type": "string", "pattern": "^parent_[0-9a-fA-F]{10}$" },
+          "consentStatus": { "type": "string", "enum": ["VERIFIED"] },
+          "consentVerifiedAt": { "type": "string" },
+          "copilotPairingKey": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

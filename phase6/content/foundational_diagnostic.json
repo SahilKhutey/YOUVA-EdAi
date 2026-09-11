@@ -1,0 +1,43 @@
+{
+  "assessmentId": "DIAG-JR-001",
+  "tier": "KINDERGARTEN_JUNIOR",
+  "ageBand": "4-6 years",
+  "domain": "Early Numeracy Baseline Diagnostic",
+  "items": [
+    {
+      "itemId": "DIAG-JR-01",
+      "audioPrompt": "Tap two apples.",
+      "options": ["🍎", "🍎 🍎", "🍎 🍎 🍎"],
+      "correctOptionIndex": 1,
+      "conceptId": "counting_1_5"
+    },
+    {
+      "itemId": "DIAG-JR-02",
+      "audioPrompt": "Find the number one.",
+      "options": ["1", "2", "3"],
+      "correctOptionIndex": 0,
+      "conceptId": "number_recognition"
+    },
+    {
+      "itemId": "DIAG-JR-03",
+      "audioPrompt": "Tap the circle.",
+      "options": ["⭕ Circle", "⬛ Square", "🔺 Triangle"],
+      "correctOptionIndex": 0,
+      "conceptId": "shape_identification"
+    },
+    {
+      "itemId": "DIAG-JR-04",
+      "audioPrompt": "Count four birds.",
+      "options": ["3", "4", "5"],
+      "correctOptionIndex": 1,
+      "conceptId": "counting_1_5"
+    },
+    {
+      "itemId": "DIAG-JR-05",
+      "audioPrompt": "Which word rhymes with hat?",
+      "options": ["Cat 🐱", "Dog 🐶", "Sun ☀️"],
+      "correctOptionIndex": 0,
+      "conceptId": "rhyming_phonics"
+    }
+  ]
+}

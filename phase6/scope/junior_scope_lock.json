@@ -1,0 +1,61 @@
+{
+  "scopeVersion": "1.0.0",
+  "tier": "KINDERGARTEN_JUNIOR",
+  "ageBand": "4-6 years",
+  "grades": [
+    "Nursery",
+    "LKG",
+    "UKG",
+    "Grade 1 (Foundational Stage)"
+  ],
+  "domain": "Foundational Numeracy & Phonics",
+  "competencyCodes": [
+    "NUM-EARLY-01",
+    "PHON-EARLY-01"
+  ],
+  "dpdpCompliance": {
+    "jurisdiction": "India (DPDP Act 2023 §9 - Processing of Personal Data of Children)",
+    "strictProhibitions": [
+      "No tracking or behavioral monitoring of children",
+      "No targeted advertising or commercial nudges",
+      "No open-ended AI conversation or synthetic avatar companions"
+    ],
+    "verificationMode": "Verified Parental Consent (VPC) + Mandatory Live Parent Co-Pilot",
+    "retentionPolicy": "Zero long-term audio or biometric storage; ephemeral session metrics only"
+  },
+  "technicalConstraints": {
+    "maxSessionMinutes": 15,
+    "maxWordsPerPrompt": 8,
+    "maxFleschKincaidGrade": 1.0,
+    "prohibitOpenEndedAi": true
+  },
+  "parentCoPilotPolicy": {
+    "coPresenceMandatory": true,
+    "realtimeAudioTranscription": true,
+    "unilateralPauseKillSwitch": true,
+    "coPlaySuggestionsDelivered": true
+  },
+  "signoffs": [
+    {
+      "role": "Founder & System Architect",
+      "name": "Dr. Arvind Patel",
+      "organization": "YOUVA-EdAi Core Leadership",
+      "decision": "APPROVED",
+      "date": "2026-09-02T10:00:00Z"
+    },
+    {
+      "role": "Early Childhood Education Specialist",
+      "name": "Dr. Sunita Sen",
+      "organization": "Foundational Learning Initiative, NCERT Consultative Body",
+      "decision": "APPROVED",
+      "date": "2026-09-02T11:30:00Z"
+    },
+    {
+      "role": "Certified Child Safety Officer",
+      "name": "Dr. Priya Deshpande",
+      "organization": "Independent Child Wellbeing & Digital Safety Council",
+      "decision": "APPROVED",
+      "date": "2026-09-02T14:00:00Z"
+    }
+  ]
+}

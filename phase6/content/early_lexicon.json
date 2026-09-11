@@ -1,0 +1,20 @@
+{
+  "lexiconVersion": "1.0.0",
+  "targetAge": "4-6 years",
+  "wordCount": 160,
+  "certifiedVocabulary": [
+    "a", "all", "am", "an", "and", "apple", "apples", "are", "at", "ball", "balls", "bat",
+    "be", "bear", "bed", "big", "bird", "birds", "blue", "boat", "book", "box", "boy",
+    "bus", "but", "can", "car", "cars", "cat", "circle", "clap", "come", "count", "cow",
+    "cup", "dad", "day", "do", "dog", "down", "duck", "ducks", "ear", "eat", "egg",
+    "eight", "eye", "far", "fast", "find", "fish", "five", "fly", "for", "four",
+    "fox", "frog", "frogs", "fun", "get", "girl", "give", "go", "good", "green", "happy",
+    "hat", "he", "hear", "help", "hen", "here", "hop", "hot", "house", "how",
+    "i", "in", "is", "it", "jump", "king", "let", "like", "little", "look", "make",
+    "me", "mom", "moon", "my", "nine", "no", "not", "now", "number", "of", "on",
+    "one", "our", "out", "pear", "pig", "play", "puppy", "ran", "red", "rhymes", "ring", "run",
+    "said", "saw", "say", "see", "seven", "she", "six", "sleep", "slow", "small",
+    "so", "some", "soon", "square", "star", "stop", "sun", "swimming", "tap", "ten", "the", "three",
+    "to", "top", "touch", "tree", "triangle", "two", "up", "we", "which", "with", "word", "yellow", "yes", "you"
+  ]
+}

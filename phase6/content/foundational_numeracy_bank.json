@@ -1,0 +1,211 @@
+{
+  "subject": "Foundational Learning",
+  "tier": "KINDERGARTEN_JUNIOR",
+  "ageBand": "4-6 years",
+  "curriculumStandard": "NEP 2020 Foundational Stage / NIPUN Bharat",
+  "domain": "Early Numeracy & Phonics",
+  "reviewedBy": "Dr. Sunita Sen, Early Childhood Specialist",
+  "reviewDate": "2026-09-03",
+  "items": [
+    {
+      "itemId": "Q-JR-NUM-001",
+      "audioPrompt": "Tap the three red apples.",
+      "text": "Tap 3 apples.",
+      "visualCue": "🍎 🍎 🍎",
+      "options": ["🍎", "🍎 🍎", "🍎 🍎 🍎"],
+      "correctOptionIndex": 2,
+      "conceptId": "counting_1_5",
+      "bktParams": { "p_l0": 0.30, "p_t": 0.22, "p_g": 0.33, "p_s": 0.04 }
+    },
+    {
+      "itemId": "Q-JR-NUM-002",
+      "audioPrompt": "Find the number two.",
+      "text": "Find number 2.",
+      "visualCue": "2",
+      "options": ["1", "2", "3"],
+      "correctOptionIndex": 1,
+      "conceptId": "number_recognition",
+      "bktParams": { "p_l0": 0.35, "p_t": 0.20, "p_g": 0.33, "p_s": 0.04 }
+    },
+    {
+      "itemId": "Q-JR-NUM-003",
+      "audioPrompt": "Tap the big circle.",
+      "text": "Tap the circle.",
+      "visualCue": "⭕",
+      "options": ["⭕ Circle", "⬛ Square", "🔺 Triangle"],
+      "correctOptionIndex": 0,
+      "conceptId": "shape_identification",
+      "bktParams": { "p_l0": 0.40, "p_t": 0.25, "p_g": 0.33, "p_s": 0.03 }
+    },
+    {
+      "itemId": "Q-JR-NUM-004",
+      "audioPrompt": "Count the little blue birds.",
+      "text": "Count the birds: 🐦 🐦 🐦 🐦",
+      "visualCue": "🐦 🐦 🐦 🐦",
+      "options": ["2", "3", "4"],
+      "correctOptionIndex": 2,
+      "conceptId": "counting_1_5",
+      "bktParams": { "p_l0": 0.25, "p_t": 0.20, "p_g": 0.33, "p_s": 0.05 }
+    },
+    {
+      "itemId": "Q-JR-NUM-005",
+      "audioPrompt": "Which word rhymes with cat?",
+      "text": "Rhymes with CAT:",
+      "visualCue": "🐱 Cat",
+      "options": ["Bat 🦇", "Dog 🐶", "Sun ☀️"],
+      "correctOptionIndex": 0,
+      "conceptId": "rhyming_phonics",
+      "bktParams": { "p_l0": 0.30, "p_t": 0.22, "p_g": 0.33, "p_s": 0.04 }
+    },
+    {
+      "itemId": "Q-JR-NUM-006",
+      "audioPrompt": "Find the yellow star.",
+      "text": "Tap the star.",
+      "visualCue": "⭐",
+      "options": ["⭐ Star", "⭕ Circle", "⬛ Square"],
+      "correctOptionIndex": 0,
+      "conceptId": "shape_identification",
+      "bktParams": { "p_l0": 0.40, "p_t": 0.22, "p_g": 0.33, "p_s": 0.03 }
+    },
+    {
+      "itemId": "Q-JR-NUM-007",
+      "audioPrompt": "Tap the one happy puppy.",
+      "text": "Find 1 puppy.",
+      "visualCue": "🐶",
+      "options": ["🐶", "🐶 🐶", "🐶 🐶 🐶 🐶"],
+      "correctOptionIndex": 0,
+      "conceptId": "counting_1_5",
+      "bktParams": { "p_l0": 0.50, "p_t": 0.25, "p_g": 0.33, "p_s": 0.02 }
+    },
+    {
+      "itemId": "Q-JR-NUM-008",
+      "audioPrompt": "Find the number five.",
+      "text": "Find number 5.",
+      "visualCue": "5",
+      "options": ["4", "5", "6"],
+      "correctOptionIndex": 1,
+      "conceptId": "number_recognition",
+      "bktParams": { "p_l0": 0.30, "p_t": 0.20, "p_g": 0.33, "p_s": 0.04 }
+    },
+    {
+      "itemId": "Q-JR-NUM-009",
+      "audioPrompt": "Which word rhymes with sun?",
+      "text": "Rhymes with SUN:",
+      "visualCue": "☀️ Sun",
+      "options": ["Run 🏃", "Hat 👒", "Car 🚗"],
+      "correctOptionIndex": 0,
+      "conceptId": "rhyming_phonics",
+      "bktParams": { "p_l0": 0.30, "p_t": 0.22, "p_g": 0.33, "p_s": 0.04 }
+    },
+    {
+      "itemId": "Q-JR-NUM-010",
+      "audioPrompt": "Tap the green triangle.",
+      "text": "Tap the triangle.",
+      "visualCue": "🔺",
+      "options": ["⬛ Square", "🔺 Triangle", "⭕ Circle"],
+      "correctOptionIndex": 1,
+      "conceptId": "shape_identification",
+      "bktParams": { "p_l0": 0.35, "p_t": 0.20, "p_g": 0.33, "p_s": 0.04 }
+    },
+    {
+      "itemId": "Q-JR-NUM-011",
+      "audioPrompt": "Count the red cars.",
+      "text": "Count cars: 🚗 🚗 🚗 🚗 🚗",
+      "visualCue": "🚗 🚗 🚗 🚗 🚗",
+      "options": ["4", "5", "6"],
+      "correctOptionIndex": 1,
+      "conceptId": "counting_1_5",
+      "bktParams": { "p_l0": 0.28, "p_t": 0.20, "p_g": 0.33, "p_s": 0.05 }
+    },
+    {
+      "itemId": "Q-JR-NUM-012",
+      "audioPrompt": "Find the number seven.",
+      "text": "Find number 7.",
+      "visualCue": "7",
+      "options": ["6", "7", "8"],
+      "correctOptionIndex": 1,
+      "conceptId": "number_recognition",
+      "bktParams": { "p_l0": 0.25, "p_t": 0.18, "p_g": 0.33, "p_s": 0.05 }
+    },
+    {
+      "itemId": "Q-JR-NUM-013",
+      "audioPrompt": "Count the six swimming fish.",
+      "text": "Count fish: 🐟 🐟 🐟 🐟 🐟 🐟",
+      "visualCue": "🐟 🐟 🐟 🐟 🐟 🐟",
+      "options": ["5", "6", "7"],
+      "correctOptionIndex": 1,
+      "conceptId": "counting_6_10",
+      "bktParams": { "p_l0": 0.20, "p_t": 0.18, "p_g": 0.33, "p_s": 0.05 }
+    },
+    {
+      "itemId": "Q-JR-NUM-014",
+      "audioPrompt": "Which word rhymes with bear?",
+      "text": "Rhymes with BEAR:",
+      "visualCue": "🐻 Bear",
+      "options": ["Pear 🍐", "Cat 🐱", "Dog 🐶"],
+      "correctOptionIndex": 0,
+      "conceptId": "rhyming_phonics",
+      "bktParams": { "p_l0": 0.28, "p_t": 0.20, "p_g": 0.33, "p_s": 0.04 }
+    },
+    {
+      "itemId": "Q-JR-NUM-015",
+      "audioPrompt": "Tap the blue square.",
+      "text": "Tap the square.",
+      "visualCue": "⬛",
+      "options": ["⬛ Square", "⭕ Circle", "⭐ Star"],
+      "correctOptionIndex": 0,
+      "conceptId": "shape_identification",
+      "bktParams": { "p_l0": 0.35, "p_t": 0.22, "p_g": 0.33, "p_s": 0.03 }
+    },
+    {
+      "itemId": "Q-JR-NUM-016",
+      "audioPrompt": "Find the number ten.",
+      "text": "Find number 10.",
+      "visualCue": "10",
+      "options": ["8", "9", "10"],
+      "correctOptionIndex": 2,
+      "conceptId": "number_recognition",
+      "bktParams": { "p_l0": 0.30, "p_t": 0.22, "p_g": 0.33, "p_s": 0.03 }
+    },
+    {
+      "itemId": "Q-JR-NUM-017",
+      "audioPrompt": "Count the eight little frogs.",
+      "text": "Count frogs: 🐸 🐸 🐸 🐸 🐸 🐸 🐸 🐸",
+      "visualCue": "🐸 🐸 🐸 🐸 🐸 🐸 🐸 🐸",
+      "options": ["7", "8", "9"],
+      "correctOptionIndex": 1,
+      "conceptId": "counting_6_10",
+      "bktParams": { "p_l0": 0.18, "p_t": 0.16, "p_g": 0.33, "p_s": 0.06 }
+    },
+    {
+      "itemId": "Q-JR-NUM-018",
+      "audioPrompt": "Which word rhymes with ring?",
+      "text": "Rhymes with RING:",
+      "visualCue": "💍 Ring",
+      "options": ["King 👑", "Sun ☀️", "Cup 🍵"],
+      "correctOptionIndex": 0,
+      "conceptId": "rhyming_phonics",
+      "bktParams": { "p_l0": 0.25, "p_t": 0.20, "p_g": 0.33, "p_s": 0.05 }
+    },
+    {
+      "itemId": "Q-JR-NUM-019",
+      "audioPrompt": "Count the nine red balls.",
+      "text": "Count balls: 🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴",
+      "visualCue": "🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴",
+      "options": ["8", "9", "10"],
+      "correctOptionIndex": 1,
+      "conceptId": "counting_6_10",
+      "bktParams": { "p_l0": 0.16, "p_t": 0.15, "p_g": 0.33, "p_s": 0.06 }
+    },
+    {
+      "itemId": "Q-JR-NUM-020",
+      "audioPrompt": "Count the ten yellow ducks.",
+      "text": "Count ducks: 🦆 🦆 🦆 🦆 🦆 🦆 🦆 🦆 🦆 🦆",
+      "visualCue": "🦆 🦆 🦆 🦆 🦆 🦆 🦆 🦆 🦆 🦆",
+      "options": ["9", "10", "11"],
+      "correctOptionIndex": 1,
+      "conceptId": "counting_6_10",
+      "bktParams": { "p_l0": 0.15, "p_t": 0.15, "p_g": 0.33, "p_s": 0.06 }
+    }
+  ]
+}
