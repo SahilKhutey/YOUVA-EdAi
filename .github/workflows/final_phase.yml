@@ -1,44 +1,48 @@
-name: YOUVA EdAI Final Phase & Master Release Gate
+name: Final Phase — Continuous Governance & Production Release Gate
 
 on:
   push:
+    branches: [ main ]
     paths:
-      - "final_phase/**"
-      - "docs/final_phase/**"
-      - ".github/workflows/final_phase.yml"
-
+      - 'final_phase/**'
+      - 'docs/final_phase/**'
+      - '.github/workflows/final_phase.yml'
   pull_request:
+    branches: [ main ]
     paths:
-      - "final_phase/**"
-      - "docs/final_phase/**"
-      - ".github/workflows/final_phase.yml"
+      - 'final_phase/**'
+      - 'docs/final_phase/**'
+      - '.github/workflows/final_phase.yml'
 
 jobs:
-  final_phase:
+  validate-final-release:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
+          cache: 'pip'
 
-      - name: Install test dependencies
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest jsonschema
-
-      - name: Run Final Phase Operational Test Suite (FP-V001 - FP-V034)
-        run: |
-          python -m pytest final_phase/tests -v
-
-      - name: Run All Repository Test Suites (Phase 0, 9, Final)
-        run: |
-          python -m pytest phase0/tests phase9/tests final_phase/tests -v
+          pip install pytest jsonschema hypothesis
 
       - name: Run Master Production Release Gate (GO / NO-GO)
         run: |
           python final_phase/scripts/validate_release_gate.py
+
+      - name: Run Final Phase 18-Step Production Execution Procedure
+        run: |
+          python final_phase/scripts/run_fp_execution_procedure.py
+
+      - name: Run Final Phase Unit & Integration Test Suite
+        run: |
+          pytest final_phase/tests/ -v
+
+      - name: Run Full Repository Regression Suite (Phase 0 - 9, Final Phase)
+        run: |
+          pytest -v
