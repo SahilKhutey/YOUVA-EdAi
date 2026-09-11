@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HighSchoolPilotEvaluationReportSchema",
+  "type": "object",
+  "required": [
+    "reportId",
+    "evaluationDate",
+    "pilotId",
+    "tier",
+    "verdict",
+    "criteriaResults",
+    "signoffs"
+  ],
+  "properties": {
+    "reportId": { "type": "string" },
+    "evaluationDate": { "type": "string" },
+    "pilotId": { "type": "string" },
+    "tier": { "type": "string", "enum": ["HIGH_SCHOOL"] },
+    "verdict": { "type": "string", "enum": ["GO_TO_PHASE_6", "NO_GO_REMEDIATE"] },
+    "criteriaResults": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["criterionId", "name", "target", "actual", "status"],
+        "properties": {
+          "criterionId": { "type": "string" },
+          "name": { "type": "string" },
+          "target": { "type": "string" },
+          "actual": { "type": "string" },
+          "status": { "type": "string", "enum": ["PASSED", "FAILED"] }
+        }
+      }
+    },
+    "signoffs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["role", "name", "organization", "decision", "date"],
+        "properties": {
+          "role": { "type": "string" },
+          "name": { "type": "string" },
+          "organization": { "type": "string" },
+          "decision": { "type": "string", "enum": ["APPROVED", "REJECTED"] },
+          "date": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

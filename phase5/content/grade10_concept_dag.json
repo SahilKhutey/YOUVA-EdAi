@@ -1,0 +1,81 @@
+{
+  "curriculum": "CBSE / NCERT",
+  "subject": "Mathematics",
+  "grade": "Grade 10",
+  "nodes": [
+    {
+      "id": "linear_polynomials",
+      "title": "Linear & Polynomial Foundations",
+      "description": "Zeroes of polynomials and algebraic identities.",
+      "difficultyBand": "FOUNDATIONAL",
+      "standardCode": "CBSE-M10-01"
+    },
+    {
+      "id": "standard_quadratic_form",
+      "title": "Standard Quadratic Form & Identification",
+      "description": "Identifying equations of the form ax^2 + bx + c = 0 with a != 0.",
+      "difficultyBand": "FOUNDATIONAL",
+      "standardCode": "CBSE-M10-02"
+    },
+    {
+      "id": "factorisation_roots",
+      "title": "Solution by Factorisation",
+      "description": "Splitting the middle term and grouping to determine real roots.",
+      "difficultyBand": "INTERMEDIATE",
+      "standardCode": "CBSE-M10-03"
+    },
+    {
+      "id": "discriminant_nature_roots",
+      "title": "Discriminant & Nature of Roots",
+      "description": "Evaluating D = b^2 - 4ac to classify roots as real/distinct, equal, or non-real.",
+      "difficultyBand": "INTERMEDIATE",
+      "standardCode": "CBSE-M10-04"
+    },
+    {
+      "id": "quadratic_formula",
+      "title": "Quadratic Formula Solution",
+      "description": "Applying Shreedharacharya quadratic formula x = (-b +- sqrt(D))/(2a).",
+      "difficultyBand": "INTERMEDIATE",
+      "standardCode": "CBSE-M10-05"
+    },
+    {
+      "id": "word_problems_quadratic",
+      "title": "Applications & Word Problems",
+      "description": "Formulating real-world word problems into quadratic models and solving.",
+      "difficultyBand": "ADVANCED",
+      "standardCode": "CBSE-M10-06"
+    }
+  ],
+  "edges": [
+    {
+      "fromNode": "linear_polynomials",
+      "toNode": "standard_quadratic_form",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "standard_quadratic_form",
+      "toNode": "factorisation_roots",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "standard_quadratic_form",
+      "toNode": "discriminant_nature_roots",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "discriminant_nature_roots",
+      "toNode": "quadratic_formula",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "factorisation_roots",
+      "toNode": "word_problems_quadratic",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "quadratic_formula",
+      "toNode": "word_problems_quadratic",
+      "relationshipType": "STRICT_PREREQUISITE"
+    }
+  ]
+}

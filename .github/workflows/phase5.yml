@@ -1,0 +1,44 @@
+name: Phase 5 — High School Expansion & Skills Passport Gate
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'phase5/**'
+      - 'docs/phase5/**'
+      - '.github/workflows/phase5.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'phase5/**'
+      - 'docs/phase5/**'
+      - '.github/workflows/phase5.yml'
+
+jobs:
+  validate-phase5:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest jsonschema hypothesis
+
+      - name: Run Phase 5 Exit Gate Validation
+        run: |
+          python phase5/scripts/validate_phase5_gate.py
+
+      - name: Run Phase 5 High School Simulation
+        run: |
+          python phase5/scripts/run_highschool_simulation.py
+
+      - name: Run Full Regression Suite (Phase 0 - 5, 9, Final)
+        run: |
+          pytest phase0/tests phase1/tests phase2/tests phase3/tests phase4/tests phase5/tests phase9/tests final_phase/tests -v

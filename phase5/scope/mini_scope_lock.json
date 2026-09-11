@@ -1,0 +1,50 @@
+{
+  "scopeVersion": "1.0.0",
+  "tier": "HIGH_SCHOOL",
+  "grade": "Grade 10",
+  "subject": "Mathematics",
+  "curriculumStandard": "CBSE / NCERT (Class 10 Chapter 4)",
+  "unitTitle": "Quadratic Equations & Polynomials",
+  "competencyCode": "MATH-G10-QUAD-01",
+  "targetAgeBand": "14-16 years",
+  "pedagogicalFramework": {
+    "engine": "Corbett & Anderson (1995) 4-Parameter Bayesian Knowledge Tracing",
+    "masteryThreshold": 0.85,
+    "scaffolding": "3-Tier Progressive Scaffolding (Conceptual -> Strategic -> Concrete)",
+    "prerequisiteGraph": "Grade 10 Quadratic Equations Concept DAG (6 nodes, 6 edges, 0 cycles)"
+  },
+  "dpdpCompliance": {
+    "jurisdiction": "India (DPDP Act 2023 §9)",
+    "parentalConsentMode": "Verified Parental Consent (VPC) with Cryptographic 6-digit OTP",
+    "dataMinimization": "Zero PII exposure in public credentials; 17-character pseudonymized student tokens",
+    "retentionPolicy": "Ephemeral pilot session logs purged per institutional SLA"
+  },
+  "uxDirectives": {
+    "gamificationLevel": "MINIMAL_ANALYTICAL",
+    "primaryTelemetryVisualizer": "Prerequisite Concept Readiness Radar & BKT Learning Velocity Curves",
+    "learnerAgency": "Self-directed diagnostic targeting, goal planning, and on-demand progressive scaffolding without cartoonish gamification"
+  },
+  "signoffs": [
+    {
+      "role": "Founder & System Architect",
+      "name": "Dr. Arvind Patel",
+      "organization": "YOUVA-EdAi Core Leadership",
+      "decision": "APPROVED",
+      "date": "2026-08-25T10:00:00Z"
+    },
+    {
+      "role": "High School Academic Lead",
+      "name": "Dr. Anita Deshmukh",
+      "organization": "Senior Mathematics Faculty, Delhi Public School, R.K. Puram",
+      "decision": "APPROVED",
+      "date": "2026-08-25T11:30:00Z"
+    },
+    {
+      "role": "Data Privacy & Compliance Counsel",
+      "name": "Adv. Rajesh Nair",
+      "organization": "EdTech Legal & DPDP Compliance Advisory",
+      "decision": "APPROVED",
+      "date": "2026-08-25T14:15:00Z"
+    }
+  ]
+}

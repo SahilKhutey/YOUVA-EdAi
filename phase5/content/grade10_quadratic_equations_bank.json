@@ -1,0 +1,211 @@
+{
+  "subject": "Mathematics",
+  "grade": "Grade 10",
+  "curriculumStandard": "CBSE / NCERT (Class 10 Chapter 4)",
+  "unit": "Quadratic Equations",
+  "competencyCode": "MATH-G10-QUAD-01",
+  "reviewedBy": "Dr. Anita Deshmukh, Senior Mathematics Faculty, Delhi Public School, R.K. Puram",
+  "reviewDate": "2026-08-26",
+  "questions": [
+    {
+      "questionId": "Q-G10-QUAD-001",
+      "text": "Which of the following equations is a quadratic equation?",
+      "options": ["(x - 2)^2 + 1 = 2x - 3", "x(x + 1) + 8 = (x + 2)(x - 2)", "x(2x + 3) = x^2 + 1", "(x + 2)^3 = x^3 - 4"],
+      "correctOptionIndex": 0,
+      "explanation": "Expanding (x - 2)^2 + 1 = x^2 - 4x + 4 + 1 = x^2 - 4x + 5. Rearranging: x^2 - 6x + 8 = 0, which is of the form ax^2 + bx + c = 0 with a != 0.",
+      "difficulty": "EASY",
+      "conceptId": "standard_quadratic_form",
+      "bktParams": { "p_l0": 0.20, "p_t": 0.15, "p_g": 0.25, "p_s": 0.05 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-002",
+      "text": "Find the roots of the quadratic equation x^2 - 3x - 10 = 0 by factorisation.",
+      "options": ["x = 5, x = -2", "x = -5, x = 2", "x = 5, x = 2", "x = -5, x = -2"],
+      "correctOptionIndex": 0,
+      "explanation": "Splitting the middle term: x^2 - 5x + 2x - 10 = 0 -> x(x - 5) + 2(x - 5) = (x - 5)(x + 2) = 0. Therefore, x = 5 or x = -2.",
+      "difficulty": "EASY",
+      "conceptId": "factorisation_roots",
+      "bktParams": { "p_l0": 0.25, "p_t": 0.18, "p_g": 0.25, "p_s": 0.06 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-003",
+      "text": "Find the roots of 2x^2 + x - 6 = 0 by factorisation.",
+      "options": ["x = 3/2, x = -2", "x = -3/2, x = 2", "x = 2/3, x = -3", "x = -2/3, x = 3"],
+      "correctOptionIndex": 0,
+      "explanation": "Product is 2 * (-6) = -12 and sum is 1. Factors are 4 and -3: 2x^2 + 4x - 3x - 6 = 2x(x + 2) - 3(x + 2) = (2x - 3)(x + 2) = 0 -> x = 3/2 or x = -2.",
+      "difficulty": "EASY",
+      "conceptId": "factorisation_roots",
+      "bktParams": { "p_l0": 0.25, "p_t": 0.18, "p_g": 0.25, "p_s": 0.06 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-004",
+      "text": "Find the roots of the quadratic equation sqrt(2)x^2 + 7x + 5*sqrt(2) = 0.",
+      "options": ["x = -5/sqrt(2), x = -sqrt(2)", "x = 5/sqrt(2), x = sqrt(2)", "x = -5, x = -2", "x = 5, x = 2"],
+      "correctOptionIndex": 0,
+      "explanation": "Product = sqrt(2) * 5*sqrt(2) = 10; sum = 7. Factors are 5 and 2: sqrt(2)x^2 + 2x + 5x + 5*sqrt(2) = sqrt(2)x(x + sqrt(2)) + 5(x + sqrt(2)) = 0 -> x = -5/sqrt(2) or x = -sqrt(2).",
+      "difficulty": "MEDIUM",
+      "conceptId": "factorisation_roots",
+      "bktParams": { "p_l0": 0.20, "p_t": 0.15, "p_g": 0.25, "p_s": 0.08 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-005",
+      "text": "Find the discriminant of the quadratic equation 2x^2 - 4x + 3 = 0.",
+      "options": ["-8", "8", "-4", "16"],
+      "correctOptionIndex": 0,
+      "explanation": "Discriminant D = b^2 - 4ac = (-4)^2 - 4(2)(3) = 16 - 24 = -8.",
+      "difficulty": "EASY",
+      "conceptId": "discriminant_nature_roots",
+      "bktParams": { "p_l0": 0.30, "p_t": 0.20, "p_g": 0.25, "p_s": 0.05 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-006",
+      "text": "What is the nature of the roots of 2x^2 - 4x + 3 = 0?",
+      "options": ["No real roots (imaginary)", "Two distinct real roots", "Two equal real roots", "Rational and equal roots"],
+      "correctOptionIndex": 0,
+      "explanation": "Since the discriminant D = -8 < 0, the equation has no real roots.",
+      "difficulty": "EASY",
+      "conceptId": "discriminant_nature_roots",
+      "bktParams": { "p_l0": 0.30, "p_t": 0.20, "p_g": 0.25, "p_s": 0.05 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-007",
+      "text": "Find the discriminant and nature of roots for 2x^2 - 6x + 3 = 0.",
+      "options": ["D = 12; two distinct real roots", "D = -12; no real roots", "D = 0; two equal real roots", "D = 24; rational roots"],
+      "correctOptionIndex": 0,
+      "explanation": "D = (-6)^2 - 4(2)(3) = 36 - 24 = 12. Since D > 0, there are two distinct real roots.",
+      "difficulty": "MEDIUM",
+      "conceptId": "discriminant_nature_roots",
+      "bktParams": { "p_l0": 0.25, "p_t": 0.18, "p_g": 0.25, "p_s": 0.06 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-008",
+      "text": "Find the value(s) of k for which 2x^2 + kx + 3 = 0 has two equal real roots.",
+      "options": ["k = +-2*sqrt(6)", "k = +-6", "k = +-sqrt(6)", "k = +-24"],
+      "correctOptionIndex": 0,
+      "explanation": "For equal real roots, D = b^2 - 4ac = 0 -> k^2 - 4(2)(3) = 0 -> k^2 - 24 = 0 -> k^2 = 24 -> k = +-2*sqrt(6).",
+      "difficulty": "MEDIUM",
+      "conceptId": "discriminant_nature_roots",
+      "bktParams": { "p_l0": 0.20, "p_t": 0.15, "p_g": 0.25, "p_s": 0.07 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-009",
+      "text": "Find the roots of 3x^2 - 5x + 2 = 0 using the quadratic formula.",
+      "options": ["x = 1, x = 2/3", "x = -1, x = -2/3", "x = 2, x = 1/3", "x = -2, x = -1/3"],
+      "correctOptionIndex": 0,
+      "explanation": "D = (-5)^2 - 4(3)(2) = 25 - 24 = 1. Using x = (-b +- sqrt(D))/(2a) = (5 +- 1)/6 -> x = 6/6 = 1 or x = 4/6 = 2/3.",
+      "difficulty": "MEDIUM",
+      "conceptId": "quadratic_formula",
+      "bktParams": { "p_l0": 0.22, "p_t": 0.16, "p_g": 0.25, "p_s": 0.06 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-010",
+      "text": "Solve for x: x^2 + 4x + 5 = 0 using the quadratic formula.",
+      "options": ["No real roots", "x = -2 +- 1", "x = 2 +- sqrt(5)", "x = -4 +- sqrt(5)"],
+      "correctOptionIndex": 0,
+      "explanation": "D = 4^2 - 4(1)(5) = 16 - 20 = -4. Since D < 0, there are no real roots.",
+      "difficulty": "MEDIUM",
+      "conceptId": "quadratic_formula",
+      "bktParams": { "p_l0": 0.25, "p_t": 0.18, "p_g": 0.25, "p_s": 0.05 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-011",
+      "text": "Find the roots of 2x^2 - 2*sqrt(2)x + 1 = 0.",
+      "options": ["x = 1/sqrt(2), x = 1/sqrt(2)", "x = sqrt(2), x = sqrt(2)", "x = 2, x = 1/2", "x = -1/sqrt(2), x = -1/sqrt(2)"],
+      "correctOptionIndex": 0,
+      "explanation": "D = (-2*sqrt(2))^2 - 4(2)(1) = 8 - 8 = 0. x = -(-2*sqrt(2))/(2 * 2) = (2*sqrt(2))/4 = sqrt(2)/2 = 1/sqrt(2) (repeated root).",
+      "difficulty": "MEDIUM",
+      "conceptId": "quadratic_formula",
+      "bktParams": { "p_l0": 0.20, "p_t": 0.15, "p_g": 0.25, "p_s": 0.07 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-012",
+      "text": "Solve for x: 1/(x + 4) - 1/(x - 7) = 11/30 (where x != -4, 7).",
+      "options": ["x = 1, x = 2", "x = -1, x = -2", "x = 4, x = -7", "x = 3, x = 5"],
+      "correctOptionIndex": 0,
+      "explanation": "((x - 7) - (x + 4))/((x + 4)(x - 7)) = -11/(x^2 - 3x - 28) = 11/30 -> -1/(x^2 - 3x - 28) = 1/30 -> x^2 - 3x - 28 = -30 -> x^2 - 3x + 2 = 0 -> (x - 1)(x - 2) = 0 -> x = 1 or x = 2.",
+      "difficulty": "HARD",
+      "conceptId": "reducible_quadratic_equations",
+      "bktParams": { "p_l0": 0.15, "p_t": 0.12, "p_g": 0.25, "p_s": 0.09 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-013",
+      "text": "The sum of the squares of two consecutive positive integers is 365. Find the integers.",
+      "options": ["13 and 14", "11 and 12", "12 and 13", "14 and 15"],
+      "correctOptionIndex": 0,
+      "explanation": "Let integers be x and x + 1. x^2 + (x + 1)^2 = 365 -> 2x^2 + 2x + 1 = 365 -> 2x^2 + 2x - 364 = 0 -> x^2 + x - 182 = 0 -> (x + 14)(x - 13) = 0. As x > 0, x = 13. Integers are 13 and 14.",
+      "difficulty": "HARD",
+      "conceptId": "word_problems_quadratic",
+      "bktParams": { "p_l0": 0.15, "p_t": 0.12, "p_g": 0.25, "p_s": 0.08 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-014",
+      "text": "The altitude of a right triangle is 7 cm less than its base. If the hypotenuse is 13 cm, find the base and altitude.",
+      "options": ["Base = 12 cm, Altitude = 5 cm", "Base = 15 cm, Altitude = 8 cm", "Base = 10 cm, Altitude = 3 cm", "Base = 9 cm, Altitude = 2 cm"],
+      "correctOptionIndex": 0,
+      "explanation": "Base = x, Altitude = x - 7. By Pythagoras: x^2 + (x - 7)^2 = 13^2 -> 2x^2 - 14x + 49 = 169 -> 2x^2 - 14x - 120 = 0 -> x^2 - 7x - 60 = 0 -> (x - 12)(x + 5) = 0 -> x = 12 cm. Altitude = 12 - 7 = 5 cm.",
+      "difficulty": "HARD",
+      "conceptId": "word_problems_quadratic",
+      "bktParams": { "p_l0": 0.15, "p_t": 0.12, "p_g": 0.25, "p_s": 0.08 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-015",
+      "text": "A motor boat whose speed is 18 km/h in still water takes 1 hour more to go 24 km upstream than to return downstream to the same spot. Find the speed of the stream.",
+      "options": ["6 km/h", "4 km/h", "8 km/h", "5 km/h"],
+      "correctOptionIndex": 0,
+      "explanation": "Let stream speed be y km/h. Upstream: 18 - y; Downstream: 18 + y. 24/(18 - y) - 24/(18 + y) = 1 -> 24[(18 + y - 18 + y)] / (324 - y^2) = 1 -> 48y = 324 - y^2 -> y^2 + 48y - 324 = 0 -> (y + 54)(y - 6) = 0 -> y = 6 km/h.",
+      "difficulty": "HARD",
+      "conceptId": "word_problems_quadratic",
+      "bktParams": { "p_l0": 0.12, "p_t": 0.10, "p_g": 0.25, "p_s": 0.10 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-016",
+      "text": "If -5 is a root of the quadratic equation 2x^2 + px - 15 = 0, find the value of p.",
+      "options": ["p = 7", "p = -7", "p = 5", "p = -5"],
+      "correctOptionIndex": 0,
+      "explanation": "Substitute x = -5: 2(-5)^2 + p(-5) - 15 = 0 -> 2(25) - 5p - 15 = 0 -> 50 - 15 = 5p -> 35 = 5p -> p = 7.",
+      "difficulty": "MEDIUM",
+      "conceptId": "standard_quadratic_form",
+      "bktParams": { "p_l0": 0.25, "p_t": 0.18, "p_g": 0.25, "p_s": 0.06 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-017",
+      "text": "If the quadratic equation p(x - 2) + 6 = 0 has two equal roots, find the value of p (where p != 0).",
+      "options": ["p = 6", "p = 4", "p = 2", "p = 12"],
+      "correctOptionIndex": 0,
+      "explanation": "Equation is px^2 - 2px + 6 = 0. For equal roots: D = (-2p)^2 - 4(p)(6) = 0 -> 4p^2 - 24p = 0 -> 4p(p - 6) = 0. Since p != 0, p = 6.",
+      "difficulty": "MEDIUM",
+      "conceptId": "discriminant_nature_roots",
+      "bktParams": { "p_l0": 0.20, "p_t": 0.15, "p_g": 0.25, "p_s": 0.07 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-018",
+      "text": "Solve for x by factorisation: 4x^2 - 4ax + (a^2 - b^2) = 0.",
+      "options": ["x = (a + b)/2, x = (a - b)/2", "x = a + b, x = a - b", "x = (a + b)/4, x = (a - b)/4", "x = 2a, x = 2b"],
+      "correctOptionIndex": 0,
+      "explanation": "Using quadratic formula: D = (-4a)^2 - 4(4)(a^2 - b^2) = 16a^2 - 16a^2 + 16b^2 = 16b^2. x = (4a +- 4b)/8 = (a +- b)/2.",
+      "difficulty": "HARD",
+      "conceptId": "quadratic_formula",
+      "bktParams": { "p_l0": 0.15, "p_t": 0.12, "p_g": 0.25, "p_s": 0.09 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-019",
+      "text": "Find the roots of 9x^2 - 15x + 6 = 0.",
+      "options": ["x = 1, x = 2/3", "x = -1, x = -2/3", "x = 3, x = 2", "x = 1/3, x = 2/3"],
+      "correctOptionIndex": 0,
+      "explanation": "Divide by 3: 3x^2 - 5x + 2 = 0 -> (3x - 2)(x - 1) = 0 -> x = 1 or x = 2/3.",
+      "difficulty": "EASY",
+      "conceptId": "factorisation_roots",
+      "bktParams": { "p_l0": 0.25, "p_t": 0.18, "p_g": 0.25, "p_s": 0.06 }
+    },
+    {
+      "questionId": "Q-G10-QUAD-020",
+      "text": "Two water taps together can fill a tank in 9 3/8 hours (75/8 hours). The tap of larger diameter takes 10 hours less than the smaller one to fill the tank separately. Find the time taken by the larger tap to fill the tank.",
+      "options": ["15 hours", "25 hours", "20 hours", "10 hours"],
+      "correctOptionIndex": 0,
+      "explanation": "Let smaller tap take x hours; larger takes x - 10 hours. 1/x + 1/(x - 10) = 8/75 -> (2x - 10)/(x^2 - 10x) = 8/75 -> 75(2x - 10) = 8(x^2 - 10x) -> 8x^2 - 230x + 750 = 0 -> 4x^2 - 115x + 375 = 0 -> (x - 25)(4x - 15) = 0. x = 25 hours (smaller), so larger tap takes 25 - 10 = 15 hours.",
+      "difficulty": "HARD",
+      "conceptId": "word_problems_quadratic",
+      "bktParams": { "p_l0": 0.10, "p_t": 0.10, "p_g": 0.25, "p_s": 0.10 }
+    }
+  ]
+}

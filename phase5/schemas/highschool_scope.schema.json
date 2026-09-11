@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HighSchoolScopeLockSchema",
+  "type": "object",
+  "required": [
+    "scopeVersion",
+    "tier",
+    "grade",
+    "subject",
+    "curriculumStandard",
+    "unitTitle",
+    "competencyCode",
+    "targetAgeBand",
+    "pedagogicalFramework",
+    "dpdpCompliance",
+    "uxDirectives",
+    "signoffs"
+  ],
+  "properties": {
+    "scopeVersion": { "type": "string" },
+    "tier": { "type": "string", "enum": ["HIGH_SCHOOL"] },
+    "grade": { "type": "string", "enum": ["Grade 10"] },
+    "subject": { "type": "string", "enum": ["Mathematics"] },
+    "curriculumStandard": { "type": "string" },
+    "unitTitle": { "type": "string" },
+    "competencyCode": { "type": "string" },
+    "targetAgeBand": { "type": "string" },
+    "pedagogicalFramework": { "type": "object" },
+    "dpdpCompliance": { "type": "object" },
+    "uxDirectives": {
+      "type": "object",
+      "required": ["gamificationLevel", "primaryTelemetryVisualizer", "learnerAgency"],
+      "properties": {
+        "gamificationLevel": { "type": "string", "enum": ["MINIMAL_ANALYTICAL", "NONE"] },
+        "primaryTelemetryVisualizer": { "type": "string" },
+        "learnerAgency": { "type": "string" }
+      }
+    },
+    "signoffs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["role", "name", "organization", "decision", "date"],
+        "properties": {
+          "role": { "type": "string" },
+          "name": { "type": "string" },
+          "organization": { "type": "string" },
+          "decision": { "type": "string", "enum": ["APPROVED", "REJECTED"] },
+          "date": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
