@@ -1,0 +1,44 @@
+name: Phase 4 — Personalization Depth Gate
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'phase4/**'
+      - 'docs/phase4/**'
+      - '.github/workflows/phase4.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'phase4/**'
+      - 'docs/phase4/**'
+      - '.github/workflows/phase4.yml'
+
+jobs:
+  validate-phase4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest jsonschema hypothesis
+
+      - name: Run Phase 4 Exit Gate Validation
+        run: |
+          python phase4/scripts/validate_phase4_gate.py
+
+      - name: Run Phase 4 Personalization Demo
+        run: |
+          python phase4/scripts/run_personalization_demo.py
+
+      - name: Run Full Regression Suite (Phase 0 - 4, 9, Final)
+        run: |
+          pytest phase0/tests phase1/tests phase2/tests phase3/tests phase4/tests phase9/tests final_phase/tests -v

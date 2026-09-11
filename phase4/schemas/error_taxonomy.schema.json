@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ErrorTaxonomySchema",
+  "type": "object",
+  "required": ["taxonomyVersion", "subject", "grade", "categories"],
+  "properties": {
+    "taxonomyVersion": { "type": "string" },
+    "subject": { "type": "string" },
+    "grade": { "type": "string" },
+    "categories": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["errorCode", "name", "description", "misconceptionExplanation", "remedialAction"],
+        "properties": {
+          "errorCode": {
+            "type": "string",
+            "enum": [
+              "SIGN_ERROR",
+              "DISTRIBUTIVE_ERROR",
+              "COMBINING_LIKE_TERMS_ERROR",
+              "FRACTION_CLEARANCE_ERROR",
+              "ARITHMETIC_ERROR"
+            ]
+          },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "misconceptionExplanation": { "type": "string" },
+          "remedialAction": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

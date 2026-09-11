@@ -1,0 +1,43 @@
+{
+  "auditVersion": "1.0.0",
+  "auditDate": "2026-09-11",
+  "auditAuthority": "YOUVA-EdAi Phase 4 Empirical Governance Committee",
+  "purpose": "Formal deprecation and permanent elimination of non-empirical, speculative, or pseudo-scientific cognitive profiling metrics in accordance with DPDP Act 2023 §9 and educational measurement standards.",
+  "prunedMetrics": [
+    {
+      "metricName": "CognitiveTwinState",
+      "status": "PURGED",
+      "rationale": "Speculative pseudo-scientific claim purporting to model an internalized brain-simulation or duplicate of the child's mind. Lacks empirical psychometric grounding, introduces ethical opacity, and violates data minimization.",
+      "replacement": "Corbett & Anderson Bayesian Knowledge Tracing (BKT) probability P(L_t) with deterministic item parameters (P(L0), P(T), P(G), P(S))."
+    },
+    {
+      "metricName": "VARK_LearningStyleHeuristic",
+      "status": "PURGED",
+      "rationale": "Learning Styles (Visual, Auditory, Reading, Kinesthetic) have been repeatedly debunked in cognitive science literature (Pashler et al., 2008) as harmful categorization that artificially limits student agency without pedagogical benefit.",
+      "replacement": "Prerequisite Concept DAG traversal and multi-modal Hint Scaffolding (Conceptual -> Strategic -> Concrete) accessible to all learners."
+    },
+    {
+      "metricName": "NeuroAttentionalIndex",
+      "status": "PURGED",
+      "rationale": "Unfalsifiable inference of neural engagement or attention level derived from mouse tracking, webcam video, or keystroke timing, which infringes child privacy under DPDP §9 without clinical calibration.",
+      "replacement": "Transparent behavioral metrics: empirical response latency (seconds) and mistake taxonomy categorization."
+    },
+    {
+      "metricName": "EmotionalValenceGuessing",
+      "status": "PURGED",
+      "rationale": "Unreliable facial/sentiment guessing algorithms prone to demographic and cultural bias, completely inappropriate for child educational governance.",
+      "replacement": "Explicit teacher observations, deterministic hint progression, and student-initiated assistance requests."
+    },
+    {
+      "metricName": "InnateAptitudeIQProjection",
+      "status": "PURGED",
+      "rationale": "Static profiling suggesting fixed cognitive ability violates growth-mindset pedagogical guidelines and risks self-fulfilling educational ceilings.",
+      "replacement": "Dynamic, malleable knowledge state estimation that updates continuously with deliberate practice and remediation."
+    }
+  ],
+  "complianceInvariants": [
+    "Every metric driving personalization MUST be directly observable, mathematically falsifiable, and auditable by teachers.",
+    "No AI agent may generate psychological diagnoses or neurological classifications.",
+    "All mastery estimates are bounded probabilities [0.0, 1.0] derived from validated Bayesian formulations."
+  ]
+}
