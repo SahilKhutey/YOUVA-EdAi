@@ -121,8 +121,8 @@ export default function TeacherSafetyDashboard() {
           source: item.source,
           createdAt: new Date(item.createdAt).toLocaleTimeString(),
           dispatchChannels: [
-            { channel: 'SMS', status: 'DELIVERED', recipientRole: 'SAFEGUARDING_OFFICER' },
-            { channel: 'EMAIL', status: 'DELIVERED', recipientRole: 'COUNSELOR' },
+            { channel: 'SMS' as const, status: 'DELIVERED' as const, recipientRole: 'SAFEGUARDING_OFFICER' },
+            { channel: 'EMAIL' as const, status: 'DELIVERED' as const, recipientRole: 'COUNSELOR' },
           ],
         }));
         setIncidents(mapped);

@@ -26,9 +26,11 @@ jobs:
         working-directory: backend
         run: npm ci
 
-      - name: Validate Prisma Schema
+      - name: Validate & Generate Prisma Schema
         working-directory: backend
-        run: npx prisma validate
+        run: |
+          npx prisma validate
+          npx prisma generate
 
       - name: Compile Backend TypeScript
         working-directory: backend
