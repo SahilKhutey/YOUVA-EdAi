@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TamperEvidentAuditLedgerEntry",
+  "type": "object",
+  "required": [
+    "sequence",
+    "eventId",
+    "timestamp",
+    "actorId",
+    "actorRole",
+    "action",
+    "resource",
+    "outcome",
+    "previousHash",
+    "entryHash"
+  ],
+  "properties": {
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "eventId": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actorId": {
+      "type": "string"
+    },
+    "actorRole": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "resource": {
+      "type": "string"
+    },
+    "resourceId": {
+      "type": ["string", "null"]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["SUCCESS", "DENIED", "FAILED", "ESCALATED"]
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "previousHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "entryHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "additionalProperties": false
+}

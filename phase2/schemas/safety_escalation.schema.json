@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SafetyEscalationIncident",
+  "type": "object",
+  "required": [
+    "incidentId",
+    "studentId",
+    "category",
+    "severity",
+    "status",
+    "source",
+    "summary",
+    "createdAt",
+    "dispatchLog"
+  ],
+  "properties": {
+    "incidentId": {
+      "type": "string"
+    },
+    "studentId": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "SELF_HARM",
+        "IMMEDIATE_DANGER",
+        "CHILD_ABUSE",
+        "SEXUAL_HARASSMENT",
+        "CYBERBULLYING",
+        "EXTREME_DISTRESS",
+        "SUSPICIOUS_ADULT_CONTACT"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["OPEN", "ESCALATED", "UNDER_REVIEW", "RESOLVED"]
+    },
+    "source": {
+      "type": "string",
+      "enum": ["AI_INTERACTION_MONITOR", "STUDENT_REPORT", "TEACHER_FLAG", "PARENT_REPORT"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 5
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dispatchLog": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["channel", "recipientRole", "dispatchedAt", "status"],
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": ["SMS", "EMAIL", "IN_APP_WEBHOOK", "PAGER_DUTY"]
+          },
+          "recipientRole": {
+            "type": "string",
+            "enum": ["SAFEGUARDING_OFFICER", "COUNSELOR", "TEACHER", "PARENT", "ADMIN"]
+          },
+          "dispatchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DELIVERED", "FAILED", "SENT"]
+          }
+        }
+      }
+    },
+    "resolution": {
+      "type": ["object", "null"],
+      "properties": {
+        "resolvedBy": {
+          "type": "object",
+          "required": ["userId", "role", "name"],
+          "properties": {
+            "userId": { "type": "string" },
+            "role": {
+              "type": "string",
+              "enum": ["SAFEGUARDING_OFFICER", "COUNSELOR", "TEACHER", "ADMIN"]
+            },
+            "name": { "type": "string" }
+          }
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 10
+        },
+        "signature": {
+          "type": "string",
+          "minLength": 16
+        },
+        "resolvedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["resolvedBy", "rationale", "signature", "resolvedAt"]
+    }
+  },
+  "additionalProperties": false
+}

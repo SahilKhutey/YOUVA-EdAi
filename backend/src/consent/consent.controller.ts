@@ -33,6 +33,34 @@ export class ConsentController {
     return this.consentService.listConsents(req.user.id, studentId);
   }
 
+  @Post('request-otp')
+  @Roles(Role.PARENT)
+  requestOtp(
+    @Req() req: any,
+    @Body('studentId') studentId: string,
+    @Body('consentType') consentType: string,
+  ) {
+    return this.consentService.requestConsentOtp(req.user.id, studentId, consentType);
+  }
+
+  @Post('verify-otp')
+  @Roles(Role.PARENT)
+  verifyOtp(
+    @Req() req: any,
+    @Body('studentId') studentId: string,
+    @Body('consentType') consentType: string,
+    @Body('otp') otp: string,
+    @Body('version') version?: string,
+  ) {
+    return this.consentService.verifyOtpAndGrant(
+      req.user.id,
+      studentId,
+      consentType,
+      otp,
+      version || '1.0.0',
+    );
+  }
+
   @Post('grant')
   @Roles(Role.PARENT)
   grant(
@@ -59,6 +87,12 @@ export class ConsentController {
     @Body('consentType') consentType: string,
   ) {
     return this.consentService.revoke(req.user.id, studentId, consentType);
+  }
+
+  @Post('purge/:studentId')
+  @Roles(Role.ADMIN)
+  executePurge(@Param('studentId') studentId: string) {
+    return this.consentService.executePurge(studentId);
   }
 
   @Get('check/:studentId/:consentType')
