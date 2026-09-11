@@ -1,0 +1,63 @@
+{
+  "pilotId": "PILOT-DPS-RKP-2026-Q3",
+  "institution": {
+    "name": "Delhi Public School",
+    "campus": "Sector XII, R.K. Puram",
+    "city": "New Delhi",
+    "principalName": "Principal Meenakshi Sundaram"
+  },
+  "gradeBand": "Grade 8",
+  "subject": "Mathematics",
+  "curriculum": "CBSE / NCERT",
+  "teachers": [
+    {
+      "teacherId": "t-dps-01",
+      "name": "Mrs. Ritu Sharma",
+      "email": "ritu.sharma@dpsrkp.edu.in",
+      "assignedSection": "Grade 8-A",
+      "trainingCompleted": true
+    },
+    {
+      "teacherId": "t-dps-02",
+      "name": "Mr. Vikram Seth",
+      "email": "vikram.seth@dpsrkp.edu.in",
+      "assignedSection": "Grade 8-B",
+      "trainingCompleted": true
+    }
+  ],
+  "students": [
+    { "studentId": "s-dps-101", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-101-verified-dpdp" },
+    { "studentId": "s-dps-102", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-102-verified-dpdp" },
+    { "studentId": "s-dps-103", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-103-verified-dpdp" },
+    { "studentId": "s-dps-104", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-104-verified-dpdp" },
+    { "studentId": "s-dps-105", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-105-verified-dpdp" },
+    { "studentId": "s-dps-106", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-106-verified-dpdp" },
+    { "studentId": "s-dps-107", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-107-verified-dpdp" },
+    { "studentId": "s-dps-108", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-108-verified-dpdp" },
+    { "studentId": "s-dps-109", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-109-verified-dpdp" },
+    { "studentId": "s-dps-110", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-110-verified-dpdp" },
+    { "studentId": "s-dps-111", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-111-verified-dpdp" },
+    { "studentId": "s-dps-112", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-112-verified-dpdp" },
+    { "studentId": "s-dps-113", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-113-verified-dpdp" },
+    { "studentId": "s-dps-114", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-114-verified-dpdp" },
+    { "studentId": "s-dps-115", "section": "Grade 8-A", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8a-115-verified-dpdp" },
+    { "studentId": "s-dps-201", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-201-verified-dpdp" },
+    { "studentId": "s-dps-202", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-202-verified-dpdp" },
+    { "studentId": "s-dps-203", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-203-verified-dpdp" },
+    { "studentId": "s-dps-204", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-204-verified-dpdp" },
+    { "studentId": "s-dps-205", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-205-verified-dpdp" },
+    { "studentId": "s-dps-206", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-206-verified-dpdp" },
+    { "studentId": "s-dps-207", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-207-verified-dpdp" },
+    { "studentId": "s-dps-208", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-208-verified-dpdp" },
+    { "studentId": "s-dps-209", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-209-verified-dpdp" },
+    { "studentId": "s-dps-210", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-210-verified-dpdp" },
+    { "studentId": "s-dps-211", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-211-verified-dpdp" },
+    { "studentId": "s-dps-212", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-212-verified-dpdp" },
+    { "studentId": "s-dps-213", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-213-verified-dpdp" },
+    { "studentId": "s-dps-214", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-214-verified-dpdp" },
+    { "studentId": "s-dps-215", "section": "Grade 8-B", "guardianConsentStatus": "VERIFIED", "evidenceToken": "hmac-sha256-dps-rkp-8b-215-verified-dpdp" }
+  ],
+  "startDate": "2026-08-10",
+  "endDate": "2026-08-30",
+  "status": "COMPLETED"
+}

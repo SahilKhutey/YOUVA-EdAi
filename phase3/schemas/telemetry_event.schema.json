@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PrivacyPreservingTelemetryEvent",
+  "type": "object",
+  "required": [
+    "eventId",
+    "timestamp",
+    "eventType",
+    "sessionId",
+    "cohortId",
+    "pseudonymizedStudentId",
+    "payload"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "PRACTICE_ITEM_PRESENTED",
+        "PRACTICE_ITEM_ANSWERED",
+        "HINT_REQUESTED",
+        "STEP_EXPANSION_VIEWED",
+        "TEACHER_OVERRIDE_EXECUTED",
+        "TEACHER_BYPASS_DETECTED",
+        "SESSION_COMPLETED"
+      ]
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "cohortId": {
+      "type": "string"
+    },
+    "pseudonymizedStudentId": {
+      "type": "string",
+      "pattern": "^anon_[a-f0-9]{12}$"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["topicId"],
+      "properties": {
+        "topicId": { "type": "string" },
+        "questionId": { "type": "string" },
+        "isCorrect": { "type": "boolean" },
+        "latencyMs": { "type": "integer", "minimum": 0 },
+        "hintIndex": { "type": "integer", "minimum": 0 },
+        "priorMastery": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "posteriorMastery": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "teacherOverrideType": { "type": "string" },
+        "bypassReason": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PilotCohortManifest",
+  "type": "object",
+  "required": [
+    "pilotId",
+    "institution",
+    "gradeBand",
+    "subject",
+    "curriculum",
+    "teachers",
+    "students",
+    "startDate",
+    "endDate",
+    "status"
+  ],
+  "properties": {
+    "pilotId": {
+      "type": "string"
+    },
+    "institution": {
+      "type": "object",
+      "required": ["name", "campus", "city", "principalName"],
+      "properties": {
+        "name": { "type": "string" },
+        "campus": { "type": "string" },
+        "city": { "type": "string" },
+        "principalName": { "type": "string" }
+      }
+    },
+    "gradeBand": {
+      "type": "string",
+      "enum": ["Grade 8"]
+    },
+    "subject": {
+      "type": "string",
+      "enum": ["Mathematics"]
+    },
+    "curriculum": {
+      "type": "string",
+      "enum": ["CBSE / NCERT"]
+    },
+    "teachers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["teacherId", "name", "email", "assignedSection", "trainingCompleted"],
+        "properties": {
+          "teacherId": { "type": "string" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "assignedSection": { "type": "string" },
+          "trainingCompleted": { "type": "boolean" }
+        }
+      }
+    },
+    "students": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["studentId", "section", "guardianConsentStatus", "evidenceToken"],
+        "properties": {
+          "studentId": { "type": "string" },
+          "section": { "type": "string" },
+          "guardianConsentStatus": {
+            "type": "string",
+            "enum": ["VERIFIED"]
+          },
+          "evidenceToken": {
+            "type": "string",
+            "minLength": 16
+          }
+        }
+      }
+    },
+    "startDate": { "type": "string", "format": "date" },
+    "endDate": { "type": "string", "format": "date" },
+    "status": {
+      "type": "string",
+      "enum": ["PLANNED", "ACTIVE", "COMPLETED", "EVALUATED"]
+    }
+  },
+  "additionalProperties": false
+}

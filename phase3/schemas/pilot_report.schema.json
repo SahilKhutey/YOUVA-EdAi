@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PilotEvaluationReport",
+  "type": "object",
+  "required": [
+    "reportId",
+    "pilotId",
+    "evaluationPeriod",
+    "metrics",
+    "goNoGoCriteria",
+    "decision",
+    "signoffs"
+  ],
+  "properties": {
+    "reportId": { "type": "string" },
+    "pilotId": { "type": "string" },
+    "evaluationPeriod": {
+      "type": "object",
+      "required": ["startDate", "endDate", "durationWeeks"],
+      "properties": {
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "durationWeeks": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "totalStudentsEnrolled",
+        "consentedRate",
+        "totalPracticeTrials",
+        "cohortCompletionRate",
+        "averageMasteryGrowth",
+        "teacherRoutingAroundRate",
+        "teacherSatisfactionScore",
+        "p95LatencyMs",
+        "safetyBreaches"
+      ],
+      "properties": {
+        "totalStudentsEnrolled": { "type": "integer" },
+        "consentedRate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "totalPracticeTrials": { "type": "integer" },
+        "cohortCompletionRate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "averageMasteryGrowth": { "type": "number" },
+        "teacherRoutingAroundRate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "teacherSatisfactionScore": { "type": "number", "minimum": 1.0, "maximum": 5.0 },
+        "p95LatencyMs": { "type": "integer" },
+        "safetyBreaches": { "type": "integer" }
+      }
+    },
+    "goNoGoCriteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["criterionId", "description", "target", "actual", "status"],
+        "properties": {
+          "criterionId": { "type": "string" },
+          "description": { "type": "string" },
+          "target": { "type": "string" },
+          "actual": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["PASSED", "FAILED"]
+          }
+        }
+      }
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["GO_TO_PHASE_4", "EXTEND_PILOT", "NO_GO_ROLLBACK"]
+    },
+    "signoffs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["role", "name", "organization", "decision", "date", "signature"],
+        "properties": {
+          "role": { "type": "string" },
+          "name": { "type": "string" },
+          "organization": { "type": "string" },
+          "decision": { "type": "string", "enum": ["APPROVED", "REJECTED"] },
+          "date": { "type": "string", "format": "date" },
+          "signature": { "type": "string", "minLength": 16 }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
