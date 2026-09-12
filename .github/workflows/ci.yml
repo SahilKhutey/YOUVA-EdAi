@@ -75,7 +75,7 @@ jobs:
         env:
           JWT_SECRET: test-secret-key-that-is-at-least-32-characters-long
           DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
-        run: npm test -- src/learning-loop src/teacher-ops src/parent src/safety src/health src/security src/telemetry src/practice
+        run: npm test -- src/learning-loop src/teacher-ops src/parent src/safety src/health src/security src/telemetry src/practice src/ai
 
       - name: Run Backend E2E Test Suites
         working-directory: backend
