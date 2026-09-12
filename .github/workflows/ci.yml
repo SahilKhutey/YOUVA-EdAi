@@ -13,18 +13,34 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16-alpine
         env:
+          POSTGRES_DB: youva
           POSTGRES_USER: youva
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: youva_test
+          POSTGRES_PASSWORD: youvapassword
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U youva -d youva_test"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-cmd "pg_isready -U youva -d youva"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://youva:youvapassword@localhost:5432/youva
+      JWT_SECRET: test-secret-key-that-is-at-least-32-characters-long
+      REDIS_URL: redis://localhost:6379
+      TELEMETRY_SALT: youva-ci-telemetry-salt-2026
 
     steps:
       - name: Checkout Code
@@ -49,41 +65,33 @@ jobs:
         working-directory: backend
         run: npm run lint
 
-      - name: Synchronize Database Schema & Generate Prisma Client
+      - name: Validate Prisma Schema & Generate Client
         working-directory: backend
-        env:
-          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
         run: |
           npx prisma validate
-          npx prisma db push --skip-generate
           npx prisma generate
+
+      - name: Apply Prisma Migrations
+        working-directory: backend
+        run: npx prisma migrate deploy
 
       - name: Seed Database
         working-directory: backend
-        env:
-          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
         run: npx prisma db seed
 
       - name: Compile Backend TypeScript
         working-directory: backend
-        env:
-          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
         run: npm run build
 
       - name: Run Core Human–AI Learning Loop & Security Verification Suites
         working-directory: backend
-        env:
-          JWT_SECRET: test-secret-key-that-is-at-least-32-characters-long
-          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
         run: npm test -- src/learning-loop src/teacher-ops src/parent src/safety src/health src/security src/telemetry src/practice src/ai
 
-      - name: Run Backend E2E Test Suites
+      - name: Run Full Application E2E
         working-directory: backend
         env:
-          JWT_SECRET: test-secret-key-that-is-at-least-32-characters-long
-          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
-          TELEMETRY_SALT: youva-ci-telemetry-salt-2026
-        run: npm run test:e2e
+          NODE_ENV: test
+        run: npm run test:e2e -- --runInBand
 
   frontend-verification:
     name: Frontend Typecheck & Build

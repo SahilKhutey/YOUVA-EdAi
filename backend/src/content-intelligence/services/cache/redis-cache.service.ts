@@ -13,16 +13,22 @@ export class RedisCacheService implements OnModuleInit, OnModuleDestroy {
   private client: Redis;
 
   constructor(private readonly configService: ConfigService) {
-    // Default to localhost:6379 if not in env
-    const redisHost =
-      this.configService.get<string>('REDIS_HOST') || 'localhost';
-    const redisPort = this.configService.get<number>('REDIS_PORT') || 6379;
+    const redisUrl = this.configService.get<string>('REDIS_URL');
+    if (redisUrl) {
+      this.client = new Redis(redisUrl, {
+        lazyConnect: true,
+      });
+    } else {
+      const redisHost =
+        this.configService.get<string>('REDIS_HOST') || 'localhost';
+      const redisPort = this.configService.get<number>('REDIS_PORT') || 6379;
 
-    this.client = new Redis({
-      host: redisHost,
-      port: redisPort,
-      lazyConnect: true, // Don't connect immediately on instantiation
-    });
+      this.client = new Redis({
+        host: redisHost,
+        port: redisPort,
+        lazyConnect: true,
+      });
+    }
   }
 
   async onModuleInit() {
