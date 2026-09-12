@@ -149,7 +149,7 @@ export class LearningService {
   async getToday(userId: string) {
     const [user, goals, assignments, masteries] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: userId }, include: { stats: true } }),
-      this.prisma.studyGoal.findMany({ where: { userId, status: 'IN_PROGRESS' }, take: 3 }),
+      this.prisma.studyGoal.findMany({ where: { userId, isActive: true }, take: 3 }),
       this.prisma.contentAssignment.findMany({
         where: { studentId: userId, status: { in: ['ASSIGNED', 'IN_PROGRESS'] } },
         include: { content: true },
@@ -169,10 +169,10 @@ export class LearningService {
       student: {
         id: user?.id,
         name: user?.name,
-        streak: user?.stats?.streakDays || 0,
+        streak: user?.stats?.currentStreak || 0,
         xp: user?.stats?.totalXp || 0,
       },
-      goals: goals.map((g) => ({ id: g.id, title: g.title, targetScore: g.targetScore })),
+      goals: goals.map((g: any) => ({ id: g.id, weeklyXpTarget: g.weeklyXpTarget, weeklyStudyMinutes: g.weeklyStudyMinutes })),
       assignments: assignments.map((a) => ({
         id: a.id,
         title: a.content.learningObjective,

@@ -47,7 +47,7 @@ export class PersonalizationEngineService {
     });
 
     const activeGoals = await this.prisma.studyGoal.findMany({
-      where: { userId, status: 'IN_PROGRESS' },
+      where: { userId, isActive: true },
       take: 3,
     });
 
@@ -64,7 +64,7 @@ export class PersonalizationEngineService {
       errorClusterScore: latestCognitiveLog?.errorClusterScore ?? 0.1,
       inferredState: latestCognitiveLog?.inferredState ?? 'flow',
       recentMistakes: recentMistakes.map((m) => m.description),
-      activeGoals: activeGoals.map((g) => ({ id: g.id, targetScore: g.targetScore, title: g.title })),
+      activeGoals: activeGoals.map((g: any) => ({ id: g.id, targetScore: g.weeklyXpTarget, title: `Weekly Target: ${g.weeklyXpTarget}` })),
     };
   }
 

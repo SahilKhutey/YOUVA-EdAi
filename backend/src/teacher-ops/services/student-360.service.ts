@@ -38,7 +38,7 @@ export class Student360Service {
           take: 5,
         },
         studyGoals: {
-          where: { status: 'IN_PROGRESS' },
+          where: { isActive: true },
         },
         learningEvidenceLogs: {
           orderBy: { createdAt: 'desc' },
@@ -107,7 +107,7 @@ export class Student360Service {
         gradeLevel: student.gradeLevel || 'Not specified',
         cognitiveLevel: student.cognitiveLevel,
         onboardingComplete: student.onboardingComplete,
-        currentStreak: student.stats?.streakDays || 0,
+        currentStreak: student.stats?.currentStreak || 0,
         totalXp: student.stats?.totalXp || 0,
         learningVelocity: student.cognitiveProfile?.learningVelocityIndex || 1.0,
       },
@@ -145,10 +145,10 @@ export class Student360Service {
             lastLoggedAt: latestCognitive.timestamp,
           }
         : null,
-      activeGoals: student.studyGoals.map((g) => ({
+      activeGoals: student.studyGoals.map((g: any) => ({
         id: g.id,
-        title: g.title,
-        targetScore: g.targetScore,
+        weeklyXpTarget: g.weeklyXpTarget,
+        weeklyStudyMinutes: g.weeklyStudyMinutes,
       })),
       recentAiDecisions: student.personalizationDecisions.map((d) => ({
         id: d.id,

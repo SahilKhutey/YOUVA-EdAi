@@ -98,19 +98,19 @@ export class LearnerIntelligenceService {
       learnerId: user.id,
       ageTier: user.cognitiveLevel,
       gradeLevel: user.gradeLevel,
-      mastery: user.topicMastery.map((tm) => ({
+      mastery: user.topicMastery.map((tm: any) => ({
         topicId: tm.topicId,
-        mastery: tm.mastery,
-        certifiedMastery: tm.certifiedMastery,
+        mastery: tm.masteryProbability,
+        certifiedMastery: tm.masteryProbability >= 0.85,
       })),
       confidence: Math.round(confidence * 100) / 100,
       evidenceCount,
       teacherOverridesCount: teacherOverrides.length,
-      cognitiveLoad: user.cognitiveProfile?.fatigueIndex ?? 0.1,
-      goals: user.studyGoals.map((g) => ({
+      cognitiveLoad: (user.cognitiveProfile as any)?.fatigueIndex ?? 0.1,
+      goals: user.studyGoals.map((g: any) => ({
         id: g.id,
-        title: g.title,
-        targetScore: g.targetScore,
+        title: `Weekly Target: ${g.weeklyXpTarget}`,
+        targetScore: g.weeklyXpTarget,
       })),
       lastUpdatedAt: new Date().toISOString(),
     };

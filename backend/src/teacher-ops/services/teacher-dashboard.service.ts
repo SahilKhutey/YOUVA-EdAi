@@ -181,7 +181,7 @@ export class TeacherDashboardService {
         gradeLevel: s.gradeLevel,
         cognitiveLevel: s.cognitiveLevel,
         totalXp: s.stats?.totalXp || 0,
-        currentStreak: s.stats?.streakDays || 0,
+        currentStreak: s.stats?.currentStreak || 0,
         averageMastery: parseFloat(avgMastery.toFixed(2)),
         pendingInterventionCount: s.studentInterventions.length,
         latestCognitiveState: s.cognitiveStateLogs[0]?.inferredState || 'nominal',

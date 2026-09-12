@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   UnifiedLearnerState,
   TopicMasterySnapshot,
@@ -79,12 +79,12 @@ export class LearnerStateService {
         topicId: record.topicId,
         topicTitle: record.topic?.title,
         subjectName: record.topic?.subject?.name,
-        mastery: record.mastery,
-        certifiedByTeacher: record.certifiedMastery || false,
-        certifiedAt: record.certifiedAt?.toISOString(),
-        lastEvidenceAt: record.updatedAt?.toISOString(),
+        mastery: record.masteryProbability,
+        certifiedByTeacher: (record as any).certifiedMastery || false,
+        certifiedAt: (record as any).certifiedAt?.toISOString(),
+        lastEvidenceAt: record.lastReviewed?.toISOString(),
       };
-      totalMasterySum += record.mastery;
+      totalMasterySum += record.masteryProbability;
     }
 
     const overallAverageMastery =
@@ -93,7 +93,7 @@ export class LearnerStateService {
         : 0;
 
     // 2. Cognitive Profile Synthesis
-    const cp = student.cognitiveProfile;
+    const cp = student.cognitiveProfile as any;
     const cognitiveProfile: CognitiveTwinSnapshot = {
       workingMemory: cp?.workingMemory ?? 0.7,
       processingSpeed: cp?.processingSpeed ?? 0.7,
@@ -155,11 +155,11 @@ export class LearnerStateService {
     }
 
     // 5. Active Goals Formatting
-    const formattedGoals = studyGoals.map((g) => ({
+    const formattedGoals = studyGoals.map((g: any) => ({
       id: g.id,
-      title: g.title,
-      targetScore: g.targetScore,
-      currentProgress: g.currentScore,
+      title: `Weekly Target: ${g.weeklyXpTarget}`,
+      targetScore: g.weeklyXpTarget,
+      currentProgress: g.weeklyStudyMinutes,
     }));
 
     return {
@@ -177,7 +177,7 @@ export class LearnerStateService {
       learningLoopTelemetry: {
         recentAccuracy: 0.85,
         errorClusterScore: 0.15,
-        streakDays: student.stats?.streakDays ?? 0,
+        streakDays: student.stats?.currentStreak ?? 0,
       },
       generatedAt: new Date().toISOString(),
     };

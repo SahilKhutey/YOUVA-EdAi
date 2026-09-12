@@ -4,7 +4,7 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateTenantDto,
   UpdateTenantDto,
@@ -257,21 +257,22 @@ export class TenantsService {
     if (studentIds.length > 0) {
       const masteryAggregate = await this.prisma.userTopicMastery.aggregate({
         where: { userId: { in: studentIds } },
-        _avg: { mastery: true },
+        _avg: { masteryProbability: true },
         _count: { id: true },
       });
 
-      averageMastery = masteryAggregate._avg.mastery
-        ? Math.round(masteryAggregate._avg.mastery * 100) / 100
+      const avgProb = (masteryAggregate._avg as any)?.masteryProbability;
+      averageMastery = avgProb
+        ? Math.round(avgProb * 100) / 100
         : 0;
 
       // Identify students whose average mastery is below 0.5
-      const lowMasteryStudents = await this.prisma.userTopicMastery.groupBy({
+      const lowMasteryStudents = await (this.prisma.userTopicMastery as any).groupBy({
         by: ['userId'],
         where: { userId: { in: studentIds } },
-        _avg: { mastery: true },
+        _avg: { masteryProbability: true },
         having: {
-          mastery: { _avg: { lt: 0.5 } },
+          masteryProbability: { _avg: { lt: 0.5 } },
         },
       });
       atRiskLearnersCount = lowMasteryStudents.length;

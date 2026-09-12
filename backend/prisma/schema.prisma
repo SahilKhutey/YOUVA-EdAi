@@ -84,7 +84,7 @@ model User {
   studentConsents          ConsentRecord[]            @relation("ConsentStudent")
   studentEscalations       SafetyEscalation[]         @relation("StudentEscalations")
   assignedEscalations      SafetyEscalation[]         @relation("AssignedEscalations")
-  resolvedEscalations      SafetyEscalation[]         @relation("ResolvedEscalations")
+  resolvedSafetyEscalations SafetyEscalation[]        @relation("ResolvedEscalations")
   auditEvents              AuditEvent[]               @relation("AuditActor")
 
   // Phase P6: Scale, Intelligence & Institutional Learning Platform

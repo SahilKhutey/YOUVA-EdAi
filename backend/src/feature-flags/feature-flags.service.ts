@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateFeatureFlagDto,
   UpdateFeatureFlagDto,
