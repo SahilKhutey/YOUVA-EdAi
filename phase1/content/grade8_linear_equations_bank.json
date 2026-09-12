@@ -5,187 +5,1396 @@
   "unit": "Linear Equations in One Variable",
   "competencyCode": "MATH-G8-ALG-01",
   "reviewedBy": "Senior Mathematics Specialist, NCERT Curriculum Committee",
-  "reviewDate": "2026-08-15",
+  "reviewDate": "2026-09-12",
+  "totalItems": 60,
+  "competencyBreakdown": {
+    "ONE_STEP": 10,
+    "TWO_STEP": 10,
+    "VARIABLES_BOTH_SIDES": 10,
+    "PARENTHESES_DISTRIBUTIVE": 10,
+    "FRACTIONS_CROSS_MULTIPLICATION": 10,
+    "WORD_PROBLEMS": 10
+  },
   "questions": [
     {
       "questionId": "Q-G8-ALG-001",
-      "text": "Solve for x: 2x - 3 = 7",
-      "options": ["x = 2", "x = 5", "x = 4", "x = 10"],
-      "correctOptionIndex": 1,
-      "explanation": "Add 3 to both sides: 2x = 10. Divide by 2: x = 5.",
+      "text": "Solve for x: x + 5 = 12",
+      "options": [
+        "x = 7",
+        "x = 17",
+        "x = -7",
+        "x = 60"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Subtract 5 from both sides: x = 12 - 5 = 7.",
       "difficulty": "EASY",
-      "bktParams": { "p_g": 0.25, "p_s": 0.05 }
+      "bloomsTaxonomyLevel": "KNOWLEDGE",
+      "hints": {
+        "tier1_socratic": "What operation is currently being applied to x, and what is its opposite?",
+        "tier2_operational": "Apply inverse operations: subtract 5 from both sides of the equals sign.",
+        "tier3_solution": "x = 12 - 5 => x = 7."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
     },
     {
       "questionId": "Q-G8-ALG-002",
-      "text": "Solve for y: y + 3 = 10",
-      "options": ["y = 7", "y = 13", "y = 3", "y = 30"],
-      "correctOptionIndex": 0,
-      "explanation": "Subtract 3 from both sides: y = 10 - 3 = 7.",
+      "text": "Solve for y: y - 8 = 15",
+      "options": [
+        "y = 7",
+        "y = 23",
+        "y = -7",
+        "y = 120"
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "Add 8 to both sides: y = 15 + 8 = 23.",
       "difficulty": "EASY",
-      "bktParams": { "p_g": 0.25, "p_s": 0.05 }
+      "bloomsTaxonomyLevel": "KNOWLEDGE",
+      "hints": {
+        "tier1_socratic": "What is the inverse of subtracting 8?",
+        "tier2_operational": "Add 8 to both sides to isolate the variable y.",
+        "tier3_solution": "y = 15 + 8 => y = 23."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
     },
     {
       "questionId": "Q-G8-ALG-003",
-      "text": "Solve for z: 6 = z + 2",
-      "options": ["z = 8", "z = 4", "z = 3", "z = 12"],
-      "correctOptionIndex": 1,
-      "explanation": "Subtract 2 from both sides: z = 6 - 2 = 4.",
+      "text": "Solve for m: 4m = 28",
+      "options": [
+        "m = 24",
+        "m = 32",
+        "m = 7",
+        "m = 112"
+      ],
+      "correctOptionIndex": 2,
+      "explanation": "Divide both sides by 4: m = 28 / 4 = 7.",
       "difficulty": "EASY",
-      "bktParams": { "p_g": 0.25, "p_s": 0.05 }
+      "bloomsTaxonomyLevel": "KNOWLEDGE",
+      "hints": {
+        "tier1_socratic": "Since 4 is multiplied by m, what operation will undo the multiplication?",
+        "tier2_operational": "Divide both sides by the coefficient 4.",
+        "tier3_solution": "m = 28 / 4 => m = 7."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
     },
     {
       "questionId": "Q-G8-ALG-004",
-      "text": "Solve for x: 3/7 + x = 17/7",
-      "options": ["x = 2", "x = 14/7", "x = 20/7", "x = 14"],
-      "correctOptionIndex": 0,
-      "explanation": "Subtract 3/7 from both sides: x = (17 - 3)/7 = 14/7 = 2.",
-      "difficulty": "MEDIUM",
-      "bktParams": { "p_g": 0.25, "p_s": 0.08 }
+      "text": "Solve for z: z / 6 = 9",
+      "options": [
+        "z = 1.5",
+        "z = 54",
+        "z = 15",
+        "z = 3"
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "Multiply both sides by 6: z = 9 * 6 = 54.",
+      "difficulty": "EASY",
+      "bloomsTaxonomyLevel": "KNOWLEDGE",
+      "hints": {
+        "tier1_socratic": "What operation reverses dividing by 6?",
+        "tier2_operational": "Multiply both sides of the equation by 6.",
+        "tier3_solution": "z = 9 * 6 => z = 54."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
     },
     {
       "questionId": "Q-G8-ALG-005",
-      "text": "Solve for x: 6x = 12",
-      "options": ["x = 6", "x = 2", "x = 18", "x = 72"],
-      "correctOptionIndex": 1,
-      "explanation": "Divide both sides by 6: x = 12 / 6 = 2.",
+      "text": "Solve for x: 3/5 + x = 14/5",
+      "options": [
+        "x = 11/5",
+        "x = 17/5",
+        "x = 2",
+        "x = 14/3"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Subtract 3/5 from both sides: x = (14 - 3)/5 = 11/5.",
       "difficulty": "EASY",
-      "bktParams": { "p_g": 0.25, "p_s": 0.05 }
+      "bloomsTaxonomyLevel": "UNDERSTANDING",
+      "hints": {
+        "tier1_socratic": "Notice that both fractions have common denominator 5. How can you isolate x?",
+        "tier2_operational": "Subtract 3/5 from 14/5.",
+        "tier3_solution": "x = (14 - 3) / 5 => x = 11/5."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.06
+      }
     },
     {
       "questionId": "Q-G8-ALG-006",
-      "text": "Solve for t: t/5 = 10",
-      "options": ["t = 2", "t = 15", "t = 50", "t = 5"],
-      "correctOptionIndex": 2,
-      "explanation": "Multiply both sides by 5: t = 10 * 5 = 50.",
+      "text": "Solve for a: 1.5a = 4.5",
+      "options": [
+        "a = 6",
+        "a = 3",
+        "a = 30",
+        "a = 0.3"
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "Divide both sides by 1.5: a = 4.5 / 1.5 = 3.",
       "difficulty": "EASY",
-      "bktParams": { "p_g": 0.25, "p_s": 0.05 }
+      "bloomsTaxonomyLevel": "UNDERSTANDING",
+      "hints": {
+        "tier1_socratic": "How do you eliminate the decimal coefficient 1.5 multiplying a?",
+        "tier2_operational": "Divide 4.5 by 1.5, or think of 45 / 15.",
+        "tier3_solution": "a = 4.5 / 1.5 => a = 3."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
     },
     {
       "questionId": "Q-G8-ALG-007",
-      "text": "Solve for x: 2x/3 = 18",
-      "options": ["x = 27", "x = 12", "x = 54", "x = 9"],
-      "correctOptionIndex": 0,
-      "explanation": "Multiply by 3: 2x = 54. Divide by 2: x = 27.",
-      "difficulty": "MEDIUM",
-      "bktParams": { "p_g": 0.25, "p_s": 0.08 }
+      "text": "Solve for p: p - 2.4 = 5.6",
+      "options": [
+        "p = 3.2",
+        "p = 8.0",
+        "p = 7.0",
+        "p = 13.44"
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "Add 2.4 to both sides: p = 5.6 + 2.4 = 8.0.",
+      "difficulty": "EASY",
+      "bloomsTaxonomyLevel": "UNDERSTANDING",
+      "hints": {
+        "tier1_socratic": "Undo subtraction of 2.4 using addition.",
+        "tier2_operational": "Add 2.4 to 5.6.",
+        "tier3_solution": "p = 5.6 + 2.4 => p = 8."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
     },
     {
       "questionId": "Q-G8-ALG-008",
-      "text": "Solve for x: 7x - 9 = 16",
-      "options": ["x = 25/7", "x = 1", "x = 7", "x = 25"],
-      "correctOptionIndex": 0,
-      "explanation": "Add 9 to both sides: 7x = 25. Divide by 7: x = 25/7.",
-      "difficulty": "MEDIUM",
-      "bktParams": { "p_g": 0.25, "p_s": 0.08 }
+      "text": "Solve for x: -3x = 21",
+      "options": [
+        "x = 7",
+        "x = -7",
+        "x = 18",
+        "x = -63"
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "Divide both sides by -3: x = 21 / (-3) = -7.",
+      "difficulty": "EASY",
+      "bloomsTaxonomyLevel": "UNDERSTANDING",
+      "hints": {
+        "tier1_socratic": "What is the sign of a positive number divided by a negative number?",
+        "tier2_operational": "Divide 21 by -3.",
+        "tier3_solution": "x = 21 / (-3) => x = -7."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.06
+      }
     },
     {
       "questionId": "Q-G8-ALG-009",
-      "text": "Solve for y: 14y - 8 = 13",
-      "options": ["y = 3/2", "y = 5/14", "y = 21/14", "y = 1.5"],
+      "text": "Solve for y: y / (-4) = 8",
+      "options": [
+        "y = -32",
+        "y = 32",
+        "y = -2",
+        "y = 2"
+      ],
       "correctOptionIndex": 0,
-      "explanation": "Add 8: 14y = 21. Divide by 14: y = 21/14 = 3/2.",
-      "difficulty": "MEDIUM",
-      "bktParams": { "p_g": 0.25, "p_s": 0.08 }
+      "explanation": "Multiply both sides by -4: y = 8 * (-4) = -32.",
+      "difficulty": "EASY",
+      "bloomsTaxonomyLevel": "UNDERSTANDING",
+      "hints": {
+        "tier1_socratic": "To clear the denominator -4, multiply both sides by -4.",
+        "tier2_operational": "Calculate 8 * (-4).",
+        "tier3_solution": "y = 8 * (-4) => y = -32."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.06
+      }
     },
     {
       "questionId": "Q-G8-ALG-010",
-      "text": "Solve for p: 17 + 6p = 9",
-      "options": ["p = 4/3", "p = -4/3", "p = -8/6", "p = -2"],
+      "text": "Solve for n: 13 = n + 19",
+      "options": [
+        "n = 32",
+        "n = -6",
+        "n = 6",
+        "n = -32"
+      ],
       "correctOptionIndex": 1,
-      "explanation": "Subtract 17: 6p = 9 - 17 = -8. Divide by 6: p = -8/6 = -4/3.",
-      "difficulty": "HARD",
-      "bktParams": { "p_g": 0.20, "p_s": 0.12 }
+      "explanation": "Subtract 19 from both sides: n = 13 - 19 = -6.",
+      "difficulty": "EASY",
+      "bloomsTaxonomyLevel": "UNDERSTANDING",
+      "hints": {
+        "tier1_socratic": "Isolate n by moving 19 to the left side of the equals sign.",
+        "tier2_operational": "Compute 13 - 19.",
+        "tier3_solution": "n = 13 - 19 => n = -6."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.06
+      }
     },
     {
       "questionId": "Q-G8-ALG-011",
-      "text": "Solve for x: 5x + 9 = 5 + 3x",
-      "options": ["x = 2", "x = -2", "x = 7", "x = -7"],
+      "text": "Solve for x: 2x - 3 = 7",
+      "options": [
+        "x = 2",
+        "x = 5",
+        "x = 4",
+        "x = 10"
+      ],
       "correctOptionIndex": 1,
-      "explanation": "Subtract 3x: 2x + 9 = 5. Subtract 9: 2x = -4. Divide by 2: x = -2.",
-      "difficulty": "MEDIUM",
-      "bktParams": { "p_g": 0.25, "p_s": 0.08 }
+      "explanation": "Add 3 to both sides: 2x = 10. Divide by 2: x = 5.",
+      "difficulty": "EASY",
+      "bloomsTaxonomyLevel": "UNDERSTANDING",
+      "hints": {
+        "tier1_socratic": "In a two-step equation, first undo addition or subtraction, then undo multiplication or division.",
+        "tier2_operational": "Add 3 to both sides to get 2x = 10, then divide by 2.",
+        "tier3_solution": "2x = 10 => x = 10 / 2 => x = 5."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
     },
     {
       "questionId": "Q-G8-ALG-012",
-      "text": "Solve for z: 4z + 3 = 6 + 2z",
-      "options": ["z = 3/2", "z = 9/2", "z = 2/3", "z = 1"],
+      "text": "Solve for x: 3x + 4 = 19",
+      "options": [
+        "x = 5",
+        "x = 7",
+        "x = 23/3",
+        "x = 4"
+      ],
       "correctOptionIndex": 0,
-      "explanation": "Subtract 2z: 2z + 3 = 6. Subtract 3: 2z = 3. Divide by 2: z = 3/2.",
-      "difficulty": "MEDIUM",
-      "bktParams": { "p_g": 0.25, "p_s": 0.08 }
+      "explanation": "Subtract 4 from both sides: 3x = 15. Divide by 3: x = 5.",
+      "difficulty": "EASY",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Eliminate the constant term +4 first.",
+        "tier2_operational": "Subtract 4 from 19 to get 3x = 15, then divide by 3.",
+        "tier3_solution": "3x = 15 => x = 15 / 3 => x = 5."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
     },
     {
       "questionId": "Q-G8-ALG-013",
-      "text": "Solve for x: 2x - 1 = 14 - x",
-      "options": ["x = 5", "x = 15", "x = 13/3", "x = 4"],
+      "text": "Solve for y: 5y - 7 = 18",
+      "options": [
+        "y = 5",
+        "y = 2.2",
+        "y = 25",
+        "y = 5.2"
+      ],
       "correctOptionIndex": 0,
-      "explanation": "Add x: 3x - 1 = 14. Add 1: 3x = 15. Divide by 3: x = 5.",
-      "difficulty": "MEDIUM",
-      "bktParams": { "p_g": 0.25, "p_s": 0.08 }
+      "explanation": "Add 7: 5y = 25. Divide by 5: y = 5.",
+      "difficulty": "EASY",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "First add 7 to both sides.",
+        "tier2_operational": "5y = 18 + 7 = 25.",
+        "tier3_solution": "y = 25 / 5 => y = 5."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
     },
     {
       "questionId": "Q-G8-ALG-014",
-      "text": "Solve for x: 8x + 4 = 3(x - 1) + 7",
-      "options": ["x = 0", "x = 1", "x = -1", "x = 2"],
+      "text": "Solve for x: 2x / 3 = 18",
+      "options": [
+        "x = 27",
+        "x = 12",
+        "x = 54",
+        "x = 9"
+      ],
       "correctOptionIndex": 0,
-      "explanation": "Expand RHS: 8x + 4 = 3x - 3 + 7 = 3x + 4. Subtract 3x: 5x + 4 = 4. 5x = 0, so x = 0.",
-      "difficulty": "HARD",
-      "bktParams": { "p_g": 0.20, "p_s": 0.12 }
+      "explanation": "Multiply by 3: 2x = 54. Divide by 2: x = 27.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "How do you eliminate the fractional denominator 3?",
+        "tier2_operational": "Multiply both sides by 3 to get 2x = 54, then divide by 2.",
+        "tier3_solution": "x = 54 / 2 => x = 27."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.08
+      }
     },
     {
       "questionId": "Q-G8-ALG-015",
-      "text": "Solve for x: x = (4/5)(x + 10)",
-      "options": ["x = 40", "x = 8", "x = 10", "x = 50"],
+      "text": "Solve for x: 7x - 9 = 16",
+      "options": [
+        "x = 25/7",
+        "x = 1",
+        "x = 7",
+        "x = 25"
+      ],
       "correctOptionIndex": 0,
-      "explanation": "Multiply both sides by 5: 5x = 4(x + 10) = 4x + 40. Subtract 4x: x = 40.",
-      "difficulty": "HARD",
-      "bktParams": { "p_g": 0.20, "p_s": 0.12 }
+      "explanation": "Add 9 to both sides: 7x = 25. Divide by 7: x = 25/7.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Add 9 to 16 first to isolate the 7x term.",
+        "tier2_operational": "7x = 25. Now divide by the coefficient 7.",
+        "tier3_solution": "7x = 25 => x = 25 / 7."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.08
+      }
     },
     {
       "questionId": "Q-G8-ALG-016",
-      "text": "Solve for m: 3m = 5m - 8/5",
-      "options": ["m = 4/5", "m = 8/5", "m = -4/5", "m = 2/5"],
+      "text": "Solve for y: 14y - 8 = 13",
+      "options": [
+        "y = 3/2",
+        "y = 5/14",
+        "y = 21/14",
+        "y = 1.5"
+      ],
       "correctOptionIndex": 0,
-      "explanation": "Subtract 5m: -2m = -8/5. Divide by -2: m = (-8/5) / (-2) = 4/5.",
-      "difficulty": "HARD",
-      "bktParams": { "p_g": 0.20, "p_s": 0.12 }
+      "explanation": "Add 8: 14y = 21. Divide by 14: y = 21/14 = 3/2.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Add 8 to 13 first.",
+        "tier2_operational": "14y = 21. Simplify the fraction 21/14 by dividing top and bottom by 7.",
+        "tier3_solution": "y = 21 / 14 => y = 3/2."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.08
+      }
     },
     {
       "questionId": "Q-G8-ALG-017",
-      "text": "The perimeter of a rectangle is 13 cm and its width is 2 3/4 cm. Find its length.",
-      "options": ["3 3/4 cm", "4 cm", "5 1/2 cm", "2 1/4 cm"],
-      "correctOptionIndex": 0,
-      "explanation": "Perimeter = 2(l + w) = 13. So l + 11/4 = 13/2 = 26/4. l = 26/4 - 11/4 = 15/4 = 3 3/4 cm.",
-      "difficulty": "HARD",
-      "bktParams": { "p_g": 0.15, "p_s": 0.15 }
+      "text": "Solve for p: 17 + 6p = 9",
+      "options": [
+        "p = 4/3",
+        "p = -4/3",
+        "p = -8/6",
+        "p = -2"
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "Subtract 17: 6p = 9 - 17 = -8. Divide by 6: p = -8/6 = -4/3.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Subtract 17 from 9. Watch out for the negative sign!",
+        "tier2_operational": "6p = -8. Divide by 6 and reduce the fraction.",
+        "tier3_solution": "p = -8 / 6 => p = -4/3."
+      },
+      "bktParams": {
+        "p_g": 0.22,
+        "p_s": 0.09
+      }
     },
     {
       "questionId": "Q-G8-ALG-018",
-      "text": "The sum of three consecutive multiples of 8 is 888. Find the smallest multiple.",
-      "options": ["288", "296", "304", "280"],
+      "text": "Solve for x: x/3 + 5/2 = -3/2",
+      "options": [
+        "x = -12",
+        "x = -6",
+        "x = 4",
+        "x = -4"
+      ],
       "correctOptionIndex": 0,
-      "explanation": "Multiples are x, x+8, x+16. Sum = 3x + 24 = 888. 3x = 864, so x = 288.",
-      "difficulty": "HARD",
-      "bktParams": { "p_g": 0.15, "p_s": 0.15 }
+      "explanation": "x/3 = -3/2 - 5/2 = -8/2 = -4. Multiply by 3: x = -4 * 3 = -12.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Subtract 5/2 from -3/2 first.",
+        "tier2_operational": "x/3 = (-3 - 5)/2 = -8/2 = -4. Now multiply by 3.",
+        "tier3_solution": "x = -4 * 3 => x = -12."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.1
+      }
     },
     {
       "questionId": "Q-G8-ALG-019",
-      "text": "Three consecutive integers add up to 51. What is the largest integer?",
-      "options": ["18", "16", "17", "19"],
+      "text": "Solve for y: 1.6 = y / 1.5",
+      "options": [
+        "y = 2.4",
+        "y = 0.1",
+        "y = 3.1",
+        "y = 2.44"
+      ],
       "correctOptionIndex": 0,
-      "explanation": "Integers: n, n+1, n+2. Sum = 3n + 3 = 51. 3n = 48, so n = 16. The largest is n + 2 = 18.",
+      "explanation": "Multiply both sides by 1.5: y = 1.6 * 1.5 = 2.4.",
       "difficulty": "MEDIUM",
-      "bktParams": { "p_g": 0.25, "p_s": 0.08 }
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "How do you undo division by 1.5?",
+        "tier2_operational": "Multiply 1.6 by 1.5.",
+        "tier3_solution": "y = 1.6 * 1.5 => y = 2.4."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.08
+      }
     },
     {
       "questionId": "Q-G8-ALG-020",
-      "text": "If you subtract 1/2 from a number and multiply the result by 1/2, you get 1/8. What is the number?",
-      "options": ["3/4", "1/4", "1/2", "1"],
+      "text": "Solve for x: 7x - 9 = 12",
+      "options": [
+        "x = 3",
+        "x = 21/7",
+        "x = 2",
+        "x = 4"
+      ],
       "correctOptionIndex": 0,
-      "explanation": "(x - 1/2) * 1/2 = 1/8. x - 1/2 = 2/8 = 1/4. x = 1/4 + 1/2 = 3/4.",
+      "explanation": "Add 9: 7x = 21. Divide by 7: x = 3.",
+      "difficulty": "EASY",
+      "bloomsTaxonomyLevel": "UNDERSTANDING",
+      "hints": {
+        "tier1_socratic": "Add 9 to 12.",
+        "tier2_operational": "7x = 21. Divide by 7.",
+        "tier3_solution": "x = 21 / 7 => x = 3."
+      },
+      "bktParams": {
+        "p_g": 0.25,
+        "p_s": 0.05
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-021",
+      "text": "Solve for x: 3x = 2x + 18",
+      "options": [
+        "x = 18",
+        "x = -18",
+        "x = 9",
+        "x = 36"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Subtract 2x from both sides: 3x - 2x = 18 => x = 18.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Collect variable terms on the left side of the equation.",
+        "tier2_operational": "Subtract 2x from 3x.",
+        "tier3_solution": "3x - 2x = 18 => x = 18."
+      },
+      "bktParams": {
+        "p_g": 0.22,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-022",
+      "text": "Solve for t: 5t - 3 = 3t - 5",
+      "options": [
+        "t = -1",
+        "t = 1",
+        "t = -4",
+        "t = 2"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Subtract 3t: 2t - 3 = -5. Add 3: 2t = -2. Divide by 2: t = -1.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Group the t-terms on one side and constant numbers on the other side.",
+        "tier2_operational": "5t - 3t = -5 + 3 => 2t = -2.",
+        "tier3_solution": "t = -2 / 2 => t = -1."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.09
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-023",
+      "text": "Solve for x: 5x + 9 = 5 + 3x",
+      "options": [
+        "x = 2",
+        "x = -2",
+        "x = 7",
+        "x = -7"
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "Subtract 3x: 2x + 9 = 5. Subtract 9: 2x = -4. Divide by 2: x = -2.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Subtract 3x from both sides.",
+        "tier2_operational": "2x + 9 = 5 => 2x = 5 - 9 = -4.",
+        "tier3_solution": "x = -4 / 2 => x = -2."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-024",
+      "text": "Solve for z: 4z + 3 = 6 + 2z",
+      "options": [
+        "z = 3/2",
+        "z = 9/2",
+        "z = 2/3",
+        "z = 1"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Subtract 2z: 2z + 3 = 6. Subtract 3: 2z = 3. Divide by 2: z = 3/2.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Subtract 2z from both sides to collect z-terms on the left.",
+        "tier2_operational": "2z = 6 - 3 = 3.",
+        "tier3_solution": "2z = 3 => z = 3 / 2."
+      },
+      "bktParams": {
+        "p_g": 0.22,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-025",
+      "text": "Solve for x: 2x - 1 = 14 - x",
+      "options": [
+        "x = 5",
+        "x = 15",
+        "x = 13/3",
+        "x = 4"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Add x: 3x - 1 = 14. Add 1: 3x = 15. Divide by 3: x = 5.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Add x to both sides to move -x to the left.",
+        "tier2_operational": "2x + x = 14 + 1 => 3x = 15.",
+        "tier3_solution": "x = 15 / 3 => x = 5."
+      },
+      "bktParams": {
+        "p_g": 0.22,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-026",
+      "text": "Solve for x: 8x + 4 = 3(x - 1) + 7",
+      "options": [
+        "x = 0",
+        "x = 1",
+        "x = -1",
+        "x = 2"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Expand RHS: 8x + 4 = 3x - 3 + 7 = 3x + 4. Subtract 3x: 5x + 4 = 4. 5x = 0, so x = 0.",
       "difficulty": "HARD",
-      "bktParams": { "p_g": 0.20, "p_s": 0.12 }
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "First expand the brackets on the right side: 3 * (x - 1).",
+        "tier2_operational": "8x + 4 = 3x + 4. What happens when you subtract 4 from both sides?",
+        "tier3_solution": "5x = 0 => x = 0 / 5 => x = 0."
+      },
+      "bktParams": {
+        "p_g": 0.18,
+        "p_s": 0.12
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-027",
+      "text": "Solve for x: x = (4/5)(x + 10)",
+      "options": [
+        "x = 40",
+        "x = 8",
+        "x = 10",
+        "x = 50"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Multiply both sides by 5: 5x = 4(x + 10) = 4x + 40. Subtract 4x: x = 40.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Multiply both sides by 5 to clear the fraction 4/5.",
+        "tier2_operational": "5x = 4(x + 10) = 4x + 40.",
+        "tier3_solution": "5x - 4x = 40 => x = 40."
+      },
+      "bktParams": {
+        "p_g": 0.18,
+        "p_s": 0.12
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-028",
+      "text": "Solve for x: 2x/3 + 1 = 7x/15 + 3",
+      "options": [
+        "x = 10",
+        "x = 15",
+        "x = 5",
+        "x = 20"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "LCM of 3 and 15 is 15. Multiply all terms by 15: 10x + 15 = 7x + 45. 3x = 30 => x = 10.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "What is the least common multiple of the denominators 3 and 15?",
+        "tier2_operational": "Multiply every term by 15: 15*(2x/3) + 15 = 15*(7x/15) + 45 => 10x + 15 = 7x + 45.",
+        "tier3_solution": "3x = 30 => x = 10."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.12
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-029",
+      "text": "Solve for y: 2y + 5/3 = 26/3 - y",
+      "options": [
+        "y = 7/3",
+        "y = 21/3",
+        "y = 3",
+        "y = 7"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Add y: 3y + 5/3 = 26/3. Subtract 5/3: 3y = 21/3 = 7. y = 7/3.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Add y to both sides to get 3y on the left.",
+        "tier2_operational": "3y = 26/3 - 5/3 = 21/3 = 7.",
+        "tier3_solution": "3y = 7 => y = 7/3."
+      },
+      "bktParams": {
+        "p_g": 0.18,
+        "p_s": 0.1
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-030",
+      "text": "Solve for m: 3m = 5m - 8/5",
+      "options": [
+        "m = 4/5",
+        "m = 8/5",
+        "m = -4/5",
+        "m = 2/5"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Subtract 5m: -2m = -8/5. Divide by -2: m = (-8/5) / (-2) = 4/5.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Subtract 5m from both sides.",
+        "tier2_operational": "-2m = -8/5. Divide both sides by -2.",
+        "tier3_solution": "m = (-8/5) / (-2) = 8/10 = 4/5."
+      },
+      "bktParams": {
+        "p_g": 0.18,
+        "p_s": 0.11
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-031",
+      "text": "Solve for x: 3(x - 3) = 5(2x + 1)",
+      "options": [
+        "x = -2",
+        "x = 2",
+        "x = -14/7",
+        "x = -1"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "3x - 9 = 10x + 5. -9 - 5 = 10x - 3x => -14 = 7x => x = -2.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Expand brackets on both sides using the distributive property.",
+        "tier2_operational": "3x - 9 = 10x + 5. Rearrange terms: 7x = -14.",
+        "tier3_solution": "x = -14 / 7 => x = -2."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.12
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-032",
+      "text": "Solve for y: 15(y - 4) - 2(y - 9) + 5(y + 6) = 0",
+      "options": [
+        "y = 2/3",
+        "y = -2/3",
+        "y = 3/2",
+        "y = 12/18"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "15y - 60 - 2y + 18 + 5y + 30 = 0 => 18y - 12 = 0 => 18y = 12 => y = 12/18 = 2/3.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Carefully expand all three brackets, paying special attention to -2(y - 9).",
+        "tier2_operational": "Combine like terms: (15 - 2 + 5)y + (-60 + 18 + 30) = 0 => 18y - 12 = 0.",
+        "tier3_solution": "18y = 12 => y = 12 / 18 = 2/3."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.15
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-033",
+      "text": "Solve for z: 3(5z - 7) - 2(9z - 11) = 4(8z - 13) - 17",
+      "options": [
+        "z = 2",
+        "z = -2",
+        "z = 3",
+        "z = 1"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "15z - 21 - 18z + 22 = 32z - 52 - 17 => -3z + 1 = 32z - 69 => 70 = 35z => z = 2.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Expand LHS: 15z - 21 - 18z + 22 = -3z + 1. Expand RHS: 32z - 52 - 17 = 32z - 69.",
+        "tier2_operational": "-3z + 1 = 32z - 69 => 1 + 69 = 32z + 3z => 70 = 35z.",
+        "tier3_solution": "z = 70 / 35 => z = 2."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.14
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-034",
+      "text": "Solve for f: 0.25(4f - 3) = 0.05(10f - 9)",
+      "options": [
+        "f = 0.6",
+        "f = 0.5",
+        "f = 1.2",
+        "f = 3/5"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "f - 0.75 = 0.5f - 0.45 => 0.5f = 0.30 => f = 0.6.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Multiply both sides by 100 to remove decimals, or expand directly: 0.25*4f = 1f.",
+        "tier2_operational": "f - 0.75 = 0.5f - 0.45 => 0.5f = 0.30.",
+        "tier3_solution": "f = 0.30 / 0.5 => f = 0.6."
+      },
+      "bktParams": {
+        "p_g": 0.18,
+        "p_s": 0.12
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-035",
+      "text": "Solve for x: 2(x - 5) + 3(x + 1) = 4(x + 2)",
+      "options": [
+        "x = 15",
+        "x = 10",
+        "x = -15",
+        "x = 5"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "2x - 10 + 3x + 3 = 4x + 8 => 5x - 7 = 4x + 8 => x = 15.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Expand all parentheses.",
+        "tier2_operational": "LHS: 5x - 7. RHS: 4x + 8. Subtract 4x from 5x.",
+        "tier3_solution": "5x - 4x = 8 + 7 => x = 15."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.09
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-036",
+      "text": "Solve for x: 6(1 - 4x) + 7(2 + 5x) = 53",
+      "options": [
+        "x = 3",
+        "x = 2",
+        "x = -3",
+        "x = 33/11"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "6 - 24x + 14 + 35x = 53 => 11x + 20 = 53 => 11x = 33 => x = 3.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Distribute 6 and 7 across the brackets.",
+        "tier2_operational": "-24x + 35x = 11x. 6 + 14 = 20. So 11x + 20 = 53.",
+        "tier3_solution": "11x = 33 => x = 3."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.09
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-037",
+      "text": "Solve for x: 5(2x + 1) = 3(x + 4)",
+      "options": [
+        "x = 1",
+        "x = 2",
+        "x = 7/7",
+        "x = -1"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "10x + 5 = 3x + 12 => 7x = 7 => x = 1.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Expand both sides.",
+        "tier2_operational": "10x + 5 = 3x + 12 => 7x = 7.",
+        "tier3_solution": "x = 7 / 7 => x = 1."
+      },
+      "bktParams": {
+        "p_g": 0.22,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-038",
+      "text": "Solve for x: 4(x - 2) + 3(2x + 1) = 25",
+      "options": [
+        "x = 3",
+        "x = 4",
+        "x = 2",
+        "x = 30/10"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "4x - 8 + 6x + 3 = 25 => 10x - 5 = 25 => 10x = 30 => x = 3.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Expand 4(x - 2) and 3(2x + 1).",
+        "tier2_operational": "Combine: 10x - 5 = 25 => 10x = 30.",
+        "tier3_solution": "x = 30 / 10 => x = 3."
+      },
+      "bktParams": {
+        "p_g": 0.22,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-039",
+      "text": "Solve for y: 2(y - 1) - 3(y - 2) = 4",
+      "options": [
+        "y = 0",
+        "y = 4",
+        "y = -4",
+        "y = 2"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "2y - 2 - 3y + 6 = 4 => -y + 4 = 4 => -y = 0 => y = 0.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Notice -3 * (-2) becomes +6.",
+        "tier2_operational": "-y + 4 = 4.",
+        "tier3_solution": "-y = 0 => y = 0."
+      },
+      "bktParams": {
+        "p_g": 0.22,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-040",
+      "text": "Solve for k: 3(2k + 1) = 2(k - 2) + 11",
+      "options": [
+        "k = 1",
+        "k = -1",
+        "k = 2",
+        "k = 4/4"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "6k + 3 = 2k - 4 + 11 = 2k + 7 => 4k = 4 => k = 1.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Expand both sides.",
+        "tier2_operational": "6k + 3 = 2k + 7 => 4k = 4.",
+        "tier3_solution": "k = 4 / 4 => k = 1."
+      },
+      "bktParams": {
+        "p_g": 0.22,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-041",
+      "text": "Solve for x: x/2 - 1/5 = x/3 + 1/4",
+      "options": [
+        "x = 27/10",
+        "x = 2.7",
+        "x = 10/27",
+        "x = 54/20"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "x/2 - x/3 = 1/4 + 1/5 => x/6 = 9/20 => x = 6 * 9 / 20 = 54/20 = 27/10.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Group the x terms on LHS: x/2 - x/3. Group fractions on RHS: 1/4 + 1/5.",
+        "tier2_operational": "LHS: (3x - 2x)/6 = x/6. RHS: (5 + 4)/20 = 9/20.",
+        "tier3_solution": "x = 6 * (9/20) = 54/20 = 27/10 = 2.7."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.14
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-042",
+      "text": "Solve for n: n/2 - 3n/4 + 5n/6 = 21",
+      "options": [
+        "n = 36",
+        "n = 18",
+        "n = 42",
+        "n = 28"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "LCM(2, 4, 6) = 12. Multiply by 12: 6n - 9n + 10n = 21 * 12 => 7n = 252 => n = 36.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "What is the common denominator of 2, 4, and 6?",
+        "tier2_operational": "Multiply all terms by 12: 6n - 9n + 10n = 252 => 7n = 252.",
+        "tier3_solution": "n = 252 / 7 => n = 36."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.12
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-043",
+      "text": "Solve for x: x + 7 - 8x/3 = 17/6 - 5x/2",
+      "options": [
+        "x = 5",
+        "x = -5",
+        "x = 6",
+        "x = 30/6"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "LCM(3, 6, 2) = 6. Multiply by 6: 6x + 42 - 16x = 17 - 15x => -10x + 42 = 17 - 15x => 5x = -25 => x = -5 (Wait: 17 - 42 = -25, so x = -5).",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Multiply the entire equation by the LCM of denominators (6).",
+        "tier2_operational": "6x + 42 - 16x = 17 - 15x => 5x = 17 - 42 = -25.",
+        "tier3_solution": "5x = -25 => x = -5."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.14
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-044",
+      "text": "Solve for x: (x - 5)/3 = (x - 3)/5",
+      "options": [
+        "x = 8",
+        "x = 16",
+        "x = -8",
+        "x = 4"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Cross multiply: 5(x - 5) = 3(x - 3) => 5x - 25 = 3x - 9 => 2x = 16 => x = 8.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Use cross-multiplication: multiply numerator of one side by denominator of the other.",
+        "tier2_operational": "5(x - 5) = 3(x - 3) => 5x - 25 = 3x - 9.",
+        "tier3_solution": "2x = 16 => x = 8."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.09
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-045",
+      "text": "Solve for t: (3t - 2)/4 - (2t + 3)/3 = 2/3 - t",
+      "options": [
+        "t = 2",
+        "t = -2",
+        "t = 1",
+        "t = 3"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "LCM = 12. 3(3t - 2) - 4(2t + 3) = 8 - 12t => 9t - 6 - 8t - 12 = 8 - 12t => t - 18 = 8 - 12t => 13t = 26 => t = 2.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Clear all denominators by multiplying the equation by 12.",
+        "tier2_operational": "3(3t - 2) - 4(2t + 3) = 8 - 12t => t - 18 = 8 - 12t.",
+        "tier3_solution": "13t = 26 => t = 2."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.15
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-046",
+      "text": "Solve for x: (8x - 3) / (3x) = 2",
+      "options": [
+        "x = 1.5",
+        "x = 3/2",
+        "x = 1",
+        "x = 2"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Multiply by 3x: 8x - 3 = 6x => 2x = 3 => x = 3/2 = 1.5.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Multiply both sides by 3x.",
+        "tier2_operational": "8x - 3 = 6x => 2x = 3.",
+        "tier3_solution": "x = 3 / 2 = 1.5."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.09
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-047",
+      "text": "Solve for x: 9x / (7 - 6x) = 15",
+      "options": [
+        "x = 35/33",
+        "x = 105/99",
+        "x = 35/31",
+        "x = 1"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "9x = 15(7 - 6x) = 105 - 90x => 99x = 105 => x = 105/99 = 35/33.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Cross multiply: 9x = 15 * (7 - 6x).",
+        "tier2_operational": "9x = 105 - 90x => 99x = 105.",
+        "tier3_solution": "x = 105 / 99 = 35 / 33."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.14
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-048",
+      "text": "Solve for y: (7y + 4) / (y + 2) = -4/3",
+      "options": [
+        "y = -4/5",
+        "y = -0.8",
+        "y = 4/5",
+        "y = -2"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "3(7y + 4) = -4(y + 2) => 21y + 12 = -4y - 8 => 25y = -20 => y = -20/25 = -4/5.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Cross multiply 3 * (7y + 4) = -4 * (y + 2).",
+        "tier2_operational": "21y + 12 = -4y - 8 => 25y = -20.",
+        "tier3_solution": "y = -20 / 25 = -4/5."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.12
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-049",
+      "text": "Solve for z: z / (z + 15) = 4/9",
+      "options": [
+        "z = 12",
+        "z = 15",
+        "z = 9",
+        "z = 60/5"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "9z = 4(z + 15) = 4z + 60 => 5z = 60 => z = 12.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Cross multiply: 9z = 4(z + 15).",
+        "tier2_operational": "9z = 4z + 60 => 5z = 60.",
+        "tier3_solution": "z = 60 / 5 = 12."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-050",
+      "text": "Solve for x: (x + 1) / (2x + 3) = 3/8",
+      "options": [
+        "x = 1/2",
+        "x = 0.5",
+        "x = 1",
+        "x = 2"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "8(x + 1) = 3(2x + 3) => 8x + 8 = 6x + 9 => 2x = 1 => x = 1/2.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Cross multiply: 8(x + 1) = 3(2x + 3).",
+        "tier2_operational": "8x + 8 = 6x + 9 => 2x = 1.",
+        "tier3_solution": "x = 1/2 = 0.5."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-051",
+      "text": "The sum of two numbers is 95. If one exceeds the other by 15, find the smaller number.",
+      "options": [
+        "40",
+        "55",
+        "35",
+        "50"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Let smaller be x. Other is x + 15. x + (x + 15) = 95 => 2x + 15 = 95 => 2x = 80 => x = 40.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Let the smaller number be x. Express the larger number in terms of x.",
+        "tier2_operational": "x + (x + 15) = 95 => 2x = 80.",
+        "tier3_solution": "x = 80 / 2 = 40."
+      },
+      "bktParams": {
+        "p_g": 0.18,
+        "p_s": 0.12
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-052",
+      "text": "Two numbers are in the ratio 5:3. If they differ by 18, what is the smaller number?",
+      "options": [
+        "27",
+        "45",
+        "18",
+        "36"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Let numbers be 5x and 3x. 5x - 3x = 18 => 2x = 18 => x = 9. Smaller = 3 * 9 = 27.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Represent the numbers as 5x and 3x.",
+        "tier2_operational": "Their difference is 5x - 3x = 2x = 18 => x = 9.",
+        "tier3_solution": "The smaller number is 3x = 3 * 9 = 27."
+      },
+      "bktParams": {
+        "p_g": 0.18,
+        "p_s": 0.12
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-053",
+      "text": "Three consecutive integers add up to 51. What is the largest integer?",
+      "options": [
+        "18",
+        "16",
+        "17",
+        "19"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "n + (n+1) + (n+2) = 51 => 3n + 3 = 51 => 3n = 48 => n = 16. Largest = n + 2 = 18.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Consecutive integers differ by 1: n, n+1, and n+2.",
+        "tier2_operational": "Sum: 3n + 3 = 51 => 3n = 48 => n = 16.",
+        "tier3_solution": "The question asks for the largest integer: n + 2 = 16 + 2 = 18."
+      },
+      "bktParams": {
+        "p_g": 0.22,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-054",
+      "text": "The sum of three consecutive multiples of 8 is 888. Find the smallest multiple.",
+      "options": [
+        "288",
+        "296",
+        "304",
+        "280"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Multiples: x, x+8, x+16. 3x + 24 = 888 => 3x = 864 => x = 288.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Consecutive multiples of 8 increase by 8 each time: x, x + 8, x + 16.",
+        "tier2_operational": "x + (x + 8) + (x + 16) = 888 => 3x + 24 = 888.",
+        "tier3_solution": "3x = 864 => x = 288."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.15
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-055",
+      "text": "The perimeter of a rectangle is 13 cm and its width is 2 3/4 cm. Find its length.",
+      "options": [
+        "3 3/4 cm",
+        "4 cm",
+        "5 1/2 cm",
+        "2 1/4 cm"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Perimeter = 2(l + w) = 13. l + 11/4 = 13/2 = 26/4. l = 26/4 - 11/4 = 15/4 = 3 3/4 cm.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "Recall the perimeter formula: P = 2 * (length + width).",
+        "tier2_operational": "2 * (l + 11/4) = 13 => l + 11/4 = 13/2 = 26/4.",
+        "tier3_solution": "l = 26/4 - 11/4 = 15/4 = 3 3/4 cm."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.15
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-056",
+      "text": "The present ages of Sahil and his mother are in ratio 1:3. Five years later the sum of their ages will be 66 years. What is Sahil's present age?",
+      "options": [
+        "14 years",
+        "42 years",
+        "16 years",
+        "12 years"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Ages: x and 3x. In 5 years: (x+5) + (3x+5) = 66 => 4x + 10 = 66 => 4x = 56 => x = 14.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "SYNTHESIS",
+      "hints": {
+        "tier1_socratic": "Let Sahil's age be x and mother's age be 3x. How old will both be in 5 years?",
+        "tier2_operational": "(x + 5) + (3x + 5) = 66 => 4x + 10 = 66.",
+        "tier3_solution": "4x = 56 => x = 14 years."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.15
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-057",
+      "text": "Fifteen years from now Ravi's age will be four times his present age. What is Ravi's present age?",
+      "options": [
+        "5 years",
+        "4 years",
+        "6 years",
+        "15 years"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Let present age be x. x + 15 = 4x => 3x = 15 => x = 5 years.",
+      "difficulty": "MEDIUM",
+      "bloomsTaxonomyLevel": "APPLICATION",
+      "hints": {
+        "tier1_socratic": "In 15 years, Ravi will be x + 15. Set this equal to 4 * x.",
+        "tier2_operational": "x + 15 = 4x => 3x = 15.",
+        "tier3_solution": "x = 15 / 3 = 5 years."
+      },
+      "bktParams": {
+        "p_g": 0.2,
+        "p_s": 0.08
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-058",
+      "text": "A positive number is 5 times another number. If 21 is added to both numbers, one becomes twice the other. Find the smaller number.",
+      "options": [
+        "7",
+        "35",
+        "14",
+        "21"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Numbers: x and 5x. 5x + 21 = 2(x + 21) => 5x + 21 = 2x + 42 => 3x = 21 => x = 7.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "SYNTHESIS",
+      "hints": {
+        "tier1_socratic": "Let the numbers be x and 5x. Add 21 to both: x + 21 and 5x + 21.",
+        "tier2_operational": "5x + 21 = 2 * (x + 21) => 5x + 21 = 2x + 42.",
+        "tier3_solution": "3x = 21 => x = 7."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.14
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-059",
+      "text": "The perimeter of a rectangular swimming pool is 154 m. Its length is 2 m more than twice its breadth. What is the breadth of the pool?",
+      "options": [
+        "25 m",
+        "52 m",
+        "30 m",
+        "24 m"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "Let breadth = b. Length = 2b + 2. P = 2(l + b) = 2(3b + 2) = 154 => 6b + 4 = 154 => 6b = 150 => b = 25 m.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "SYNTHESIS",
+      "hints": {
+        "tier1_socratic": "Express length as 2b + 2, where b is breadth.",
+        "tier2_operational": "2 * (2b + 2 + b) = 154 => 2 * (3b + 2) = 154 => 6b + 4 = 154.",
+        "tier3_solution": "6b = 150 => b = 25 m."
+      },
+      "bktParams": {
+        "p_g": 0.15,
+        "p_s": 0.14
+      }
+    },
+    {
+      "questionId": "Q-G8-ALG-060",
+      "text": "If you subtract 1/2 from a number and multiply the result by 1/2, you get 1/8. What is the number?",
+      "options": [
+        "3/4",
+        "1/4",
+        "1/2",
+        "1"
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "(x - 1/2) * 1/2 = 1/8 => x - 1/2 = 2/8 = 1/4 => x = 1/4 + 1/2 = 3/4.",
+      "difficulty": "HARD",
+      "bloomsTaxonomyLevel": "ANALYSIS",
+      "hints": {
+        "tier1_socratic": "Translate the sentence into an equation: (x - 1/2) * 1/2 = 1/8.",
+        "tier2_operational": "Multiply both sides by 2 to clear 1/2: x - 1/2 = 2/8 = 1/4.",
+        "tier3_solution": "x = 1/4 + 1/2 = 1/4 + 2/4 = 3/4."
+      },
+      "bktParams": {
+        "p_g": 0.18,
+        "p_s": 0.12
+      }
     }
   ]
 }

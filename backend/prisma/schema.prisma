@@ -236,6 +236,7 @@ model Question {
   correctAnswer String
   options       String? // SQLite doesn't support Json
   explanation   String?
+  hints         String? // 3-tier progressive hints JSON string
 
   answers UserAnswer[]
 }

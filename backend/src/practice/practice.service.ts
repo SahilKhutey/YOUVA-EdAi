@@ -55,6 +55,7 @@ export class PracticeService {
           id: q.id,
           content: q.content,
           options: q.options ? JSON.parse(q.options) : [],
+          hints: q.hints ? JSON.parse(q.hints) : undefined,
         })),
       };
     }
@@ -160,6 +161,12 @@ export class PracticeService {
     let correctCount = 0;
     const results = [];
 
+    const initialMasteryRecord = await this.prisma.userTopicMastery.findUnique({
+      where: { userId_topicId: { userId, topicId: session.topicId } },
+    });
+    const initialMastery = initialMasteryRecord?.masteryProbability ?? 0.1;
+    let finalMastery = initialMastery;
+
     for (const ans of answers) {
       const question = await this.prisma.question.findUnique({
         where: { id: ans.questionId },
@@ -186,7 +193,7 @@ export class PracticeService {
       });
 
       // Real-time ACLE Updates per question
-      await this.bktService.updateMastery(userId, session.topicId, isCorrect);
+      finalMastery = await this.bktService.updateMastery(userId, session.topicId, isCorrect);
       await this.rlDifficultyService.updateDifficultyState(
         userId,
         session.topicId,
@@ -206,6 +213,16 @@ export class PracticeService {
     await this.gamificationService.addXp(userId, xpEarned);
     await this.gamificationService.updateStreak(userId);
 
-    return { score, correctCount, total: answers.length, results, xpEarned };
+    const masteryDelta = Number((finalMastery - initialMastery).toFixed(3));
+
+    return {
+      score,
+      correctCount,
+      total: answers.length,
+      results,
+      xpEarned,
+      masteryProbability: finalMastery,
+      masteryDelta,
+    };
   }
 }
