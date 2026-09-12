@@ -39,7 +39,7 @@ export class CognitiveTwinService {
     }) {
         const profile = await this.getProfile(userId);
 
-        let updatedSkillGenome = JSON.parse(profile.skillGenome || '{}');
+        const updatedSkillGenome = JSON.parse(profile.skillGenome || '{}');
         if (data.skillGenomeDelta) {
             for (const [skill, delta] of Object.entries(data.skillGenomeDelta)) {
                 updatedSkillGenome[skill] = Math.min(1.0, Math.max(0.0, (updatedSkillGenome[skill] || 0) + delta));

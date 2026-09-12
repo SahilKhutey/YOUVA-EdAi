@@ -8,8 +8,23 @@ on:
 
 jobs:
   backend-verification:
-    name: Backend Build, Schema Validation & Learning Loop Tests
+    name: Backend Build, Database Integration, Schema Validation & E2E Suites
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: youva
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: youva_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U youva -d youva_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout Code
@@ -26,26 +41,49 @@ jobs:
         working-directory: backend
         run: npm ci
 
-      - name: Validate & Generate Prisma Schema
+      - name: Typecheck Backend TypeScript
+        working-directory: backend
+        run: npm run typecheck
+
+      - name: Lint Backend Codebase
+        working-directory: backend
+        run: npm run lint
+
+      - name: Synchronize Database Schema & Generate Prisma Client
         working-directory: backend
         env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/testdb
+          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
         run: |
           npx prisma validate
+          npx prisma db push --skip-generate
           npx prisma generate
+
+      - name: Seed Database
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
+        run: npx prisma db seed
 
       - name: Compile Backend TypeScript
         working-directory: backend
         env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/testdb
+          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
         run: npm run build
 
       - name: Run Core Human–AI Learning Loop & Security Verification Suites
         working-directory: backend
         env:
           JWT_SECRET: test-secret-key-that-is-at-least-32-characters-long
-          DATABASE_URL: postgresql://user:pass@localhost:5432/testdb
-        run: npm test -- src/learning-loop src/teacher-ops src/parent src/safety src/health src/security
+          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
+        run: npm test -- src/learning-loop src/teacher-ops src/parent src/safety src/health src/security src/telemetry src/practice
+
+      - name: Run Backend E2E Test Suites
+        working-directory: backend
+        env:
+          JWT_SECRET: test-secret-key-that-is-at-least-32-characters-long
+          DATABASE_URL: postgresql://youva:test@localhost:5432/youva_test
+          TELEMETRY_SALT: youva-ci-telemetry-salt-2026
+        run: npm run test:e2e
 
   frontend-verification:
     name: Frontend Typecheck & Build

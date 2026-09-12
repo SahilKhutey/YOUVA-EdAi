@@ -140,7 +140,7 @@ export class AnalyticsService {
 
   async getRecommendations(userId: string) {
     const weakTopics = await this.getWeakTopics(userId);
-    let queryTopic = weakTopics.length > 0 ? `${weakTopics[0].topic} ${weakTopics[0].subject} tutorial` : 'General Study Tips';
+    const queryTopic = weakTopics.length > 0 ? `${weakTopics[0].topic} ${weakTopics[0].subject} tutorial` : 'General Study Tips';
 
     try {
       const resources = await this.orchestratorService.searchContent(queryTopic, userId, 'general');

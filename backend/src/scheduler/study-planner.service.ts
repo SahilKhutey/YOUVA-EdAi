@@ -26,8 +26,7 @@ export class StudyPlannerService {
         if (mastery.length === 0) {
             // Fallback: pick any 5 topics
             const allTopics = await this.prisma.topic.findMany({ take: 5 });
-            // @ts-ignore
-            mastery.push(...allTopics.map(t => ({ topic: t, topicId: t.id })));
+            (mastery as any[]).push(...allTopics.map(t => ({ topic: t, topicId: t.id })));
         }
 
         // 3. Clear future existing study sessions to avoid overlaps

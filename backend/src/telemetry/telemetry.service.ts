@@ -82,6 +82,13 @@ export class TelemetryService {
   }
 
   /**
+   * Returns all recorded telemetry events in memory.
+   */
+  getAllEvents(): TelemetryEventDto[] {
+    return [...this.events];
+  }
+
+  /**
    * Clears in-memory buffer (primarily used in testing).
    */
   clearEvents(): void {

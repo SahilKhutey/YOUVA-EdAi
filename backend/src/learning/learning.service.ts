@@ -101,7 +101,7 @@ export class LearningService {
     const session = await this.prisma.learningSession.findUnique({
       where: { id: sessionId },
     });
-    let logs = session?.logs ? JSON.parse(session.logs as string) : [];
+    const logs = session?.logs ? JSON.parse(session.logs as string) : [];
     logs.push({ role, content, timestamp: new Date() });
 
     await this.prisma.learningSession.update({

@@ -32,8 +32,8 @@ export class DigitalTwinService {
 
     // AI telemetry aggregation
     let activeModels = 3;
-    let averageLatencyMs = 280;
-    let safetyScore = 0.99;
+    const averageLatencyMs = 280;
+    const safetyScore = 0.99;
 
     try {
       if (prismaClient.aIAgent) {

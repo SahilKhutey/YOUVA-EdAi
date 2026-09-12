@@ -9,15 +9,19 @@ export class RevisionController {
 
   @Get('suggestions')
   async getSuggestions(@Request() req: any) {
-    return this.revisionService.getRevisionSuggestions(req.user.userId);
+    const studentId = req.user.userId || req.user.id;
+    return this.revisionService.getRevisionSuggestions(studentId);
   }
 
   @Post('start')
   async startRevision(@Request() req: any) {
-    return this.revisionService.startRevisionSession(req.user.userId);
+    const studentId = req.user.userId || req.user.id;
+    return this.revisionService.startRevisionSession(studentId);
   }
+
   @Get('schedule')
   async getSchedule(@Request() req: any) {
-    return this.revisionService.getScheduledRevisions(req.user.userId);
+    const studentId = req.user.userId || req.user.id;
+    return this.revisionService.getScheduledRevisions(studentId);
   }
 }

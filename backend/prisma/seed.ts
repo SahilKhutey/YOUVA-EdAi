@@ -204,7 +204,6 @@ async function main() {
             id: 'class-dps-8a',
             name: 'Grade 8-A Mathematics',
             gradeLevel: 'Grade 8',
-            section: 'A',
             subject: 'Mathematics',
             teacherId: teacherRitu.id,
         }
@@ -217,7 +216,6 @@ async function main() {
             id: 'class-dps-8b',
             name: 'Grade 8-B Mathematics',
             gradeLevel: 'Grade 8',
-            section: 'B',
             subject: 'Mathematics',
             teacherId: teacherVikram.id,
         }
@@ -267,7 +265,6 @@ async function main() {
             create: {
                 parentId: pilotParent.id,
                 studentId: studentUser.id,
-                relationship: 'GUARDIAN',
             }
         });
 
@@ -278,7 +275,6 @@ async function main() {
             create: {
                 classId: s.classId,
                 studentId: studentUser.id,
-                status: 'ACTIVE',
             }
         });
 
@@ -330,7 +326,6 @@ async function main() {
         create: {
             parentId: pilotParent.id,
             studentId: unconsentedStudent.id,
-            relationship: 'GUARDIAN',
         }
     });
 
