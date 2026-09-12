@@ -1,30 +1,35 @@
-process.env.JWT_SECRET = 'test-secret-key-that-is-at-least-32-characters-long';
-process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
+process.env.JWT_SECRET =
+  process.env.JWT_SECRET || 'test-secret-key-that-is-at-least-32-characters-long';
 
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from './../src/app.module';
-import { PrismaService } from './../src/prisma/prisma.service';
+import { AppModule } from '../src/app.module';
 
-describe('AppController (e2e)', () => {
+describe('Application E2E', () => {
   let app: INestApplication;
 
-  const mockPrisma = {
-    $connect: jest.fn().mockResolvedValue(undefined),
-    $disconnect: jest.fn().mockResolvedValue(undefined),
-    $queryRaw: jest.fn().mockResolvedValue([{ '1': 1 }]),
-  };
-
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    })
-      .overrideProvider(PrismaService)
-      .useValue(mockPrisma)
-      .compile();
+    const moduleFixture: TestingModule =
+      await Test.createTestingModule({
+        imports: [AppModule],
+      }).compile();
 
     app = moduleFixture.createNestApplication();
+
+    app.setGlobalPrefix('api');
+
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    );
+
     await app.init();
   });
 
@@ -34,10 +39,16 @@ describe('AppController (e2e)', () => {
     }
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
+  it('boots the full Nest application against the integration database', async () => {
+    await request(app.getHttpServer())
+      .get('/api')
       .expect(200)
       .expect('Hello World!');
+  });
+
+  it('rejects an unknown API route with 404', async () => {
+    await request(app.getHttpServer())
+      .get('/api/__e2e_missing_route__')
+      .expect(404);
   });
 });

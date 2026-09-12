@@ -1,6 +1,7 @@
-process.env.JWT_SECRET = 'test-secret-key-that-is-at-least-32-characters-long';
+process.env.JWT_SECRET =
+  process.env.JWT_SECRET || 'test-secret-key-that-is-at-least-32-characters-long';
 process.env.DATABASE_URL =
-  process.env.DATABASE_URL || 'postgresql://youva:test@localhost:5432/youva_test';
+  process.env.DATABASE_URL || 'postgresql://youva:youvapassword@localhost:5432/youva';
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
