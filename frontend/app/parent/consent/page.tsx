@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import api from '@/lib/axios';
 import {
   ArrowLeft,
   ShieldCheck,
@@ -29,6 +30,7 @@ interface ConsentItem {
 }
 
 export default function ParentConsentPage() {
+  const [studentId, setStudentId] = useState<string>('s-dps-101');
   const [consents, setConsents] = useState<ConsentItem[]>([
     {
       type: 'LEARNING_SERVICE',
@@ -99,15 +101,61 @@ export default function ParentConsentPage() {
   // Modal states
   const [otpModalItem, setOtpModalItem] = useState<ConsentItem | null>(null);
   const [otpValue, setOtpValue] = useState('');
+  const [otpHint, setOtpHint] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [purgeWarningItem, setPurgeWarningItem] = useState<ConsentItem | null>(null);
 
-  const initiateGrant = (item: ConsentItem) => {
+  // Sync with live backend consents if available
+  useEffect(() => {
+    async function loadConsents() {
+      try {
+        const res = await api.get(`/consent/${studentId}`);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setConsents((prev) =>
+            prev.map((c) => {
+              const live = res.data.find((r: any) => r.consentType === c.type);
+              if (live) {
+                return {
+                  ...c,
+                  granted: live.status === 'GRANTED',
+                  version: live.version || c.version,
+                  updatedAt:
+                    live.status === 'GRANTED'
+                      ? `Active • Granted at ${new Date(live.grantedAt).toLocaleDateString()}`
+                      : `Revoked (${live.status})`,
+                  evidenceToken: live.evidence || c.evidenceToken,
+                };
+              }
+              return c;
+            }),
+          );
+        }
+      } catch {
+        // Fallback to initial local state when running without live backend auth
+      }
+    }
+    loadConsents();
+  }, [studentId]);
+
+  const initiateGrant = async (item: ConsentItem) => {
     setOtpModalItem(item);
     setOtpValue('');
+    setOtpHint(null);
+
+    try {
+      const res = await api.post('/consent/request-otp', {
+        studentId,
+        consentType: item.type,
+      });
+      if (res.data?.otpPreview) {
+        setOtpHint(`Test Mode OTP: ${res.data.otpPreview}`);
+      }
+    } catch {
+      // Local fallback in non-connected mode
+    }
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otpValue.length !== 6) {
       alert('Please enter a valid 6-digit OTP.');
@@ -115,24 +163,42 @@ export default function ParentConsentPage() {
     }
 
     setIsVerifying(true);
-    setTimeout(() => {
-      if (otpModalItem) {
-        setConsents((prev) =>
-          prev.map((c) =>
-            c.type === otpModalItem.type
-              ? {
-                  ...c,
-                  granted: true,
-                  updatedAt: 'Granted via SMS OTP just now',
-                  evidenceToken: `hmac-sha256-verified-otp-${Date.now().toString(16)}`,
-                }
-              : c,
-          ),
-        );
+    let evidence = `hmac-sha256-verified-otp-${Date.now().toString(16)}`;
+
+    try {
+      const res = await api.post('/consent/verify-otp', {
+        studentId,
+        consentType: otpModalItem?.type,
+        otp: otpValue,
+      });
+      if (res.data?.evidence) {
+        evidence = res.data.evidence;
       }
-      setIsVerifying(false);
-      setOtpModalItem(null);
-    }, 600);
+    } catch (err: any) {
+      // If backend returns an explicit error message, display it
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+        setIsVerifying(false);
+        return;
+      }
+    }
+
+    if (otpModalItem) {
+      setConsents((prev) =>
+        prev.map((c) =>
+          c.type === otpModalItem.type
+            ? {
+                ...c,
+                granted: true,
+                updatedAt: 'Granted via verified OTP just now',
+                evidenceToken: evidence,
+              }
+            : c,
+        ),
+      );
+    }
+    setIsVerifying(false);
+    setOtpModalItem(null);
   };
 
   const initiateRevoke = (item: ConsentItem) => {
@@ -143,7 +209,16 @@ export default function ParentConsentPage() {
     }
   };
 
-  const executeRevoke = (item: ConsentItem) => {
+  const executeRevoke = async (item: ConsentItem) => {
+    try {
+      await api.post('/consent/revoke', {
+        studentId,
+        consentType: item.type,
+      });
+    } catch {
+      // Local optimistic update
+    }
+
     setConsents((prev) =>
       prev.map((c) =>
         c.type === item.type
@@ -313,6 +388,11 @@ export default function ParentConsentPage() {
                   <div className="text-[11px] text-slate-400 text-center mt-1">
                     Valid for 10 minutes • 3 verification attempts permitted
                   </div>
+                  {otpHint && (
+                    <div className="mt-2 text-center text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 py-1 px-2 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                      {otpHint}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-2">

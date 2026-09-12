@@ -6,6 +6,8 @@ import { AiService } from '../ai/ai.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { BktService } from '../learning-engine/services/bkt.service';
 import { RlDifficultyService } from '../learning-engine/services/rl-difficulty.service';
+import { ConsentService } from '../consent/consent.service';
+import { TelemetryService } from '../telemetry/telemetry.service';
 
 describe('PracticeService', () => {
   let service: PracticeService;
@@ -17,6 +19,9 @@ describe('PracticeService', () => {
         {
           provide: PrismaService,
           useValue: {
+            user: { findUnique: jest.fn() },
+            parentStudent: { findFirst: jest.fn() },
+            consentRecord: { findFirst: jest.fn() },
             topic: { findUnique: jest.fn() },
             practiceSession: {
               create: jest.fn(),
@@ -43,6 +48,14 @@ describe('PracticeService', () => {
         {
           provide: RlDifficultyService,
           useValue: { getOptimalDifficulty: jest.fn().mockResolvedValue(0.5), updateDifficultyState: jest.fn() },
+        },
+        {
+          provide: ConsentService,
+          useValue: { hasConsent: jest.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: TelemetryService,
+          useValue: { emitEvent: jest.fn(), exportCohortTelemetry: jest.fn() },
         },
       ],
     }).compile();

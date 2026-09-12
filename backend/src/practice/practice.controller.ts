@@ -16,7 +16,8 @@ export class PracticeController {
 
   @Post('generate')
   async generateQuiz(@Request() req: any, @Body('topicId') topicId: string) {
-    return this.practiceService.generateQuiz(req.user.userId, topicId);
+    const studentId = req.user.userId || req.user.id;
+    return this.practiceService.generateQuiz(studentId, topicId);
   }
 
   @Post('submit')
@@ -24,15 +25,17 @@ export class PracticeController {
     @Request() req: any,
     @Body() body: { sessionId: string; answers: any[] },
   ) {
+    const studentId = req.user.userId || req.user.id;
     return this.practiceService.submitQuiz(
       body.sessionId,
-      req.user.userId,
+      studentId,
       body.answers,
     );
   }
 
   @Get('tests')
   async getTests(@Request() req: any) {
-    return this.practiceService.getTests(req.user.userId);
+    const studentId = req.user.userId || req.user.id;
+    return this.practiceService.getTests(studentId);
   }
 }

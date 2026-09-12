@@ -154,6 +154,205 @@ async function main() {
         }
     });
     console.log('Created Demo Teacher');
+
+    // =========================================================================
+    // Phase 3 Closed Pilot Cohort: Delhi Public School, R.K. Puram (20 Students)
+    // =========================================================================
+    const pilotParent = await prisma.user.upsert({
+        where: { email: 'parent.dps@test.com' },
+        update: {},
+        create: {
+            email: 'parent.dps@test.com',
+            password: hashedPassword,
+            name: 'Mr. Rajesh Kumar (DPS RKP Parent Delegate)',
+            role: 'PARENT',
+            onboardingComplete: true
+        }
+    });
+    console.log('Created Pilot Parent: Mr. Rajesh Kumar');
+
+    const teacherRitu = await prisma.user.upsert({
+        where: { email: 'ritu.sharma@dpsrkp.edu.in' },
+        update: {},
+        create: {
+            email: 'ritu.sharma@dpsrkp.edu.in',
+            password: hashedPassword,
+            name: 'Mrs. Ritu Sharma',
+            role: 'TEACHER',
+            onboardingComplete: true
+        }
+    });
+
+    const teacherVikram = await prisma.user.upsert({
+        where: { email: 'vikram.seth@dpsrkp.edu.in' },
+        update: {},
+        create: {
+            email: 'vikram.seth@dpsrkp.edu.in',
+            password: hashedPassword,
+            name: 'Mr. Vikram Seth',
+            role: 'TEACHER',
+            onboardingComplete: true
+        }
+    });
+    console.log('Created Pilot Teachers: Mrs. Ritu Sharma & Mr. Vikram Seth');
+
+    // Seed Pilot Classes
+    const class8A = await prisma.teacherClass.upsert({
+        where: { id: 'class-dps-8a' },
+        update: {},
+        create: {
+            id: 'class-dps-8a',
+            name: 'Grade 8-A Mathematics',
+            gradeLevel: 'Grade 8',
+            section: 'A',
+            subject: 'Mathematics',
+            teacherId: teacherRitu.id,
+        }
+    });
+
+    const class8B = await prisma.teacherClass.upsert({
+        where: { id: 'class-dps-8b' },
+        update: {},
+        create: {
+            id: 'class-dps-8b',
+            name: 'Grade 8-B Mathematics',
+            gradeLevel: 'Grade 8',
+            section: 'B',
+            subject: 'Mathematics',
+            teacherId: teacherVikram.id,
+        }
+    });
+    console.log('Created Pilot Classes: Grade 8-A & Grade 8-B');
+
+    // Seed 20 Pilot Cohort Students with Verified DPDP Consents
+    const pilotStudentsData = [
+        ...Array.from({ length: 10 }, (_, i) => ({
+            id: `s-dps-${101 + i}`,
+            email: `student.dps${101 + i}@dpsrkp.edu.in`,
+            name: `DPS Student 8A-${i + 1}`,
+            classId: class8A.id,
+            teacherId: teacherRitu.id,
+            section: '8-A',
+        })),
+        ...Array.from({ length: 10 }, (_, i) => ({
+            id: `s-dps-${201 + i}`,
+            email: `student.dps${201 + i}@dpsrkp.edu.in`,
+            name: `DPS Student 8B-${i + 1}`,
+            classId: class8B.id,
+            teacherId: teacherVikram.id,
+            section: '8-B',
+        })),
+    ];
+
+    for (const s of pilotStudentsData) {
+        const studentUser = await prisma.user.upsert({
+            where: { email: s.email },
+            update: {},
+            create: {
+                id: s.id,
+                email: s.email,
+                password: hashedPassword,
+                name: s.name,
+                role: 'STUDENT',
+                gradeLevel: 'Grade 8',
+                cognitiveLevel: 'TEEN',
+                onboardingComplete: true,
+            }
+        });
+
+        // Link Parent & Student
+        await prisma.parentStudent.upsert({
+            where: { parentId_studentId: { parentId: pilotParent.id, studentId: studentUser.id } },
+            update: {},
+            create: {
+                parentId: pilotParent.id,
+                studentId: studentUser.id,
+                relationship: 'GUARDIAN',
+            }
+        });
+
+        // Enroll in Pilot Class
+        await prisma.teacherClassEnrollment.upsert({
+            where: { classId_studentId: { classId: s.classId, studentId: studentUser.id } },
+            update: {},
+            create: {
+                classId: s.classId,
+                studentId: studentUser.id,
+                status: 'ACTIVE',
+            }
+        });
+
+        // Grant DPDP Act 2023 Verified Parental Consents
+        const consentTypes = ['LEARNING_SERVICE', 'AI_ASSISTANCE', 'PERSONALIZATION', 'PARENT_PROGRESS_VISIBILITY'];
+        for (const cType of consentTypes) {
+            await prisma.consentRecord.upsert({
+                where: {
+                    parentId_studentId_consentType: {
+                        parentId: pilotParent.id,
+                        studentId: studentUser.id,
+                        consentType: cType,
+                    }
+                },
+                update: {},
+                create: {
+                    parentId: pilotParent.id,
+                    studentId: studentUser.id,
+                    consentType: cType,
+                    status: 'GRANTED',
+                    version: '1.0.0',
+                    grantedAt: new Date(),
+                    evidence: `hmac-sha256-dps-rkp-${s.id}-${cType.toLowerCase()}-verified-dpdp`,
+                }
+            });
+        }
+    }
+    console.log(`Seeded 20 pilot students with DPDP parent consents and class enrollments.`);
+
+    // Seed 1 Unconsented Control Student for fail-closed verification
+    const unconsentedStudent = await prisma.user.upsert({
+        where: { email: 'student.unconsented@dpsrkp.edu.in' },
+        update: {},
+        create: {
+            id: 's-dps-unconsented',
+            email: 'student.unconsented@dpsrkp.edu.in',
+            password: hashedPassword,
+            name: 'Unconsented Control Student',
+            role: 'STUDENT',
+            gradeLevel: 'Grade 8',
+            cognitiveLevel: 'TEEN',
+            onboardingComplete: true,
+        }
+    });
+
+    await prisma.parentStudent.upsert({
+        where: { parentId_studentId: { parentId: pilotParent.id, studentId: unconsentedStudent.id } },
+        update: {},
+        create: {
+            parentId: pilotParent.id,
+            studentId: unconsentedStudent.id,
+            relationship: 'GUARDIAN',
+        }
+    });
+
+    await prisma.consentRecord.upsert({
+        where: {
+            parentId_studentId_consentType: {
+                parentId: pilotParent.id,
+                studentId: unconsentedStudent.id,
+                consentType: 'LEARNING_SERVICE',
+            }
+        },
+        update: { status: 'REVOKED', revokedAt: new Date() },
+        create: {
+            parentId: pilotParent.id,
+            studentId: unconsentedStudent.id,
+            consentType: 'LEARNING_SERVICE',
+            status: 'REVOKED',
+            version: '1.0.0',
+            revokedAt: new Date(),
+        }
+    });
+    console.log('Seeded Unconsented Control Student (REVOKED consent)');
 }
 
 main()

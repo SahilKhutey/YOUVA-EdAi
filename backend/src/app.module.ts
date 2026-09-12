@@ -62,6 +62,7 @@ import { LearningOperationsModule } from './learning-operations/learning-operati
 import { AutonomousLearningModule } from './autonomous-learning/autonomous-learning.module';
 import { CredentialNetworkModule } from './credential-network/credential-network.module';
 import { InteroperabilityModule } from './interoperability/p16.module';
+import { TelemetryModule } from './telemetry/telemetry.module';
 
 
 
@@ -127,6 +128,7 @@ import { InteroperabilityModule } from './interoperability/p16.module';
     AutonomousLearningModule,
     CredentialNetworkModule,
     InteroperabilityModule,
+    TelemetryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

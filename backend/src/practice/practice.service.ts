@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { BktService } from '../learning-engine/services/bkt.service';
 import { RlDifficultyService } from '../learning-engine/services/rl-difficulty.service';
+import { ConsentService } from '../consent/consent.service';
+import { ConsentType } from '../consent/consent.constants';
+import { TelemetryService } from '../telemetry/telemetry.service';
+import { TelemetryEventType } from '../telemetry/telemetry.constants';
 
 @Injectable()
 export class PracticeService {
@@ -13,9 +17,49 @@ export class PracticeService {
     private gamificationService: GamificationService,
     private bktService: BktService,
     private rlDifficultyService: RlDifficultyService,
+    private consentService: ConsentService,
+    private telemetryService: TelemetryService,
   ) { }
 
   async generateQuiz(userId: string, topicId: string) {
+    // DPDP Act 2023 §9 Statutory Child Consent Gate
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true },
+    });
+
+    if (user && user.role === 'STUDENT') {
+      // 1. Explicit Revocation Check
+      const revokedConsent = await this.prisma.consentRecord.findFirst({
+        where: {
+          studentId: userId,
+          consentType: ConsentType.LEARNING_SERVICE,
+          status: 'REVOKED',
+        },
+      });
+      if (revokedConsent) {
+        throw new ForbiddenException(
+          'DPDPNonCompliance: Verifiable parental consent (LEARNING_SERVICE) is mandatory before generating practice sessions.',
+        );
+      }
+
+      // 2. Child with parent relationship must have active, unrevoked consent
+      const hasParentLink = await this.prisma.parentStudent.findFirst({
+        where: { studentId: userId },
+      });
+      if (hasParentLink) {
+        const hasActiveConsent = await this.consentService.hasConsent(
+          userId,
+          ConsentType.LEARNING_SERVICE,
+        );
+        if (!hasActiveConsent) {
+          throw new ForbiddenException(
+            'DPDPNonCompliance: Verifiable parental consent (LEARNING_SERVICE) is mandatory before generating practice sessions.',
+          );
+        }
+      }
+    }
+
     const topic = await this.prisma.topic.findUnique({
       where: { id: topicId },
     });
@@ -49,6 +93,18 @@ export class PracticeService {
           Math.abs(b.difficulty - targetDifficulty),
       );
       const selected = sorted.slice(0, Math.min(5, sorted.length));
+
+      this.telemetryService.emitEvent({
+        eventType: TelemetryEventType.PRACTICE_ITEM_PRESENTED,
+        sessionId: session.id,
+        studentId: userId,
+        payload: {
+          topicId,
+          itemCount: selected.length,
+          targetDifficulty,
+        },
+      });
+
       return {
         sessionId: session.id,
         questions: selected.map((q) => ({
@@ -109,6 +165,17 @@ export class PracticeService {
         options: question.options ? JSON.parse(question.options) : [], // Handle null options
       });
     }
+
+    this.telemetryService.emitEvent({
+      eventType: TelemetryEventType.PRACTICE_ITEM_PRESENTED,
+      sessionId: session.id,
+      studentId: userId,
+      payload: {
+        topicId,
+        itemCount: questions.length,
+        targetDifficulty,
+      },
+    });
 
     return { sessionId: session.id, questions };
   }
@@ -192,6 +259,18 @@ export class PracticeService {
         explanation: question.explanation,
       });
 
+      // Privacy-preserving telemetry event per question answered
+      this.telemetryService.emitEvent({
+        eventType: TelemetryEventType.PRACTICE_ITEM_ANSWERED,
+        sessionId,
+        studentId: userId,
+        payload: {
+          questionId: ans.questionId,
+          isCorrect,
+          difficulty: question.difficulty,
+        },
+      });
+
       // Real-time ACLE Updates per question
       finalMastery = await this.bktService.updateMastery(userId, session.topicId, isCorrect);
       await this.rlDifficultyService.updateDifficultyState(
@@ -214,6 +293,20 @@ export class PracticeService {
     await this.gamificationService.updateStreak(userId);
 
     const masteryDelta = Number((finalMastery - initialMastery).toFixed(3));
+
+    // Telemetry event for session completion
+    this.telemetryService.emitEvent({
+      eventType: TelemetryEventType.SESSION_COMPLETED,
+      sessionId,
+      studentId: userId,
+      payload: {
+        score,
+        correctCount,
+        total: answers.length,
+        masteryDelta,
+        finalMastery,
+      },
+    });
 
     return {
       score,
