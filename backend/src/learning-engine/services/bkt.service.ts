@@ -25,16 +25,18 @@ export class BktService {
     userId: string,
     topicId: string,
     isCorrect: boolean,
+    tx?: any,
   ): Promise<number> {
+    const client = tx || this.prisma;
     try {
       // 1. Fetch current mastery state
-      let masteryRecord = await this.prisma.userTopicMastery.findUnique({
+      let masteryRecord = await client.userTopicMastery.findUnique({
         where: { userId_topicId: { userId, topicId } },
       });
 
       if (!masteryRecord) {
         // If no prior record, initialize with default low probability and default difficulty
-        masteryRecord = await this.prisma.userTopicMastery.create({
+        masteryRecord = await client.userTopicMastery.create({
           data: {
             userId,
             topicId,
@@ -70,7 +72,7 @@ export class BktService {
       pLn = Math.max(0.001, Math.min(0.999, pLn));
 
       // 3. Persist new mastery
-      await this.prisma.userTopicMastery.update({
+      await client.userTopicMastery.update({
         where: { id: masteryRecord.id },
         data: {
           masteryProbability: pLn,

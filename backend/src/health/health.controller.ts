@@ -11,9 +11,21 @@ export class HealthController {
     return this.healthService.liveness();
   }
 
+  @Get('liveness')
+  @HttpCode(HttpStatus.OK)
+  liveness() {
+    return this.healthService.liveness();
+  }
+
   @Get('ready')
   @HttpCode(HttpStatus.OK)
   async ready() {
+    return this.healthService.readiness();
+  }
+
+  @Get('readiness')
+  @HttpCode(HttpStatus.OK)
+  async readiness() {
     return this.healthService.readiness();
   }
 }

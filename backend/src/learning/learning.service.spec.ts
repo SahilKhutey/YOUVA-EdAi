@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LearningService } from './learning.service';
 import { AiService } from '../ai/ai.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { GamificationService } from '../gamification/gamification.service';
 
 describe('LearningService', () => {
   let service: LearningService;
@@ -13,6 +14,13 @@ describe('LearningService', () => {
         {
           provide: AiService,
           useValue: { generateText: jest.fn() },
+        },
+        {
+          provide: GamificationService,
+          useValue: {
+            addXp: jest.fn(),
+            updateStreak: jest.fn(),
+          },
         },
         {
           provide: PrismaService,

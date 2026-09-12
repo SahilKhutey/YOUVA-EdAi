@@ -26,6 +26,10 @@ export class HealthService {
     return {
       status: dbHealth.status === 'up' ? 'ready' : 'not_ready',
       database: dbHealth,
+      system: {
+        uptimeSeconds: Math.round(process.uptime()),
+        memoryUsageMb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      },
       timestamp: new Date().toISOString(),
     };
   }

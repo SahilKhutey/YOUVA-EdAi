@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LearningController } from './learning.controller';
 
 import { LearningService } from './learning.service';
+import { LearningTransactionService } from './services/learning-transaction.service';
 
 describe('LearningController', () => {
   let controller: LearningController;
@@ -16,6 +17,17 @@ describe('LearningController', () => {
             startSession: jest.fn(),
             continueSession: jest.fn(),
             endSession: jest.fn(),
+          },
+        },
+        {
+          provide: LearningTransactionService,
+          useValue: {
+            createSession: jest.fn(),
+            getSession: jest.fn(),
+            processDiagnostic: jest.fn(),
+            processAttempt: jest.fn(),
+            getNextActivity: jest.fn(),
+            getSessionProgress: jest.fn(),
           },
         },
       ],

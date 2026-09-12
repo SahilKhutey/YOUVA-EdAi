@@ -26,14 +26,16 @@ export class RlDifficultyService {
     topicId: string,
     isCorrect: boolean,
     currentQuestionDifficulty: number,
+    tx?: any,
   ): Promise<number> {
+    const client = tx || this.prisma;
     try {
-      let masteryRecord = await this.prisma.userTopicMastery.findUnique({
+      let masteryRecord = await client.userTopicMastery.findUnique({
         where: { userId_topicId: { userId, topicId } },
       });
 
       if (!masteryRecord) {
-        masteryRecord = await this.prisma.userTopicMastery.create({
+        masteryRecord = await client.userTopicMastery.create({
           data: {
             userId,
             topicId,
@@ -65,7 +67,7 @@ export class RlDifficultyService {
       nextState = Math.max(0.1, Math.min(1.0, nextState));
 
       // Persist new state
-      await this.prisma.userTopicMastery.update({
+      await client.userTopicMastery.update({
         where: { id: masteryRecord.id },
         data: {
           difficultyState: nextState,
@@ -89,8 +91,9 @@ export class RlDifficultyService {
   /**
    * Predicts and retrieves the optimal difficulty layer for the next question.
    */
-  async getOptimalDifficulty(userId: string, topicId: string): Promise<number> {
-    const record = await this.prisma.userTopicMastery.findUnique({
+  async getOptimalDifficulty(userId: string, topicId: string, tx?: any): Promise<number> {
+    const client = tx || this.prisma;
+    const record = await client.userTopicMastery.findUnique({
       where: { userId_topicId: { userId, topicId } },
     });
 

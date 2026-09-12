@@ -11,9 +11,10 @@ export class LearningLoopAuditService {
   /**
    * Appends an immutable audit entry to the audit log.
    */
-  async logAction(entry: AuditLogEntry): Promise<any> {
+  async logAction(entry: AuditLogEntry, tx?: any): Promise<any> {
+    const client = tx || this.prisma;
     try {
-      const record = await this.prisma.learningLoopAuditLog.create({
+      const record = await client.learningLoopAuditLog.create({
         data: {
           userId: entry.userId,
           actorType: entry.actorType,
