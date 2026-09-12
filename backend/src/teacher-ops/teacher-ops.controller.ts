@@ -27,6 +27,7 @@ import { OverrideRecommendationDto } from './dto/override-recommendation.dto';
 import { CreateClassDto } from './dto/create-class.dto';
 import { EnrollStudentDto } from './dto/enroll-student.dto';
 import { AssignContentDto } from './dto/assign-content.dto';
+import { ActorType } from '../learning-loop/domain/enums';
 
 @Controller('teacher')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -85,7 +86,16 @@ export class TeacherOpsController {
     @Param('id') interventionId: string,
     @Body() dto: ResolveInterventionDto,
   ) {
-    return this.interventionService.resolveIntervention(req.user.id, interventionId, dto);
+    const actorType =
+      req.user?.actorType === ActorType.AI || req.user?.role === 'AI' || req.user?.role === 'BOT'
+        ? ActorType.AI
+        : ActorType.TEACHER;
+    return this.interventionService.resolveIntervention(
+      req.user.id,
+      interventionId,
+      dto,
+      actorType,
+    );
   }
 
   /**

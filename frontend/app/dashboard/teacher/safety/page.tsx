@@ -52,10 +52,14 @@ export default function TeacherSafetyDashboard() {
   const [rationale, setRationale] = useState('');
   const [signature, setSignature] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterSeverity, setFilterSeverity] = useState('ALL');
 
   const fetchIncidents = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const res = await api.get('/safety/incidents');
       if (res.data && Array.isArray(res.data)) {
@@ -78,8 +82,10 @@ export default function TeacherSafetyDashboard() {
         }));
         setIncidents(mapped);
       }
-    } catch {
-      // Empty fallback
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Unable to load pastoral safety incident queue.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -232,9 +238,28 @@ export default function TeacherSafetyDashboard() {
           </div>
         </div>
 
-        {/* Incident List */}
+        {/* Incident List (4-State Screen Pattern) */}
         <div className="space-y-4">
-          {filteredIncidents.length === 0 ? (
+          {loading ? (
+            <div className="space-y-4 animate-pulse">
+              <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+              <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl p-6 space-y-3">
+              <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
+              <div>
+                <h3 className="font-bold text-sm text-rose-800 dark:text-rose-200">{error}</h3>
+                <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">Please verify your educator credentials or school network connection.</p>
+              </div>
+              <button
+                onClick={fetchIncidents}
+                className="px-4 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition shadow-sm"
+              >
+                Retry Request
+              </button>
+            </div>
+          ) : filteredIncidents.length === 0 ? (
             <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8">
               <ShieldCheck className="w-12 h-12 text-emerald-500 mx-auto mb-3 opacity-90" />
               <h3 className="font-bold text-base text-slate-800 dark:text-slate-200">No Active Safety Incidents</h3>

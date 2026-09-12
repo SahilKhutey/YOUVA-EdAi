@@ -7,6 +7,9 @@ import {
   LlmGenerationOptions,
   LlmGenerationResult,
   ProviderTier,
+  StructuredGenerationResult,
+  ProviderHealthStatus,
+  ModerationCheckResult,
 } from './interfaces/llm-provider.interface';
 
 @Injectable()
@@ -133,6 +136,109 @@ export class AiService {
 
     const fullPrompt = `${systemPrompt}\nStudent: ${userMessage}\nTutor:`;
     return this.generateText(fullPrompt);
+  }
+
+  /**
+   * Evaluates prompt against basic safety and pedagogical boundary standards.
+   */
+  moderatePrompt(prompt: string): ModerationCheckResult {
+    const lower = prompt.toLowerCase();
+    const selfHarmMarkers = ['kill myself', 'suicide', 'end my life', 'cut myself', 'want to die'];
+    for (const marker of selfHarmMarkers) {
+      if (lower.includes(marker)) {
+        return {
+          passed: false,
+          flaggedCategory: 'SELF_HARM',
+          reason: 'Prompt contains severe distress markers requiring pastoral intervention.',
+        };
+      }
+    }
+
+    const jailbreakMarkers = ['ignore all previous instructions', 'bypass system prompt', 'dan mode'];
+    for (const jb of jailbreakMarkers) {
+      if (lower.includes(jb)) {
+        return {
+          passed: false,
+          flaggedCategory: 'PROMPT_INJECTION',
+          reason: 'Prompt contains unauthorized system instruction override attempt.',
+        };
+      }
+    }
+
+    return { passed: true };
+  }
+
+  /**
+   * Generates strongly-typed structured output adhering to schema guidelines with fallback.
+   */
+  async generateStructured<T>(
+    prompt: string,
+    schemaInstruction: string,
+    fallbackFactory?: () => T,
+    options?: LlmGenerationOptions,
+  ): Promise<StructuredGenerationResult<T>> {
+    // 1. Run safety moderation check
+    const mod = this.moderatePrompt(prompt);
+    if (!mod.passed) {
+      throw new Error(`SafetyModerationViolation: ${mod.reason}`);
+    }
+
+    const fullPrompt = `${prompt}\n\nSchema Requirements:\n${schemaInstruction}\nReturn raw JSON only without markdown formatting.`;
+    const result = await this.generateTextWithFallback(fullPrompt, options);
+
+    try {
+      const cleaned = result.text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleaned) as T;
+      return {
+        data: parsed,
+        provider: result.provider,
+        fallbackUsed: result.fallbackUsed,
+        timestamp: result.timestamp,
+        rawText: result.text,
+      };
+    } catch (parseError) {
+      this.logger.warn(`Failed to parse structured JSON from provider ${result.provider}: ${parseError.message}`);
+      if (fallbackFactory) {
+        return {
+          data: fallbackFactory(),
+          provider: ProviderTier.DETERMINISTIC_CACHE,
+          fallbackUsed: true,
+          timestamp: new Date().toISOString(),
+          rawText: result.text,
+        };
+      }
+      throw new Error(`StructuredGenerationParseError: Could not parse output into expected schema.`);
+    }
+  }
+
+  /**
+   * Detailed health diagnostics with latency measurement for all provider tiers.
+   */
+  async getDetailedProviderHealth(): Promise<ProviderHealthStatus[]> {
+    const statuses: ProviderHealthStatus[] = [];
+    for (const provider of this.providers) {
+      const start = Date.now();
+      let available = false;
+      try {
+        available = await provider.isAvailable();
+      } catch {
+        available = false;
+      }
+      const latencyMs = Date.now() - start;
+
+      let status: 'HEALTHY' | 'DEGRADED' | 'OFFLINE' = 'OFFLINE';
+      if (available) {
+        status = latencyMs > 2000 ? 'DEGRADED' : 'HEALTHY';
+      }
+
+      statuses.push({
+        tier: provider.tier,
+        available,
+        status,
+        latencyMs,
+      });
+    }
+    return statuses;
   }
 
   /**

@@ -33,20 +33,24 @@ interface ChildSummary {
 export default function ParentDashboardPage() {
   const [children, setChildren] = useState<ChildSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchChildren = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get('/parent/children');
+      if (res.data && Array.isArray(res.data)) {
+        setChildren(res.data);
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Unable to retrieve linked children profiles.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchChildren = async () => {
-      try {
-        const res = await api.get('/parent/children');
-        if (res.data && Array.isArray(res.data)) {
-          setChildren(res.data);
-        }
-      } catch {
-        // Safe fallback
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchChildren();
   }, []);
 
@@ -101,6 +105,18 @@ export default function ParentDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
               <div className="h-48 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
               <div className="h-48 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+            </div>
+          ) : error ? (
+            <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl p-8 text-center space-y-3">
+              <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
+              <h3 className="text-sm font-bold text-rose-800 dark:text-rose-200">{error}</h3>
+              <p className="text-xs text-rose-600 dark:text-rose-400">Please verify network connectivity or log in again.</p>
+              <button
+                onClick={fetchChildren}
+                className="px-4 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition"
+              >
+                Retry Request
+              </button>
             </div>
           ) : children.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-16 text-center space-y-4">
