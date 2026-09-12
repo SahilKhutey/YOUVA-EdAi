@@ -84,4 +84,102 @@ describe('P5 Security & Environment Validation', () => {
       await expect(guard.canActivate(mockContext)).rejects.toThrow(BadRequestException);
     });
   });
+
+  describe('ProductionExceptionFilter Invariants', () => {
+    let filter: any;
+    let mockResponse: any;
+    let mockArgumentsHost: any;
+
+    beforeEach(async () => {
+      const { ProductionExceptionFilter } = await import(
+        './filters/production-exception.filter'
+      );
+      filter = new ProductionExceptionFilter();
+
+      mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      };
+
+      mockArgumentsHost = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            method: 'POST',
+            originalUrl: '/api/learning/evaluate',
+            requestId: 'req-prod-sec-test-01',
+          }),
+          getResponse: () => mockResponse,
+        }),
+      };
+    });
+
+    it('✓ masks unhandled internal errors (500) and does not leak stack trace or internal details', () => {
+      const sensitiveInternalError = new Error('DATABASE CONNECTION FAILED: postgresql://admin:secret@internal-db:5432');
+
+      filter.catch(sensitiveInternalError, mockArgumentsHost);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: 500,
+          message: 'Internal server error',
+          requestId: 'req-prod-sec-test-01',
+        }),
+      );
+      // Ensure raw database string was NOT leaked in JSON response
+      const sentPayload = mockResponse.json.mock.calls[0][0];
+      expect(JSON.stringify(sentPayload)).not.toContain('postgresql://admin:secret');
+    });
+
+    it('✓ preserves structured 4xx client errors without censorship', async () => {
+      const { NotFoundException } = await import('@nestjs/common');
+      const clientError = new NotFoundException('Topic not found in grade curriculum');
+
+      filter.catch(clientError, mockArgumentsHost);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: 404,
+          message: 'Topic not found in grade curriculum',
+          requestId: 'req-prod-sec-test-01',
+        }),
+      );
+    });
+  });
+
+  describe('TieredRateLimitGuard Invariants', () => {
+    let guard: any;
+
+    beforeEach(async () => {
+      const { TieredRateLimitGuard } = await import(
+        './guards/rate-limit.guard'
+      );
+      guard = new TieredRateLimitGuard();
+    });
+
+    it('✓ allows requests within limits and throttles upon exceeding threshold', () => {
+      const mockContext = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            originalUrl: '/api/auth/login',
+            ip: '192.168.1.50',
+            headers: {},
+          }),
+        }),
+      } as any;
+
+      // Auth route allows up to 10 requests
+      for (let i = 0; i < 10; i++) {
+        expect(guard.canActivate(mockContext)).toBe(true);
+      }
+
+      // 11th request must throw 429 Too Many Requests
+      expect(() => guard.canActivate(mockContext)).toThrow(
+        expect.objectContaining({
+          status: 429,
+        }),
+      );
+    });
+  });
 });
