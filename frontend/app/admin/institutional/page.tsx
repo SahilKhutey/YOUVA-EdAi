@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ShieldCheck } from 'lucide-react';
 
 interface JurisdictionStatus {
   id: string;
@@ -86,30 +87,7 @@ export default function InstitutionalTrustTerminal() {
   ]);
 
   // Credentials State
-  const [credentials, setCredentials] = useState<CredentialSummary[]>([
-    {
-      id: 'urn:uuid:7f3b8c2a-9e1d-4f6b-8a2c-1d3e5f7a9b0c',
-      competencyCode: 'MATH-G8-ALG-01',
-      studentTokenHash: 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
-      masteryScore: 0.92,
-      teacherName: 'Pooja Verma, TGT Mathematics',
-      teacherDecision: 'APPROVED',
-      speedrunItemsDetected: 0,
-      zeroPiiVerified: true,
-      status: 'ISSUED',
-    },
-    {
-      id: 'urn:uuid:3b99c112-44df-419a-9e32-000188bcdef2',
-      competencyCode: 'SCI-G8-PHYS-02',
-      studentTokenHash: 'c4ca4238a0b923820dcc509a6f75849b2827df61a9796013a7c66a87756f6c91',
-      masteryScore: 0.88,
-      teacherName: 'Sunil Mehta, PGT Physics',
-      teacherDecision: 'APPROVED',
-      speedrunItemsDetected: 1,
-      zeroPiiVerified: true,
-      status: 'ISSUED',
-    },
-  ]);
+  const [credentials, setCredentials] = useState<CredentialSummary[]>([]);
 
   // District Aggregates State
   const [districtCohorts] = useState<DistrictCohort[]>([
@@ -397,46 +375,56 @@ export default function InstitutionalTrustTerminal() {
                   <span>Speedrun Threshold: &lt; 8.0s</span>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs font-mono">
-                  <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
-                    <tr>
-                      <th className="p-3">Credential ID</th>
-                      <th className="p-3">Competency</th>
-                      <th className="p-3">Mastery Score</th>
-                      <th className="p-3">Zero-PII Token Hash</th>
-                      <th className="p-3">Authorizing Teacher</th>
-                      <th className="p-3">Speedrun Anomaly</th>
-                      <th className="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {credentials.map((c) => (
-                      <tr key={c.id} className="hover:bg-slate-800/30 transition">
-                        <td className="p-3 text-indigo-400 truncate max-w-[180px]">{c.id}</td>
-                        <td className="p-3 font-semibold text-slate-200">{c.competencyCode}</td>
-                        <td className="p-3 font-bold text-emerald-400">{(c.masteryScore * 100).toFixed(1)}%</td>
-                        <td className="p-3 text-slate-400 truncate max-w-[160px]">{c.studentTokenHash}</td>
-                        <td className="p-3 text-slate-300">{c.teacherName}</td>
-                        <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-2xs font-semibold ${
-                            c.speedrunItemsDetected === 0
-                              ? 'bg-emerald-950 text-emerald-400'
-                              : 'bg-amber-950 text-amber-400'
-                          }`}>
-                            {c.speedrunItemsDetected} items &lt; 8s
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span className="px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded text-2xs font-semibold">
-                            {c.status}
-                          </span>
-                        </td>
+              {credentials.length === 0 ? (
+                <div className="text-center py-12 border border-dashed border-slate-800 rounded-lg p-6 my-2">
+                  <ShieldCheck className="w-10 h-10 text-slate-500 mx-auto mb-2 opacity-80" />
+                  <h3 className="font-semibold text-sm text-slate-300">No Credentials Minted in Current Window</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto font-sans">
+                    All learner competency mastery assessments will appear here once verified by authorized teachers and minted with cryptographic token hashes.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                      <tr>
+                        <th className="p-3">Credential ID</th>
+                        <th className="p-3">Competency</th>
+                        <th className="p-3">Mastery Score</th>
+                        <th className="p-3">Zero-PII Token Hash</th>
+                        <th className="p-3">Authorizing Teacher</th>
+                        <th className="p-3">Speedrun Anomaly</th>
+                        <th className="p-3">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {credentials.map((c) => (
+                        <tr key={c.id} className="hover:bg-slate-800/30 transition">
+                          <td className="p-3 text-indigo-400 truncate max-w-[180px]">{c.id}</td>
+                          <td className="p-3 font-semibold text-slate-200">{c.competencyCode}</td>
+                          <td className="p-3 font-bold text-emerald-400">{(c.masteryScore * 100).toFixed(1)}%</td>
+                          <td className="p-3 text-slate-400 truncate max-w-[160px]">{c.studentTokenHash}</td>
+                          <td className="p-3 text-slate-300">{c.teacherName}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded text-2xs font-semibold ${
+                              c.speedrunItemsDetected === 0
+                                ? 'bg-emerald-950 text-emerald-400'
+                                : 'bg-amber-950 text-amber-400'
+                            }`}>
+                              {c.speedrunItemsDetected} items &lt; 8s
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded text-2xs font-semibold">
+                              {c.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}

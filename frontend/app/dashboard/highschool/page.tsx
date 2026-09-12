@@ -47,19 +47,7 @@ export default function HighSchoolDashboardPage() {
   const studentDid = "did:youva:student:a1b2c3d4e5f67890";
   const pilotSchool = "Delhi Public School, Sector XII, R.K. Puram";
 
-  const credentials: CredentialBadge[] = [
-    {
-      id: "urn:uuid:7c9e6679-7425-40de-944b-e07fc1f90ae7",
-      title: "Class 10 Quadratic Equations Mastery",
-      competencyCode: "MATH-G10-QUAD-01",
-      masteryPercentage: 89.2,
-      authorizedBy: "Dr. Anita Deshmukh",
-      authorizedRole: "Senior Mathematics Faculty",
-      verificationHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      issuedAt: "2026-08-30T10:00:00Z",
-      standards: "W3C VC 2.0 / Open Badges 3.0",
-    },
-  ];
+  const [credentials, setCredentials] = useState<CredentialBadge[]>([]);
 
   const concepts: ConceptNode[] = [
     { id: "c1", title: "Standard Quadratic Form ax² + bx + c = 0", status: "MASTERED", masteryScore: 0.98, prerequisitesMet: true },
@@ -161,7 +149,7 @@ export default function HighSchoolDashboardPage() {
               <span className="text-xs font-medium uppercase tracking-wider">W3C Micro-Credentials</span>
               <Award className="w-4 h-4 text-primary" />
             </div>
-            <div className="text-2xl font-bold text-foreground">1 <span className="text-sm font-normal text-muted-foreground">Active</span></div>
+            <div className="text-2xl font-bold text-foreground">{credentials.length} <span className="text-sm font-normal text-muted-foreground">Active</span></div>
             <p className="text-xs text-muted-foreground mt-1">Human faculty signed &amp; verified</p>
           </div>
         </div>
@@ -238,60 +226,66 @@ export default function HighSchoolDashboardPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {credentials.map((cred) => (
-                <div key={cred.id} className="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                        <Award className="w-6 h-6" />
+            {credentials.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-border rounded-xl p-6 text-muted-foreground bg-card">
+                <Award className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-60" />
+                <p className="text-sm font-semibold text-foreground">No Verifiable Credentials Issued Yet</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Attain &gt;85% BKT mastery with confirmed human faculty sign-off to mint tamper-evident W3C micro-credentials.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {credentials.map((cred) => (
+                  <div key={cred.id} className="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                          <Award className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-foreground text-base">{cred.title}</h3>
+                          <p className="text-xs text-muted-foreground font-mono">{cred.competencyCode}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-foreground text-base">{cred.title}</h3>
-                        <p className="text-xs text-muted-foreground font-mono">{cred.competencyCode}</p>
+                      <span className="text-xs font-mono font-semibold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-foreground">
+                        {cred.standards}
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-muted/50 text-xs space-y-2 font-mono">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Certified BKT Mastery:</span>
+                        <span className="font-semibold text-emerald-600">{cred.masteryPercentage}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Authorizing Faculty:</span>
+                        <span className="font-medium text-foreground">{cred.authorizedBy} ({cred.authorizedRole})</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Verification Hash:</span>
+                        <span className="text-muted-foreground truncate max-w-[200px]">{cred.verificationHash}</span>
                       </div>
                     </div>
-                    <span className="text-xs font-mono font-semibold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-foreground">
-                      {cred.standards}
-                    </span>
-                  </div>
 
-                  <div className="p-4 rounded-xl bg-muted/50 text-xs space-y-2 font-mono">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Certified BKT Mastery:</span>
-                      <span className="font-semibold text-emerald-600">{cred.masteryPercentage}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Authorizing Faculty:</span>
-                      <span className="font-medium text-foreground">{cred.authorizedBy} ({cred.authorizedRole})</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Verification Token Hash:</span>
-                      <span className="truncate max-w-[200px] text-muted-foreground">{cred.verificationHash}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Issuance Timestamp:</span>
-                      <span className="text-foreground">{new Date(cred.issuedAt).toLocaleDateString()}</span>
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-xs text-muted-foreground">
+                        Issued: {new Date(cred.issuedAt).toLocaleDateString()}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setSelectedCredential(cred);
+                          setShowQrModal(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        <QrCode className="w-3.5 h-3.5" /> Export Verifiable QR
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                      <ShieldCheck className="w-4 h-4" /> Zero-PII Invariant Enforced
-                    </span>
-                    <button
-                      onClick={() => {
-                        setSelectedCredential(cred);
-                        setShowQrModal(true);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                    >
-                      <QrCode className="w-3.5 h-3.5" /> Export Verifiable QR
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

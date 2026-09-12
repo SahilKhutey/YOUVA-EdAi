@@ -20,13 +20,9 @@ export default function WorkspacePage() {
   const [mode, setMode] = useState<"input" | "output">("input");
 
   // Global Workspace State
-  const [topic, setTopic] = useState<string>("Introduction to React");
-  const [videoUrl, setVideoUrl] = useState<string>(
-    "https://www.youtube.com/watch?v=SqcY0GlETPk",
-  );
-  const [explanation, setExplanation] = useState<string>(
-    "Welcome to the workspace! Ask a question below to get started.",
-  );
+  const [topic, setTopic] = useState<string>("");
+  const [videoUrl, setVideoUrl] = useState<string>("");
+  const [explanation, setExplanation] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleSearch = async (query: string) => {
@@ -166,9 +162,13 @@ export default function WorkspacePage() {
                       Smart Board Recap
                     </h3>
                     <div className="space-y-4 text-muted-foreground whitespace-pre-wrap">
-                      {" "}
-                      {/* whitespace-pre-wrap ensures formatting is preserved */}
-                      <p>{explanation}</p>
+                      {explanation ? (
+                        <p>{explanation}</p>
+                      ) : (
+                        <p className="text-sm text-slate-400 italic">
+                          No notes generated yet. Run a session or ask a question in Input Mode to populate recaps.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

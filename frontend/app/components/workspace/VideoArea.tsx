@@ -39,7 +39,7 @@ export default function VideoArea({
           </div>
         )}
 
-        {hasMounted && (
+        {hasMounted && videoUrl ? (
           <div className="w-full h-full">
             {/* @ts-ignore */}
             <ReactPlayer
@@ -51,7 +51,17 @@ export default function VideoArea({
               playing={false}
             />
           </div>
-        )}
+        ) : hasMounted ? (
+          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-slate-900 text-slate-400">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
+              <Sparkles className="w-6 h-6 text-primary" />
+            </div>
+            <p className="text-sm font-semibold text-white">Interactive Video Studio</p>
+            <p className="text-xs text-slate-400 mt-1 max-w-xs">
+              Search a concept or upload study material below to stream AI-curated lesson walkthroughs.
+            </p>
+          </div>
+        ) : null}
 
         {/* Bookmark Button (Top Right Absolute) */}
         <button className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors text-primary z-10">
@@ -68,7 +78,7 @@ export default function VideoArea({
       {/* Controls / Metadata */}
       <div className="h-16 px-4 flex items-center justify-between border-t border-border bg-white z-20">
         <div className="text-sm font-medium text-foreground truncate max-w-[70%]">
-          Topic: {topic}
+          Topic: {topic || "No Topic Selected"}
         </div>
         <div className="flex items-center gap-2">
           <button className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted">

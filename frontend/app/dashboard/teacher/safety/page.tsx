@@ -46,56 +46,7 @@ interface SafetyIncidentItem {
 
 export default function TeacherSafetyDashboard() {
   const { user } = useAuth();
-  const [incidents, setIncidents] = useState<SafetyIncidentItem[]>([
-    {
-      id: 'inc-948f21',
-      studentId: 's-delhi-001',
-      studentName: 'Aarav Sharma',
-      grade: 'Grade 8-A',
-      category: 'SELF_HARM',
-      severity: 'CRITICAL',
-      status: 'ESCALATED',
-      summary: "Trigger phrase detected in practice reflection: 'I feel so hopeless and want to cut myself'",
-      source: 'AI_INTERACTION_MONITOR',
-      createdAt: '12 minutes ago',
-      dispatchChannels: [
-        { channel: 'SMS', status: 'DELIVERED', recipientRole: 'SAFEGUARDING_OFFICER' },
-        { channel: 'EMAIL', status: 'DELIVERED', recipientRole: 'COUNSELOR' },
-        { channel: 'IN_APP_WEBHOOK', status: 'DELIVERED', recipientRole: 'TEACHER' },
-      ],
-    },
-    {
-      id: 'inc-881b40',
-      studentId: 's-delhi-014',
-      studentName: 'Rohan Gupta',
-      grade: 'Grade 8-B',
-      category: 'CYBERBULLYING',
-      severity: 'HIGH',
-      status: 'ESCALATED',
-      summary: "Peer harassment reported during collaborative board: repeated derogatory remarks",
-      source: 'STUDENT_REPORT',
-      createdAt: '45 minutes ago',
-      dispatchChannels: [
-        { channel: 'SMS', status: 'DELIVERED', recipientRole: 'SAFEGUARDING_OFFICER' },
-        { channel: 'EMAIL', status: 'DELIVERED', recipientRole: 'COUNSELOR' },
-      ],
-    },
-    {
-      id: 'inc-763a12',
-      studentId: 's-delhi-022',
-      studentName: 'Ananya Iyer',
-      grade: 'Grade 8-A',
-      category: 'EXTREME_DISTRESS',
-      severity: 'MEDIUM',
-      status: 'OPEN',
-      summary: "Academic anxiety panic detected: 'I cannot breathe, failing this diagnostic test'",
-      source: 'AI_INTERACTION_MONITOR',
-      createdAt: '2 hours ago',
-      dispatchChannels: [
-        { channel: 'EMAIL', status: 'DELIVERED', recipientRole: 'TEACHER' },
-      ],
-    },
-  ]);
+  const [incidents, setIncidents] = useState<SafetyIncidentItem[]>([]);
 
   const [selectedIncident, setSelectedIncident] = useState<SafetyIncidentItem | null>(null);
   const [rationale, setRationale] = useState('');
@@ -107,20 +58,20 @@ export default function TeacherSafetyDashboard() {
   const fetchIncidents = async () => {
     try {
       const res = await api.get('/safety/incidents');
-      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+      if (res.data && Array.isArray(res.data)) {
         // Map backend incidents
         const mapped = res.data.map((item: any) => ({
           id: item.id,
           studentId: item.studentId,
           studentName: item.student?.name || 'Student',
-          grade: 'Grade 8',
+          grade: item.student?.grade || 'Grade 8',
           category: item.category,
           severity: item.severity,
           status: item.status,
           summary: item.summary,
           source: item.source,
           createdAt: new Date(item.createdAt).toLocaleTimeString(),
-          dispatchChannels: [
+          dispatchChannels: item.dispatchChannels || [
             { channel: 'SMS' as const, status: 'DELIVERED' as const, recipientRole: 'SAFEGUARDING_OFFICER' },
             { channel: 'EMAIL' as const, status: 'DELIVERED' as const, recipientRole: 'COUNSELOR' },
           ],
@@ -128,7 +79,7 @@ export default function TeacherSafetyDashboard() {
         setIncidents(mapped);
       }
     } catch {
-      // Fallback to verified local state
+      // Empty fallback
     }
   };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { ShieldCheck, FileCheck } from 'lucide-react';
 
 interface SeatStats {
   total: number;
@@ -29,7 +30,6 @@ interface SafetyAlert {
 }
 
 export default function InstitutionalAdminTerminal() {
-  // Mock institutional state connected to Phase 7 scale services
   const [tenantId] = useState('tenant-dps-rkpuram');
   const [institutionName] = useState('Delhi Public School, R.K. Puram');
   const [contractId] = useState('CONTRACT-DPSRKP-2026-SCALE');
@@ -41,47 +41,8 @@ export default function InstitutionalAdminTerminal() {
     available: 35,
   });
 
-  const [stagedItems, setStagedItems] = useState<StagedItem[]>([
-    {
-      stagingId: 'STG-DPS-9912A',
-      sourceSystem: 'Canvas LMS (CBSE Math)',
-      studentId: 'anon_cbse8_0042',
-      conceptId: 'MATH-G8-LINEQ-03',
-      score: 0.88,
-      provenance: 'sha256:7f83b165...canvas_sync',
-      status: 'PENDING',
-    },
-    {
-      stagingId: 'STG-DPS-9912B',
-      sourceSystem: 'Moodle SIS',
-      studentId: 'anon_cbse10_0109',
-      conceptId: 'MATH-G10-QUAD-02',
-      score: 0.94,
-      provenance: 'sha256:a4c10e82...moodle_sync',
-      status: 'PENDING',
-    },
-  ]);
-
-  const [safetyAlerts, setSafetyAlerts] = useState<SafetyAlert[]>([
-    {
-      id: 'INC-2026-0089',
-      severity: 'HIGH',
-      category: 'PERSISTENT_DISTRESS_SIGNALS',
-      studentRef: 'anon_jr_0012',
-      minutesOpen: 8,
-      slaLimitMinutes: 15,
-      status: 'OPEN',
-    },
-    {
-      id: 'INC-2026-0091',
-      severity: 'LOW',
-      category: 'UNUSUAL_SESSION_DURATION',
-      studentRef: 'anon_cbse8_0078',
-      minutesOpen: 45,
-      slaLimitMinutes: 240,
-      status: 'ACKNOWLEDGED',
-    },
-  ]);
+  const [stagedItems, setStagedItems] = useState<StagedItem[]>([]);
+  const [safetyAlerts, setSafetyAlerts] = useState<SafetyAlert[]>([]);
 
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
@@ -177,7 +138,7 @@ export default function InstitutionalAdminTerminal() {
                 Student Seat Quota
               </h2>
               <span className="text-xs font-semibold text-emerald-400">
-                {Math.round((studentSeats.used / studentSeats.total) * 100)}% Utilized
+                {studentSeats.total > 0 ? Math.round((studentSeats.used / studentSeats.total) * 100) : 0}% Utilized
               </span>
             </div>
             <div className="text-3xl font-extrabold text-white">
@@ -186,7 +147,7 @@ export default function InstitutionalAdminTerminal() {
             <div className="w-full bg-slate-800 rounded-full h-2">
               <div
                 className="bg-emerald-500 h-2 rounded-full"
-                style={{ width: `${(studentSeats.used / studentSeats.total) * 100}%` }}
+                style={{ width: `${studentSeats.total > 0 ? (studentSeats.used / studentSeats.total) * 100 : 0}%` }}
               />
             </div>
             <p className="text-xs text-slate-400">
@@ -235,63 +196,73 @@ export default function InstitutionalAdminTerminal() {
             </span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="text-slate-400 border-b border-slate-800">
-                  <th className="py-2.5 px-3">Staging ID</th>
-                  <th className="py-2.5 px-3">Source System</th>
-                  <th className="py-2.5 px-3">Learner ID (De-Identified)</th>
-                  <th className="py-2.5 px-3">Concept ID</th>
-                  <th className="py-2.5 px-3">Ext. Score</th>
-                  <th className="py-2.5 px-3">Provenance Checksum</th>
-                  <th className="py-2.5 px-3 text-right">Teacher Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 font-mono">
-                {stagedItems.map((item) => (
-                  <tr key={item.stagingId} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="py-3 px-3 text-white font-semibold">{item.stagingId}</td>
-                    <td className="py-3 px-3 text-cyan-400 font-sans">{item.sourceSystem}</td>
-                    <td className="py-3 px-3 text-slate-300">{item.studentId}</td>
-                    <td className="py-3 px-3 text-indigo-300">{item.conceptId}</td>
-                    <td className="py-3 px-3 text-white font-sans font-bold">
-                      {(item.score * 100).toFixed(0)}%
-                    </td>
-                    <td className="py-3 px-3 text-slate-500 text-[11px]">{item.provenance}</td>
-                    <td className="py-3 px-3 text-right font-sans">
-                      {item.status === 'PENDING' ? (
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleTeacherAuthorize(item.stagingId, true)}
-                            className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition"
-                          >
-                            Authorize
-                          </button>
-                          <button
-                            onClick={() => handleTeacherAuthorize(item.stagingId, false)}
-                            className="px-2.5 py-1 rounded bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-xs transition"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span
-                          className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                            item.status === 'APPROVED'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      )}
-                    </td>
+          {stagedItems.length === 0 ? (
+            <div className="text-center py-12 border border-dashed border-slate-800 rounded-lg p-6 my-2">
+              <FileCheck className="w-10 h-10 text-slate-500 mx-auto mb-2 opacity-80" />
+              <h3 className="font-semibold text-sm text-slate-300">No Pending LMS/SIS Submissions</h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                External gradebook and assessment observations from integrated Canvas/Moodle connectors will appear here for authoritative teacher review and cryptographic sign-off.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="text-slate-400 border-b border-slate-800">
+                    <th className="py-2.5 px-3">Staging ID</th>
+                    <th className="py-2.5 px-3">Source System</th>
+                    <th className="py-2.5 px-3">Learner ID (De-Identified)</th>
+                    <th className="py-2.5 px-3">Concept ID</th>
+                    <th className="py-2.5 px-3">Ext. Score</th>
+                    <th className="py-2.5 px-3">Provenance Checksum</th>
+                    <th className="py-2.5 px-3 text-right">Teacher Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 font-mono">
+                  {stagedItems.map((item) => (
+                    <tr key={item.stagingId} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-3 px-3 text-white font-semibold">{item.stagingId}</td>
+                      <td className="py-3 px-3 text-cyan-400 font-sans">{item.sourceSystem}</td>
+                      <td className="py-3 px-3 text-slate-300">{item.studentId}</td>
+                      <td className="py-3 px-3 text-indigo-300">{item.conceptId}</td>
+                      <td className="py-3 px-3 text-white font-sans font-bold">
+                        {(item.score * 100).toFixed(0)}%
+                      </td>
+                      <td className="py-3 px-3 text-slate-500 text-[11px]">{item.provenance}</td>
+                      <td className="py-3 px-3 text-right font-sans">
+                        {item.status === 'PENDING' ? (
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => handleTeacherAuthorize(item.stagingId, true)}
+                              className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition"
+                            >
+                              Authorize
+                            </button>
+                            <button
+                              onClick={() => handleTeacherAuthorize(item.stagingId, false)}
+                              className="px-2.5 py-1 rounded bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-xs transition"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span
+                            className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                              item.status === 'APPROVED'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         {/* Safety Operations Queue */}
@@ -313,62 +284,72 @@ export default function InstitutionalAdminTerminal() {
             </span>
           </div>
 
-          <div className="space-y-3">
-            {safetyAlerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="p-4 rounded-lg bg-slate-950/60 border border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-xs"
-              >
-                <div className="flex items-start md:items-center gap-3">
-                  <span
-                    className={`px-2 py-1 rounded font-bold uppercase tracking-wide text-[10px] ${
-                      alert.severity === 'CRITICAL'
-                        ? 'bg-red-500 text-white'
-                        : alert.severity === 'HIGH'
-                        ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                        : 'bg-amber-500/20 text-amber-400'
-                    }`}
-                  >
-                    {alert.severity}
-                  </span>
-                  <div>
-                    <div className="font-bold text-white">{alert.category}</div>
-                    <div className="text-slate-400 font-mono mt-0.5">
-                      Learner: {alert.studentRef} • Incident ID: {alert.id}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-slate-400">Elapsed / Limit</div>
-                    <div
-                      className={`font-mono font-bold ${
-                        alert.minutesOpen >= alert.slaLimitMinutes
-                          ? 'text-red-400 animate-pulse'
-                          : 'text-amber-300'
+          {safetyAlerts.length === 0 ? (
+            <div className="text-center py-12 border border-dashed border-slate-800 rounded-lg p-6">
+              <ShieldCheck className="w-10 h-10 text-emerald-400 mx-auto mb-2 opacity-80" />
+              <h3 className="font-semibold text-sm text-slate-300">All Safeguarding Boundaries Clear</h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                No active safeguarding alerts or unanswered distress escalations. The multi-tenant safety SLA monitor is continuously active.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {safetyAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="p-4 rounded-lg bg-slate-950/60 border border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-xs"
+                >
+                  <div className="flex items-start md:items-center gap-3">
+                    <span
+                      className={`px-2 py-1 rounded font-bold uppercase tracking-wide text-[10px] ${
+                        alert.severity === 'CRITICAL'
+                          ? 'bg-red-500 text-white'
+                          : alert.severity === 'HIGH'
+                          ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                          : 'bg-amber-500/20 text-amber-400'
                       }`}
                     >
-                      {alert.minutesOpen}m / {alert.slaLimitMinutes}m
+                      {alert.severity}
+                    </span>
+                    <div>
+                      <div className="font-bold text-white">{alert.category}</div>
+                      <div className="text-slate-400 font-mono mt-0.5">
+                        Learner: {alert.studentRef} • Incident ID: {alert.id}
+                      </div>
                     </div>
                   </div>
 
-                  {alert.status === 'OPEN' ? (
-                    <button
-                      onClick={() => handleAcknowledgeIncident(alert.id)}
-                      className="px-3 py-1.5 rounded bg-rose-600 hover:bg-rose-500 text-white font-semibold transition"
-                    >
-                      Acknowledge Incident
-                    </button>
-                  ) : (
-                    <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-400 font-semibold">
-                      {alert.status}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-slate-400">Elapsed / Limit</div>
+                      <div
+                        className={`font-mono font-bold ${
+                          alert.minutesOpen >= alert.slaLimitMinutes
+                            ? 'text-red-400 animate-pulse'
+                            : 'text-amber-300'
+                        }`}
+                      >
+                        {alert.minutesOpen}m / {alert.slaLimitMinutes}m
+                      </div>
+                    </div>
+
+                    {alert.status === 'OPEN' ? (
+                      <button
+                        onClick={() => handleAcknowledgeIncident(alert.id)}
+                        className="px-3 py-1.5 rounded bg-rose-600 hover:bg-rose-500 text-white font-semibold transition"
+                      >
+                        Acknowledge Incident
+                      </button>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-400 font-semibold">
+                        {alert.status}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>

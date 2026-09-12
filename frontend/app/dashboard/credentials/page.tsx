@@ -113,7 +113,7 @@ export default function CredentialWallet() {
                                         <p className="text-sm font-bold text-slate-700 mt-1">{format(new Date(cred.issuedAt), 'MMM dd, yyyy')}</p>
                                     </div>
                                     <div className="col-span-2 mt-2 bg-slate-100 rounded-lg p-3 border border-slate-200 border-dashed">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mesh Hash (Mock)</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">W3C Credential Hash</p>
                                         <p className="text-xs font-mono text-slate-600 truncate bg-white px-2 py-1 rounded border shadow-inner">
                                             {cred.blockchainHash}
                                         </p>

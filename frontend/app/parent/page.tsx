@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import api from '@/lib/axios';
 import { 
   Users, 
   ShieldCheck, 
@@ -34,38 +35,19 @@ export default function ParentDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulated fetch or integration with /api/parent/children
-    setTimeout(() => {
-      setChildren([
-        {
-          id: 'rel-1',
-          student: {
-            id: 'stu-alex',
-            name: 'Alex Johnson',
-            gradeLevel: 'Grade 7',
-            cognitiveLevel: 'TEEN',
-          },
-          masteryPercentage: 74,
-          streakDays: 8,
-          needsAttentionCount: 2,
-          recentTopic: 'Linear Equations & Fractions',
-        },
-        {
-          id: 'rel-2',
-          student: {
-            id: 'stu-emma',
-            name: 'Emma Johnson',
-            gradeLevel: 'Grade 4',
-            cognitiveLevel: 'CHILD',
-          },
-          masteryPercentage: 86,
-          streakDays: 12,
-          needsAttentionCount: 0,
-          recentTopic: 'Ecosystems & Food Webs',
-        },
-      ]);
-      setLoading(false);
-    }, 400);
+    const fetchChildren = async () => {
+      try {
+        const res = await api.get('/parent/children');
+        if (res.data && Array.isArray(res.data)) {
+          setChildren(res.data);
+        }
+      } catch {
+        // Safe fallback
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChildren();
   }, []);
 
   return (
@@ -119,6 +101,18 @@ export default function ParentDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
               <div className="h-48 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
               <div className="h-48 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+            </div>
+          ) : children.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-16 text-center space-y-4">
+              <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 rounded-full flex items-center justify-center mx-auto">
+                <Users className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">No Enrolled Children Linked</h3>
+                <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+                  Connect your child's student account using their unique school student code to monitor their curriculum progress, streaks, and pastoral safety.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

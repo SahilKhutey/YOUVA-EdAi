@@ -30,13 +30,7 @@ export default function ParentCopilotPage() {
 
   const childToken = "anon_10a2b3c4d5e6";
 
-  const transcripts: TranscriptEntry[] = [
-    { time: "10:01 AM", speaker: "AI_VOICE", text: "Tap the three red apples." },
-    { time: "10:01 AM", speaker: "CHILD_TAP", text: "Selected: Option 3 (🍎 🍎 🍎) [Correct]" },
-    { time: "10:02 AM", speaker: "AI_VOICE", text: "Find the big yellow star." },
-    { time: "10:02 AM", speaker: "CHILD_TAP", text: "Selected: Option 1 (⭐ Star) [Correct]" },
-    { time: "10:03 AM", speaker: "AI_VOICE", text: "Which friend rhymes with cat?" },
-  ];
+  const [transcripts, setTranscripts] = useState<TranscriptEntry[]>([]);
 
   const handlePause = () => {
     setSessionStatus(sessionStatus === "ACTIVE" ? "PAUSED" : "ACTIVE");
@@ -139,24 +133,34 @@ export default function ParentCopilotPage() {
               </span>
             </div>
 
-            <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-              {transcripts.map((entry, idx) => (
-                <div
-                  key={idx}
-                  className={`p-3 rounded-xl text-xs font-mono ${
-                    entry.speaker === "AI_VOICE"
-                      ? "bg-amber-500/10 border border-amber-500/20 text-amber-950 dark:text-amber-200"
-                      : "bg-muted border border-border text-foreground"
-                  }`}
-                >
-                  <div className="flex justify-between text-muted-foreground text-[10px] mb-1">
-                    <span>{entry.speaker === "AI_VOICE" ? "YOUVA Voice Prompt" : "Child Interaction"}</span>
-                    <span>{entry.time}</span>
+            {transcripts.length === 0 ? (
+              <div className="text-center py-10 border border-dashed border-border rounded-xl p-6 text-muted-foreground">
+                <Ear className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-60" />
+                <p className="text-xs font-semibold text-foreground">Waiting for Child Voice or Interaction Event</p>
+                <p className="text-[11px] text-muted-foreground mt-1 max-w-sm mx-auto">
+                  Live spoken audio prompts and tactile interaction responses will stream here in real-time as your child engages with the session.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                {transcripts.map((entry, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3 rounded-xl text-xs font-mono ${
+                      entry.speaker === "AI_VOICE"
+                        ? "bg-amber-500/10 border border-amber-500/20 text-amber-950 dark:text-amber-200"
+                        : "bg-muted border border-border text-foreground"
+                    }`}
+                  >
+                    <div className="flex justify-between text-muted-foreground text-[10px] mb-1">
+                      <span>{entry.speaker === "AI_VOICE" ? "YOUVA Voice Prompt" : "Child Interaction"}</span>
+                      <span>{entry.time}</span>
+                    </div>
+                    <p className="text-sm font-sans font-semibold">{entry.text}</p>
                   </div>
-                  <p className="text-sm font-sans font-semibold">{entry.text}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Co-Play Interaction Guidance for Parents */}
