@@ -82,6 +82,7 @@ export interface LearningPriority {
 export interface CreateSessionDto {
   topicId: string;
   mode?: 'diagnostic' | 'practice' | 'assessment';
+  tenantId?: string;
 }
 
 export interface SubmitDiagnosticDto {

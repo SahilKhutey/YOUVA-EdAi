@@ -63,12 +63,14 @@ import { AutonomousLearningModule } from './autonomous-learning/autonomous-learn
 import { CredentialNetworkModule } from './credential-network/credential-network.module';
 import { InteroperabilityModule } from './interoperability/p16.module';
 import { TelemetryModule } from './telemetry/telemetry.module';
-
-
+import { validateEnvironment } from './config/env.validation';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validate: validateEnvironment,
+    }),
     AuthModule,
     UsersModule,
     PrismaModule,

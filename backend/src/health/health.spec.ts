@@ -42,4 +42,13 @@ describe('P5 HealthService & Readiness Probes', () => {
     expect(readiness.status).toBe('not_ready');
     expect(readiness.database.status).toBe('down');
   });
+
+  it('✓ verifies AI is isolated and non-blocking to readiness probe (N2.15/N2.16)', async () => {
+    prisma.$queryRaw.mockResolvedValue([{ '?column?': 1 }]);
+
+    const readiness = await service.readiness();
+    expect(readiness.ai.status).toBe('isolated_non_blocking');
+    expect(readiness.ai.fallbackAvailable).toBe(true);
+    expect(readiness.config.status).toBe('valid');
+  });
 });

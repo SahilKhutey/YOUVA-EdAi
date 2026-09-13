@@ -32,6 +32,8 @@ describe('P5 Security & Environment Validation', () => {
         PORT: 3001,
         DATABASE_URL: 'postgresql://localhost:5432/youva',
         JWT_SECRET: 'super_secure_production_jwt_secret_token_32chars_min',
+        FRONTEND_URL: 'https://app.youva.edai',
+        AI_PROVIDER: 'deterministic',
       });
 
       expect(valid.NODE_ENV).toBe('production');

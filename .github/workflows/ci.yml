@@ -83,9 +83,9 @@ jobs:
         working-directory: backend
         run: npm run build
 
-      - name: Run Core Human–AI Learning Loop & Security Verification Suites
+      - name: Run Core Human–AI Learning Loop, Configuration & Security Verification Suites
         working-directory: backend
-        run: npm test -- src/learning-loop src/teacher-ops src/parent src/safety src/health src/security src/telemetry src/practice src/ai
+        run: npm test -- src/learning-loop src/teacher-ops src/parent src/safety src/health src/security src/telemetry src/practice src/ai src/config src/learning/ src/learning-engine/
 
       - name: Run Full Application E2E
         working-directory: backend

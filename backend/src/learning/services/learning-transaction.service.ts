@@ -4,11 +4,13 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BktService } from '../../learning-engine/services/bkt.service';
 import { RlDifficultyService } from '../../learning-engine/services/rl-difficulty.service';
 import { LearningLoopAuditService } from '../../learning-loop/audit/learning-loop-audit.service';
+import { StructuredLoggerService } from '../../observability/logger.service';
 import { ActorType } from '../../learning-loop/domain/enums';
 import {
   LearningAttemptRequest,
@@ -33,6 +35,7 @@ export class LearningTransactionService {
     private readonly bktService: BktService,
     private readonly rlDifficultyService: RlDifficultyService,
     private readonly auditService: LearningLoopAuditService,
+    @Optional() private readonly structuredLogger?: StructuredLoggerService,
   ) {}
 
   /**
@@ -43,63 +46,92 @@ export class LearningTransactionService {
     dto: CreateSessionDto,
     requestId: string = randomUUID(),
   ) {
-    const topic = await this.prisma.topic.findUnique({
-      where: { id: dto.topicId },
-      include: { subject: true },
-    });
+    const startTime = Date.now();
+    try {
+      const topic = await this.prisma.topic.findUnique({
+        where: { id: dto.topicId },
+        include: { subject: true },
+      });
 
-    if (!topic) {
-      throw new NotFoundException(`Topic ${dto.topicId} not found`);
-    }
+      if (!topic) {
+        throw new NotFoundException(`Topic ${dto.topicId} not found`);
+      }
 
-    const sessionState =
-      dto.mode === 'diagnostic'
-        ? LearnerSessionState.DIAGNOSTIC_STARTED
-        : LearnerSessionState.SESSION_CREATED;
+      const sessionState =
+        dto.mode === 'diagnostic'
+          ? LearnerSessionState.DIAGNOSTIC_STARTED
+          : LearnerSessionState.SESSION_CREATED;
 
-    const initialLog = {
-      state: sessionState,
-      stateHistory: [
-        {
-          from: null,
-          to: sessionState,
-          timestamp: new Date().toISOString(),
-          reason: 'Initial session creation',
+      const initialLog = {
+        state: sessionState,
+        stateHistory: [
+          {
+            from: null,
+            to: sessionState,
+            timestamp: new Date().toISOString(),
+            reason: 'Initial session creation',
+          },
+        ],
+        attempts: [],
+        diagnosticResult: null,
+      };
+
+      const session = await this.prisma.learningSession.create({
+        data: {
+          userId,
+          topicId: dto.topicId,
+          logs: JSON.stringify(initialLog),
         },
-      ],
-      attempts: [],
-      diagnosticResult: null,
-    };
+        include: {
+          topic: {
+            include: { subject: true },
+          },
+        },
+      });
 
-    const session = await this.prisma.learningSession.create({
-      data: {
+      await this.auditService.logAction({
         userId,
-        topicId: dto.topicId,
-        logs: JSON.stringify(initialLog),
-      },
-      include: {
-        topic: { include: { subject: true } },
-      },
-    });
+        actorType: ActorType.STUDENT,
+        actorId: userId,
+        action: 'SESSION_INITIALIZED',
+        stateBefore: null,
+        stateAfter: { sessionId: session.id, state: sessionState },
+        metadata: { requestId, sessionId: session.id, mode: dto.mode || 'practice' },
+      });
 
-    await this.auditService.logAction({
-      userId,
-      actorType: ActorType.STUDENT,
-      actorId: userId,
-      action: 'SESSION_INITIALIZED',
-      stateBefore: null,
-      stateAfter: { sessionId: session.id, state: sessionState },
-      metadata: { requestId, sessionId: session.id, mode: dto.mode || 'practice' },
-    });
+      this.structuredLogger?.logLearningTransaction({
+        timestamp: new Date().toISOString(),
+        requestId,
+        tenantId: dto.tenantId || 'tenant-default',
+        userId,
+        sessionId: session.id,
+        operation: 'CREATE_SESSION',
+        durationMs: Date.now() - startTime,
+        status: 'SUCCESS',
+      });
 
-    return {
-      sessionId: session.id,
-      state: sessionState,
-      topicId: session.topicId,
-      topicTitle: session.topic.title,
-      subjectName: session.topic.subject.name,
-      createdAt: session.startTime,
-    };
+      return {
+        sessionId: session.id,
+        state: sessionState,
+        topicId: session.topicId,
+        topicTitle: session.topic.title,
+        subjectName: session.topic.subject.name,
+        createdAt: session.startTime,
+      };
+    } catch (err: any) {
+      this.structuredLogger?.logLearningTransaction({
+        timestamp: new Date().toISOString(),
+        requestId,
+        tenantId: dto.tenantId || 'tenant-default',
+        userId,
+        sessionId: 'uncreated',
+        operation: 'CREATE_SESSION',
+        durationMs: Date.now() - startTime,
+        status: 'FAILURE',
+        errorCode: err?.message || 'UNKNOWN_ERROR',
+      });
+      throw err;
+    }
   }
 
   /**
@@ -269,23 +301,35 @@ export class LearningTransactionService {
     req: LearningAttemptRequest,
     requestId: string = randomUUID(),
   ): Promise<LearningAttemptResult> {
-    // Basic validations
-    if (!req.sessionId || !req.activityId || !req.clientAttemptId) {
-      throw new BadRequestException(
-        'Malformed request: sessionId, activityId, and clientAttemptId are required',
-      );
-    }
+    const startTime = Date.now();
+    try {
+      // Basic validations
+      if (!req.sessionId || !req.activityId || !req.clientAttemptId) {
+        throw new BadRequestException(
+          'Malformed request: sessionId, activityId, and clientAttemptId are required',
+        );
+      }
 
-    // 1. IDEMPOTENCY CHECK (N2.2)
-    const cacheKey = `${req.sessionId}:${req.clientAttemptId}`;
-    const cachedResult = this.attemptCache.get(cacheKey);
+      // 1. IDEMPOTENCY CHECK (N2.2)
+      const cacheKey = `${req.sessionId}:${req.clientAttemptId}`;
+      const cachedResult = this.attemptCache.get(cacheKey);
 
-    if (cachedResult) {
-      this.logger.log(
-        `Idempotent attempt detected for clientAttemptId ${req.clientAttemptId}. Returning persisted result without duplicate mutation.`,
-      );
-      return cachedResult;
-    }
+      if (cachedResult) {
+        this.logger.log(
+          `Idempotent attempt detected for clientAttemptId ${req.clientAttemptId}. Returning persisted result without duplicate mutation.`,
+        );
+        this.structuredLogger?.logLearningTransaction({
+          timestamp: new Date().toISOString(),
+          requestId,
+          userId: req.learnerId || userId,
+          sessionId: req.sessionId,
+          operation: 'PROCESS_ATTEMPT',
+          durationMs: Date.now() - startTime,
+          status: 'IDEMPOTENT_HIT',
+          attemptId: cachedResult.attemptId,
+        });
+        return cachedResult;
+      }
 
     // Check DB session
     const session = await this.prisma.learningSession.findUnique({
@@ -472,10 +516,35 @@ export class LearningTransactionService {
       return attemptRecord;
     });
 
-    // Save in cache for sub-millisecond idempotency responses
-    this.attemptCache.set(cacheKey, result);
+      // Save in cache for sub-millisecond idempotency responses
+      this.attemptCache.set(cacheKey, result);
 
-    return result;
+      this.structuredLogger?.logLearningTransaction({
+        timestamp: new Date().toISOString(),
+        requestId,
+        userId: req.learnerId || userId,
+        sessionId: req.sessionId,
+        operation: 'PROCESS_ATTEMPT',
+        durationMs: Date.now() - startTime,
+        status: 'SUCCESS',
+        attemptId: result.attemptId,
+        correlationChain: result.correlationChain as any,
+      });
+
+      return result;
+    } catch (err: any) {
+      this.structuredLogger?.logLearningTransaction({
+        timestamp: new Date().toISOString(),
+        requestId,
+        userId: req?.learnerId || userId,
+        sessionId: req?.sessionId || 'unknown',
+        operation: 'PROCESS_ATTEMPT',
+        durationMs: Date.now() - startTime,
+        status: 'FAILURE',
+        errorCode: err?.message || 'UNKNOWN_ERROR',
+      });
+      throw err;
+    }
   }
 
   /**

@@ -65,4 +65,39 @@ export class StructuredLoggerService implements NestLoggerService {
       }),
     );
   }
+
+  /**
+   * Structured Learning Transaction Logger (N2.18):
+   * Emits audit logs with correlation chain while strictly preventing leakage
+   * of passwords, JWT secrets, API keys, or raw sensitive learner responses.
+   */
+  logLearningTransaction(data: {
+    timestamp?: string;
+    requestId?: string;
+    tenantId?: string;
+    userId: string;
+    sessionId: string;
+    operation: string;
+    durationMs: number;
+    status: 'SUCCESS' | 'FAILURE' | 'IDEMPOTENT_HIT';
+    errorCode?: string;
+    attemptId?: string;
+    correlationChain?: Record<string, string>;
+  }) {
+    console.log(
+      this.formatLog('LEARNING_TRANSACTION', `Learning transaction: ${data.operation}`, {
+        timestamp: data.timestamp || new Date().toISOString(),
+        requestId: data.requestId || 'req-unassigned',
+        tenantId: data.tenantId || 'tenant-default',
+        userId: data.userId,
+        sessionId: data.sessionId,
+        operation: data.operation,
+        durationMs: data.durationMs,
+        status: data.status,
+        errorCode: data.errorCode,
+        attemptId: data.attemptId,
+        correlationChain: data.correlationChain,
+      }),
+    );
+  }
 }

@@ -1,5 +1,7 @@
 process.env.JWT_SECRET =
   process.env.JWT_SECRET || 'test-secret-key-that-is-at-least-32-characters-long';
+process.env.DATABASE_URL =
+  process.env.DATABASE_URL || 'postgresql://youva:youvapassword@localhost:5432/youva';
 
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
