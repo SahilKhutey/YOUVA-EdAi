@@ -348,6 +348,103 @@ async function main() {
         }
     });
     console.log('Seeded Unconsented Control Student (REVOKED consent)');
+
+    // =========================================================================
+    // Tenant B: Modern School Vasant Vihar (Cross-Tenant Isolation Fixtures)
+    // =========================================================================
+    const modernParent = await prisma.user.upsert({
+        where: { email: 'parent.sunita@modernschool.edu.in' },
+        update: {},
+        create: {
+            id: 'u-parent-modern-01',
+            email: 'parent.sunita@modernschool.edu.in',
+            password: hashedPassword,
+            name: 'Mrs. Sunita Sharma (Modern School Parent)',
+            role: 'PARENT',
+            onboardingComplete: true
+        }
+    });
+
+    const modernTeacher = await prisma.user.upsert({
+        where: { email: 'teacher.anita@modernschool.edu.in' },
+        update: {},
+        create: {
+            id: 'u-teacher-modern-01',
+            email: 'teacher.anita@modernschool.edu.in',
+            password: hashedPassword,
+            name: 'Mrs. Anita Roy (Modern School Educator)',
+            role: 'TEACHER',
+            onboardingComplete: true
+        }
+    });
+
+    const modernClass = await prisma.teacherClass.upsert({
+        where: { id: 'class-modern-8a' },
+        update: {},
+        create: {
+            id: 'class-modern-8a',
+            name: 'Grade 8-A Modern Mathematics',
+            gradeLevel: 'Grade 8',
+            subject: 'Mathematics',
+            teacherId: modernTeacher.id,
+        }
+    });
+
+    const modernStudent = await prisma.user.upsert({
+        where: { email: 'student.kabir@modernschool.edu.in' },
+        update: {},
+        create: {
+            id: 's-modern-101',
+            email: 'student.kabir@modernschool.edu.in',
+            password: hashedPassword,
+            name: 'Kabir Sharma (Modern School Student)',
+            role: 'STUDENT',
+            gradeLevel: 'Grade 8',
+            cognitiveLevel: 'TEEN',
+            onboardingComplete: true,
+        }
+    });
+
+    await prisma.parentStudent.upsert({
+        where: { parentId_studentId: { parentId: modernParent.id, studentId: modernStudent.id } },
+        update: {},
+        create: {
+            parentId: modernParent.id,
+            studentId: modernStudent.id,
+        }
+    });
+
+    await prisma.teacherClassEnrollment.upsert({
+        where: { classId_studentId: { classId: modernClass.id, studentId: modernStudent.id } },
+        update: {},
+        create: {
+            classId: modernClass.id,
+            studentId: modernStudent.id,
+        }
+    });
+
+    for (const cType of ['LEARNING_SERVICE', 'AI_ASSISTANCE', 'PERSONALIZATION', 'PARENT_PROGRESS_VISIBILITY']) {
+        await prisma.consentRecord.upsert({
+            where: {
+                parentId_studentId_consentType: {
+                    parentId: modernParent.id,
+                    studentId: modernStudent.id,
+                    consentType: cType,
+                }
+            },
+            update: {},
+            create: {
+                parentId: modernParent.id,
+                studentId: modernStudent.id,
+                consentType: cType,
+                status: 'GRANTED',
+                version: '1.0.0',
+                grantedAt: new Date(),
+                evidence: `hmac-sha256-modern-vv-${modernStudent.id}-${cType.toLowerCase()}-verified-dpdp`,
+            }
+        });
+    }
+    console.log('Seeded Tenant B: Modern School Vasant Vihar fixtures.');
 }
 
 main()

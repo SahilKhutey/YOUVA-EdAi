@@ -21,12 +21,14 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
     try {
-      await api.post("/auth/register", { email, password, role });
-      await register(email, password);
+      const res = await api.post("/auth/register", { email, password, role });
+      if (res.data?.access_token) {
+        localStorage.setItem("token", res.data.access_token);
+      }
+      await login(email, password);
     } catch (err: any) {
       console.error(err);
-      alert("Registration failed. Please try again.");
-      setError(err.response?.data?.message || "Registration failed"); // Keep original error message for display
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

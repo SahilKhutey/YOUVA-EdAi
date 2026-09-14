@@ -7,15 +7,23 @@ if (isProduction && !apiUrl && typeof window !== 'undefined') {
     console.error('[CRITICAL] Missing NEXT_PUBLIC_API_URL environment variable in production.');
 }
 
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL;
+const normalizedBaseUrl = rawApiUrl
+    ? (rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl.replace(/\/$/, '')}/api`)
+    : 'http://localhost:3001/api';
+
 const api = axios.create({
-    baseURL: apiUrl || (isProduction ? '' : 'http://localhost:3001'),
+    baseURL: normalizedBaseUrl,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+    if (config.url && config.url.startsWith('/api/')) {
+        config.url = config.url.substring(4);
+    }
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }

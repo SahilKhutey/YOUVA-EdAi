@@ -91,14 +91,17 @@ export default function PracticePage() {
     });
   };
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   const submitQuiz = async () => {
     if (!sessionId || submitting) return;
 
     // Ensure all questions answered
     if (Object.keys(answers).length !== questions.length) {
-      alert("Please answer all questions before submitting.");
+      setValidationError("Please answer all questions before submitting.");
       return;
     }
+    setValidationError(null);
 
     setSubmitting(true);
     const formattedAnswers = Object.entries(answers).map(([qId, ans]) => ({
@@ -446,6 +449,13 @@ export default function PracticePage() {
             );
           })}
         </div>
+
+        {validationError && (
+          <div className="mt-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-semibold flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{validationError}</span>
+          </div>
+        )}
 
         <div className="mt-8 flex justify-end">
           <button

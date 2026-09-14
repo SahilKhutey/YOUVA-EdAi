@@ -51,6 +51,7 @@ export default function TeacherSafetyDashboard() {
   const [selectedIncident, setSelectedIncident] = useState<SafetyIncidentItem | null>(null);
   const [rationale, setRationale] = useState('');
   const [signature, setSignature] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,13 +99,14 @@ export default function TeacherSafetyDashboard() {
     if (!selectedIncident) return;
 
     if (rationale.trim().length < 10) {
-      alert('Safeguarding rationale must be at least 10 characters.');
+      setFormError('Safeguarding rationale must be at least 10 characters.');
       return;
     }
     if (signature.trim().length < 16) {
-      alert('Digital cryptographic signature must be at least 16 characters.');
+      setFormError('Digital cryptographic signature must be at least 16 characters.');
       return;
     }
+    setFormError(null);
 
     setIsSubmitting(true);
     try {
@@ -388,6 +390,12 @@ export default function TeacherSafetyDashboard() {
               </div>
 
               <form onSubmit={handleResolve} className="space-y-4">
+                {formError && (
+                  <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>{formError}</span>
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
                     Pedagogical &amp; Safeguarding Action Taken *
