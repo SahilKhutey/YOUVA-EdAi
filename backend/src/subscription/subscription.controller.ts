@@ -9,6 +9,7 @@ import {
   Req,
   Headers,
   RawBodyRequest,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -31,6 +32,9 @@ export class SubscriptionController {
     @Headers('stripe-signature') signature: string,
     @Req() req: any,
   ) {
+    if (!signature) {
+      throw new UnauthorizedException('Missing stripe-signature header');
+    }
     // Note: To receive the raw body (req.rawBody), nest app must be configured with `rawBody: true`
     // If rawBody is not available, we use req.body as a fallback (which works for our dummy test logic)
     const payload = req.rawBody || Buffer.from(JSON.stringify(req.body));

@@ -46,15 +46,15 @@ export class HumanApprovalService {
     });
 
     if (decision === 'APPROVE') {
-      await prismaClient.learningAction.update({
+      await prismaClient.learningAction?.update?.({
         where: { id: approval.actionId },
         data: { status: 'APPROVED' },
-      }).catch(() => null);
+      })?.catch?.(() => null);
     } else if (decision === 'REJECT') {
-      await prismaClient.learningAction.update({
+      await prismaClient.learningAction?.update?.({
         where: { id: approval.actionId },
         data: { status: 'DENIED' },
-      }).catch(() => null);
+      })?.catch?.(() => null);
     }
 
     return updated;

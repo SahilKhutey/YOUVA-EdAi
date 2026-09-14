@@ -103,6 +103,12 @@ export function validateEnvironment(
         `[FATAL] AI provider '${transformed.AI_PROVIDER}' requires GEMINI_API_KEY or AI_PROVIDER_API_KEY in production.`,
       );
     }
+
+    // 4. STRIPE_WEBHOOK_SECRET placeholder check in production
+    const stripeWebhookSecret = config.STRIPE_WEBHOOK_SECRET as string | undefined;
+    if (stripeWebhookSecret === 'whsec_dummy') {
+      throw new Error('[FATAL] Insecure dummy STRIPE_WEBHOOK_SECRET detected in production environment.');
+    }
   }
 
   // Redis requirement when explicitly enabled

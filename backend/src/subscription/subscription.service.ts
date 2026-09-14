@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import Stripe from 'stripe';
 
@@ -60,7 +60,16 @@ export class SubscriptionService {
 
   async handleStripeWebhook(signature: string, payload: Buffer) {
     try {
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_dummy';
+      const isProduction = process.env.NODE_ENV === 'production';
+      const webhookSecret =
+        process.env.STRIPE_WEBHOOK_SECRET || (isProduction ? '' : 'whsec_dummy');
+
+      if (isProduction && (!webhookSecret || webhookSecret === 'whsec_dummy')) {
+        this.logger.error(
+          'CRITICAL: Production Stripe webhook secret is missing or set to dummy value.',
+        );
+        throw new UnauthorizedException('Production webhook secret misconfigured');
+      }
 
       let event: Stripe.Event;
       try {
@@ -73,15 +82,17 @@ export class SubscriptionService {
         this.logger.error(
           `Webhook signature verification failed: ${err.message}`,
         );
-        // If dummy key, bypass verification for local testing purposes
-        if (webhookSecret === 'whsec_dummy') {
+        // Only permit dummy bypass in non-production local/test environments
+        if (!isProduction && webhookSecret === 'whsec_dummy') {
           event = JSON.parse(payload.toString());
         } else {
-          throw new Error(`Webhook Error: ${err.message}`);
+          throw new UnauthorizedException(
+            `Webhook signature verification failed: ${err.message}`,
+          );
         }
       }
 
-      if (event.type === 'checkout.session.completed') {
+      if (event?.type === 'checkout.session.completed' && event?.data?.object) {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.client_reference_id;
 
