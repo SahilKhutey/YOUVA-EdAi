@@ -94,6 +94,20 @@ export class TeacherInterventionOpsService {
     return { urgent, review };
   }
 
+  private async executeTx<T>(fn: (tx: any) => Promise<T>): Promise<T> {
+    if (typeof (this.prisma as any).$transaction === 'function') {
+      return (this.prisma as any).$transaction(fn);
+    }
+    return fn(this.prisma);
+  }
+
+  private async logAudit(entry: any, tx?: any) {
+    if (tx && tx !== this.prisma) {
+      return this.auditService.logAction(entry, tx);
+    }
+    return this.auditService.logAction(entry);
+  }
+
   /**
    * Resolves a pending teacher intervention.
    * STRICT: Authorized human educator only.
@@ -129,27 +143,207 @@ export class TeacherInterventionOpsService {
       throw new BadRequestException('Resolution notes are required when resolving an intervention.');
     }
 
-    const updated = await this.prisma.teacherIntervention.update({
-      where: { id: interventionId },
-      data: {
-        status: InterventionStatus.RESOLVED,
-        feedback: `${intervention.feedback ? intervention.feedback + ' | ' : ''}[Resolved by Teacher] ${dto.resolutionNotes}`.trim(),
-      },
-    });
+    const updated = await this.executeTx(async (tx) => {
+      const res = await tx.teacherIntervention.update({
+        where: { id: interventionId },
+        data: {
+          status: InterventionStatus.RESOLVED,
+          feedback: `${intervention.feedback ? intervention.feedback + ' | ' : ''}[Resolved by Teacher] ${dto.resolutionNotes}`.trim(),
+        },
+      });
 
-    // Record audit entry
-    await this.auditService.logAction({
-      userId: intervention.studentId,
-      actorType,
-      actorId: teacherId,
-      action: 'TEACHER_INTERVENTION_RESOLVED',
-      stateBefore: { status: intervention.status },
-      stateAfter: { status: InterventionStatus.RESOLVED, resolutionNotes: dto.resolutionNotes },
-      metadata: { interventionId },
+      await this.logAudit(
+        {
+          userId: intervention.studentId,
+          actorType,
+          actorId: teacherId,
+          action: 'TEACHER_INTERVENTION_RESOLVED',
+          stateBefore: { status: intervention.status },
+          stateAfter: { status: InterventionStatus.RESOLVED, resolutionNotes: dto.resolutionNotes },
+          metadata: { interventionId },
+        },
+        tx,
+      );
+
+      return res;
     });
 
     this.logger.log(`Teacher ${teacherId} resolved intervention ${interventionId} for student ${intervention.studentId}`);
 
     return updated;
+  }
+
+  /**
+   * Retrieves a single intervention by ID, verifying teacher scope.
+   */
+  async getIntervention(teacherId: string, interventionId: string) {
+    const intervention = await this.prisma.teacherIntervention.findUnique({
+      where: { id: interventionId },
+      include: {
+        student: { select: { id: true, name: true, email: true, gradeLevel: true } },
+        decision: true,
+      },
+    });
+
+    if (!intervention) {
+      throw new NotFoundException(`Intervention ${interventionId} not found.`);
+    }
+
+    await this.scopeAuth.assertTeacherStudentScope(teacherId, intervention.studentId);
+    return intervention;
+  }
+
+  /**
+   * Creates an intervention request.
+   */
+  async createIntervention(
+    teacherId: string,
+    dto: {
+      learnerId: string;
+      type: string;
+      reason: string;
+      recommendation?: string;
+    },
+    actorType: ActorType = ActorType.TEACHER,
+  ) {
+    if (actorType === ActorType.AI || actorType === ActorType.STUDENT) {
+      throw new ForbiddenException('Only authorized educators can create teacher interventions.');
+    }
+
+    await this.scopeAuth.assertTeacherStudentScope(teacherId, dto.learnerId);
+
+    const intervention = await this.executeTx(async (tx) => {
+      const created = await tx.teacherIntervention.create({
+        data: {
+          teacherId,
+          studentId: dto.learnerId,
+          action: dto.type || 'INTERVENE',
+          feedback: dto.reason,
+          status: InterventionStatus.PENDING,
+        },
+      });
+
+      await this.logAudit(
+        {
+          userId: dto.learnerId,
+          actorType,
+          actorId: teacherId,
+          action: 'TEACHER_INTERVENTION_CREATED',
+          stateBefore: null,
+          stateAfter: created,
+          metadata: {
+            type: dto.type,
+            reason: dto.reason,
+            recommendation: dto.recommendation,
+          },
+        },
+        tx,
+      );
+
+      return created;
+    });
+
+    return intervention;
+  }
+
+  /**
+   * Authorizes a proposed intervention.
+   * Atomic transaction: status update to AUTHORIZED + audit event (N3.5, N3.13).
+   */
+  async authorizeIntervention(
+    teacherId: string,
+    interventionId: string,
+    actorType: ActorType = ActorType.TEACHER,
+  ) {
+    if (actorType === ActorType.AI || actorType === ActorType.STUDENT) {
+      throw new ForbiddenException('Only human educators can authorize consequential interventions.');
+    }
+
+    const intervention = await this.prisma.teacherIntervention.findUnique({
+      where: { id: interventionId },
+    });
+
+    if (!intervention) {
+      throw new NotFoundException(`Intervention ${interventionId} not found.`);
+    }
+
+    await this.scopeAuth.assertTeacherStudentScope(teacherId, intervention.studentId);
+
+    if (intervention.status === 'AUTHORIZED' || intervention.status === InterventionStatus.RESOLVED) {
+      throw new BadRequestException(`Intervention is already in status ${intervention.status}.`);
+    }
+
+    return this.executeTx(async (tx) => {
+      const updated = await tx.teacherIntervention.update({
+        where: { id: interventionId },
+        data: {
+          status: 'AUTHORIZED',
+        },
+      });
+
+      await this.logAudit(
+        {
+          userId: intervention.studentId,
+          actorType,
+          actorId: teacherId,
+          action: 'TEACHER_INTERVENTION_AUTHORIZED',
+          stateBefore: { status: intervention.status },
+          stateAfter: { status: 'AUTHORIZED' },
+          metadata: { interventionId },
+        },
+        tx,
+      );
+
+      return updated;
+    });
+  }
+
+  /**
+   * Rejects a proposed intervention with documented rationale.
+   */
+  async rejectIntervention(
+    teacherId: string,
+    interventionId: string,
+    reason?: string,
+    actorType: ActorType = ActorType.TEACHER,
+  ) {
+    if (actorType === ActorType.AI || actorType === ActorType.STUDENT) {
+      throw new ForbiddenException('Only human educators can reject interventions.');
+    }
+
+    const intervention = await this.prisma.teacherIntervention.findUnique({
+      where: { id: interventionId },
+    });
+
+    if (!intervention) {
+      throw new NotFoundException(`Intervention ${interventionId} not found.`);
+    }
+
+    await this.scopeAuth.assertTeacherStudentScope(teacherId, intervention.studentId);
+
+    return this.executeTx(async (tx) => {
+      const updated = await tx.teacherIntervention.update({
+        where: { id: interventionId },
+        data: {
+          status: 'REJECTED',
+          feedback: reason ? `[Rejected] ${reason}` : '[Rejected by Teacher]',
+        },
+      });
+
+      await this.logAudit(
+        {
+          userId: intervention.studentId,
+          actorType,
+          actorId: teacherId,
+          action: 'TEACHER_INTERVENTION_REJECTED',
+          stateBefore: { status: intervention.status },
+          stateAfter: { status: 'REJECTED', reason },
+          metadata: { interventionId },
+        },
+        tx,
+      );
+
+      return updated;
+    });
   }
 }

@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Body,
   Param,
   Req,
@@ -69,11 +68,79 @@ export class TeacherOpsController {
   }
 
   /**
+   * Scoped Learner 360 View (N3 Canonical Route)
+   */
+  @Get('learners/:id')
+  async getLearner360(@Req() req: any, @Param('id') learnerId: string) {
+    return this.student360Service.getStudent360(req.user.id, learnerId);
+  }
+
+  /**
    * Intervention Queue (URGENT and REVIEW)
    */
   @Get('interventions')
   async getInterventions(@Req() req: any) {
     return this.interventionService.getInterventionQueue(req.user.id);
+  }
+
+  /**
+   * Single Intervention Detail (N3.5)
+   */
+  @Get('interventions/:id')
+  async getIntervention(@Req() req: any, @Param('id') interventionId: string) {
+    return this.interventionService.getIntervention(req.user.id, interventionId);
+  }
+
+  /**
+   * Create Intervention Request (N3.4)
+   */
+  @Post('interventions')
+  @HttpCode(HttpStatus.CREATED)
+  async createIntervention(
+    @Req() req: any,
+    @Body()
+    dto: {
+      learnerId: string;
+      type: string;
+      reason: string;
+      recommendation?: string;
+    },
+  ) {
+    const actorType =
+      req.user?.actorType === ActorType.AI || req.user?.role === 'AI' || req.user?.role === 'BOT'
+        ? ActorType.AI
+        : ActorType.TEACHER;
+    return this.interventionService.createIntervention(req.user.id, dto, actorType);
+  }
+
+  /**
+   * Authorize Intervention (N3.5, N3.13)
+   */
+  @Post('interventions/:id/authorize')
+  @HttpCode(HttpStatus.OK)
+  async authorizeIntervention(@Req() req: any, @Param('id') interventionId: string) {
+    const actorType =
+      req.user?.actorType === ActorType.AI || req.user?.role === 'AI' || req.user?.role === 'BOT'
+        ? ActorType.AI
+        : ActorType.TEACHER;
+    return this.interventionService.authorizeIntervention(req.user.id, interventionId, actorType);
+  }
+
+  /**
+   * Reject Intervention (N3.5)
+   */
+  @Post('interventions/:id/reject')
+  @HttpCode(HttpStatus.OK)
+  async rejectIntervention(
+    @Req() req: any,
+    @Param('id') interventionId: string,
+    @Body('reason') reason?: string,
+  ) {
+    const actorType =
+      req.user?.actorType === ActorType.AI || req.user?.role === 'AI' || req.user?.role === 'BOT'
+        ? ActorType.AI
+        : ActorType.TEACHER;
+    return this.interventionService.rejectIntervention(req.user.id, interventionId, reason, actorType);
   }
 
   /**

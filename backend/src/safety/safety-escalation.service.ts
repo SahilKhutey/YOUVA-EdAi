@@ -87,6 +87,13 @@ export class SafetyEscalationService {
     return incident;
   }
 
+  private async executeTx<T>(fn: (tx: any) => Promise<T>): Promise<T> {
+    if (typeof (this.prisma as any).$transaction === 'function') {
+      return (this.prisma as any).$transaction(fn);
+    }
+    return fn(this.prisma);
+  }
+
   /**
    * Resolves a safety incident.
    * STRICT GOVERNANCE INVARIANT:
@@ -135,14 +142,37 @@ export class SafetyEscalationService {
       resolvedAt: new Date().toISOString(),
     };
 
-    return this.prisma.safetyEscalation.update({
-      where: { id: input.incidentId },
-      data: {
-        status: 'RESOLVED',
-        resolvedById: input.actor.userId,
-        resolution: JSON.stringify(resolutionPayload),
-        resolvedAt: new Date(),
-      },
+    return this.executeTx(async (tx) => {
+      const updated = await tx.safetyEscalation.update({
+        where: { id: input.incidentId },
+        data: {
+          status: 'RESOLVED',
+          resolvedById: input.actor.userId,
+          resolution: JSON.stringify(resolutionPayload),
+          resolvedAt: new Date(),
+        },
+      });
+
+      if (tx.auditEvent?.create) {
+        await tx.auditEvent.create({
+          data: {
+            actorId: input.actor.userId,
+            actorRole: normalizedRole,
+            action: 'SAFETY_INCIDENT_RESOLVED',
+            resource: 'SafetyEscalation',
+            resourceId: input.incidentId,
+            outcome: 'SUCCESS',
+            metadata: JSON.stringify({
+              incidentId: input.incidentId,
+              rationale: input.rationale,
+              signature: input.signature,
+              resolvedAt: resolutionPayload.resolvedAt,
+            }),
+          },
+        });
+      }
+
+      return updated;
     });
   }
 

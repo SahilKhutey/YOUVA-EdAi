@@ -39,6 +39,78 @@ export class LearningTransactionService {
   ) {}
 
   /**
+   * Validates statutory DPDP consent before permitting learner transactions (N3.7).
+   * Throws ForbiddenException if consent is missing, revoked, or expired.
+   */
+  private async validateConsent(userId: string, requestId: string): Promise<void> {
+    if (!this.prisma.parentStudent?.findFirst || !this.prisma.consentRecord?.findFirst) {
+      return;
+    }
+
+    const parentLink = await this.prisma.parentStudent.findFirst({
+      where: { studentId: userId, status: 'ACTIVE' },
+    });
+
+    const revokedConsent = await this.prisma.consentRecord.findFirst({
+      where: {
+        studentId: userId,
+        consentType: 'LEARNING_SERVICE',
+        status: 'REVOKED',
+      },
+    });
+
+    if (revokedConsent) {
+      await this.auditService.logAction({
+        userId,
+        actorType: ActorType.STUDENT,
+        actorId: userId,
+        action: 'CONSENT_VIOLATION_BLOCKED',
+        stateBefore: { consentStatus: 'REVOKED' },
+        stateAfter: null,
+        metadata: {
+          requestId,
+          reason: 'DPDPNonCompliance: Verifiable parental consent (LEARNING_SERVICE) is revoked.',
+          parentId: parentLink?.parentId || revokedConsent.parentId,
+        },
+      });
+
+      throw new ForbiddenException(
+        'DPDPNonCompliance: Verifiable parental consent (LEARNING_SERVICE) is mandatory before learning.',
+      );
+    }
+
+    if (parentLink) {
+      const activeConsent = await this.prisma.consentRecord.findFirst({
+        where: {
+          studentId: userId,
+          consentType: 'LEARNING_SERVICE',
+          status: 'GRANTED',
+        },
+      });
+
+      if (!activeConsent) {
+        await this.auditService.logAction({
+          userId,
+          actorType: ActorType.STUDENT,
+          actorId: userId,
+          action: 'CONSENT_VIOLATION_BLOCKED',
+          stateBefore: { consentStatus: 'MISSING' },
+          stateAfter: null,
+          metadata: {
+            requestId,
+            reason: 'DPDPNonCompliance: Verifiable parental consent (LEARNING_SERVICE) is mandatory before learning.',
+            parentId: parentLink.parentId,
+          },
+        });
+
+        throw new ForbiddenException(
+          'DPDPNonCompliance: Verifiable parental consent (LEARNING_SERVICE) is mandatory before learning.',
+        );
+      }
+    }
+  }
+
+  /**
    * Initializes a new learner session and audits the creation event.
    */
   async createSession(
@@ -48,6 +120,8 @@ export class LearningTransactionService {
   ) {
     const startTime = Date.now();
     try {
+      await this.validateConsent(userId, requestId);
+
       const topic = await this.prisma.topic.findUnique({
         where: { id: dto.topicId },
         include: { subject: true },
@@ -309,6 +383,8 @@ export class LearningTransactionService {
           'Malformed request: sessionId, activityId, and clientAttemptId are required',
         );
       }
+
+      await this.validateConsent(userId, requestId);
 
       // 1. IDEMPOTENCY CHECK (N2.2)
       const cacheKey = `${req.sessionId}:${req.clientAttemptId}`;

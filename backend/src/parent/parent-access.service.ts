@@ -134,4 +134,51 @@ export class ParentAccessService {
       },
     });
   }
+
+  /**
+   * Returns recent learning activity sessions for a linked child (N3.6).
+   */
+  async getChildActivity(parentId: string, studentId: string) {
+    await this.assertParentOfStudent(parentId, studentId);
+
+    const sessions = await this.prisma.learningSession.findMany({
+      where: { userId: studentId },
+      include: { topic: { include: { subject: true } } },
+      orderBy: { startTime: 'desc' },
+      take: 10,
+    });
+
+    return sessions.map((s) => ({
+      id: s.id,
+      topicId: s.topicId,
+      topicTitle: s.topic?.title || 'General Topic',
+      subjectName: s.topic?.subject?.name || 'General',
+      startTime: s.startTime,
+      endTime: s.endTime,
+      isCompleted: Boolean(s.endTime),
+    }));
+  }
+
+  /**
+   * Returns active DPDP consent records and status for a linked child (N3.6).
+   */
+  async getChildConsent(parentId: string, studentId: string) {
+    await this.assertParentOfStudent(parentId, studentId);
+
+    return this.prisma.consentRecord.findMany({
+      where: { parentId, studentId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Returns notifications scoped to parent (N3.6).
+   */
+  async getParentNotifications(parentId: string) {
+    return this.prisma.notification.findMany({
+      where: { userId: parentId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+  }
 }

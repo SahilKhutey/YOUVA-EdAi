@@ -6,6 +6,8 @@ import {
   Param,
   UseGuards,
   Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { LearningService } from './learning.service';
 import { LearningTransactionService } from './services/learning-transaction.service';
@@ -97,6 +99,24 @@ export class LearningController {
     const attemptReq = {
       learnerId: body.learnerId || userId,
       sessionId: id,
+      activityId: body.activityId,
+      response: body.response,
+      clientAttemptId: body.clientAttemptId,
+      timestamp: body.timestamp || new Date().toISOString(),
+    };
+    return this.learningTxService.processAttempt(userId, attemptReq);
+  }
+
+  @Post('attempts')
+  @HttpCode(HttpStatus.OK)
+  async submitAttemptDirect(
+    @Request() req: any,
+    @Body() body: any,
+  ) {
+    const userId = req.user.id || req.user.userId;
+    const attemptReq = {
+      learnerId: body.learnerId || userId,
+      sessionId: body.sessionId,
       activityId: body.activityId,
       response: body.response,
       clientAttemptId: body.clientAttemptId,
