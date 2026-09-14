@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { GeminiProvider } from './providers/gemini.provider';
 import { OllamaProvider } from './providers/ollama.provider';
 import { DeterministicFallbackProvider } from './providers/deterministic-fallback.provider';
@@ -11,6 +11,9 @@ import {
   ProviderHealthStatus,
   ModerationCheckResult,
 } from './interfaces/llm-provider.interface';
+import { AiGatewayService } from './gateway/ai-gateway.service';
+import { ModelRouterService } from './routing/model-router.service';
+import { AiSafetyModeratorService } from './safety/ai-safety-moderator.service';
 
 @Injectable()
 export class AiService {
@@ -21,6 +24,9 @@ export class AiService {
     private geminiProvider: GeminiProvider,
     private ollamaProvider: OllamaProvider,
     private fallbackProvider: DeterministicFallbackProvider,
+    @Optional() private aiGateway?: AiGatewayService,
+    @Optional() private modelRouter?: ModelRouterService,
+    @Optional() private safetyModerator?: AiSafetyModeratorService,
   ) {
     // Priority order: Primary Gemini -> Secondary Ollama -> Deterministic Fallback
     this.providers = [
@@ -28,6 +34,16 @@ export class AiService {
       this.ollamaProvider,
       this.fallbackProvider,
     ];
+    if (!this.safetyModerator) {
+      this.safetyModerator = new AiSafetyModeratorService();
+    }
+  }
+
+  /**
+   * Access the underlying production AI Gateway directly.
+   */
+  get gateway(): AiGatewayService {
+    return this.aiGateway;
   }
 
   /**
@@ -142,29 +158,14 @@ export class AiService {
    * Evaluates prompt against basic safety and pedagogical boundary standards.
    */
   moderatePrompt(prompt: string): ModerationCheckResult {
-    const lower = prompt.toLowerCase();
-    const selfHarmMarkers = ['kill myself', 'suicide', 'end my life', 'cut myself', 'want to die'];
-    for (const marker of selfHarmMarkers) {
-      if (lower.includes(marker)) {
-        return {
-          passed: false,
-          flaggedCategory: 'SELF_HARM',
-          reason: 'Prompt contains severe distress markers requiring pastoral intervention.',
-        };
-      }
+    const result = this.safetyModerator.moderateInput(prompt);
+    if (!result.passed) {
+      return {
+        passed: false,
+        flaggedCategory: result.flags[0] || 'SAFETY_VIOLATION',
+        reason: result.moderationReason,
+      };
     }
-
-    const jailbreakMarkers = ['ignore all previous instructions', 'bypass system prompt', 'dan mode'];
-    for (const jb of jailbreakMarkers) {
-      if (lower.includes(jb)) {
-        return {
-          passed: false,
-          flaggedCategory: 'PROMPT_INJECTION',
-          reason: 'Prompt contains unauthorized system instruction override attempt.',
-        };
-      }
-    }
-
     return { passed: true };
   }
 

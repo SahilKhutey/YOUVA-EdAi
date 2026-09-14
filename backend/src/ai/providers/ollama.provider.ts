@@ -6,10 +6,16 @@ import {
   LlmGenerationOptions,
   ProviderTier,
 } from '../interfaces/llm-provider.interface';
+import {
+  AiProvider,
+  ProviderGenerationRequest,
+  ProviderGenerationResult,
+} from '../interfaces/ai-provider.interface';
 
 @Injectable()
-export class OllamaProvider implements ILlmProvider {
+export class OllamaProvider implements ILlmProvider, AiProvider {
   readonly tier = ProviderTier.SECONDARY_OLLAMA;
+  readonly name = 'ollama';
   private readonly logger = new Logger(OllamaProvider.name);
   private readonly baseUrl: string;
   private readonly modelName: string;
@@ -31,27 +37,57 @@ export class OllamaProvider implements ILlmProvider {
     }
   }
 
-  async generateText(
-    prompt: string,
-    options?: LlmGenerationOptions,
-  ): Promise<string> {
+  async generate(request: ProviderGenerationRequest): Promise<ProviderGenerationResult> {
+    const start = Date.now();
+    const prompt = request.systemPrompt
+      ? `${request.systemPrompt}\n\nUser:\n${request.userPrompt}`
+      : request.userPrompt;
+
     const response = await axios.post(
       `${this.baseUrl}/api/generate`,
       {
         model: this.modelName,
-        prompt: prompt,
+        prompt,
         stream: false,
         options: {
-          temperature: options?.temperature ?? 0.7,
-          num_predict: options?.maxTokens ?? 1024,
+          temperature: request.temperature ?? 0.7,
+          num_predict: request.maxTokens ?? 1024,
         },
       },
-      { timeout: 30000 },
+      { timeout: request.timeoutMs || 10000 },
     );
 
     if (response.data && response.data.response) {
-      return response.data.response;
+      const text = response.data.response;
+      const latencyMs = Date.now() - start;
+      const inputTokens = Math.max(1, Math.ceil(prompt.length / 4));
+      const outputTokens = Math.max(1, Math.ceil(text.length / 4));
+
+      return {
+        text,
+        provider: this.name,
+        model: this.modelName,
+        inputTokens,
+        outputTokens,
+        totalTokens: inputTokens + outputTokens,
+        latencyMs,
+      };
     }
+
     throw new Error('OllamaProvider returned empty response.');
+  }
+
+  async generateText(
+    prompt: string,
+    options?: LlmGenerationOptions,
+  ): Promise<string> {
+    const res = await this.generate({
+      systemPrompt: options?.systemPrompt || '',
+      userPrompt: prompt,
+      temperature: options?.temperature,
+      maxTokens: options?.maxTokens,
+      timeoutMs: options?.timeoutMs,
+    });
+    return res.text;
   }
 }
