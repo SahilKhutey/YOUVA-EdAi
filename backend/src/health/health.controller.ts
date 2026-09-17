@@ -28,4 +28,17 @@ export class HealthController {
   async readiness() {
     return this.healthService.readiness();
   }
+
+  @Get('dependencies')
+  @HttpCode(HttpStatus.OK)
+  async dependencies() {
+    return {
+      database: await this.healthService.database(),
+      redis: await this.healthService.redis(),
+      queue: await this.healthService.queue(),
+      ai: await this.healthService.ai(),
+      websocket: this.healthService.websocket(),
+      timestamp: new Date().toISOString(),
+    };
+  }
 }

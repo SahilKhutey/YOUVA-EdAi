@@ -66,6 +66,15 @@ export class AiGatewayService implements AiGateway {
 
     // 3. Rate Limit & Budget Invariant Check
     this.rateLimiter.checkRateLimit(request.tenantId, request.actorId);
+    const budget = this.costTracker?.checkTenantSpendLimit
+      ? await this.costTracker.checkTenantSpendLimit(request.tenantId)
+      : { allowed: true, currentDailySpend: 0, limitDailySpend: 50 };
+    if (!budget.allowed) {
+      this.metricsService.increment('ai_requests_blocked');
+      throw new ForbiddenException(
+        `AiBudgetCeilingExceeded: Tenant [${request.tenantId}] daily AI spend limit ($${budget.limitDailySpend}) exceeded (current: $${budget.currentDailySpend}).`,
+      );
+    }
 
     // 4. Learner Context Minimization & PII Redaction
     const minimizedInput = this.minimizeInputByPurpose(request.purpose, request.input);

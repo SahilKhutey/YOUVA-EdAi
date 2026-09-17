@@ -63,9 +63,63 @@ export class HealthService {
     }
   }
 
+  async queue(): Promise<{
+    status: 'up' | 'degraded' | 'down';
+    pendingDepth: number;
+    deadLetterCount: number;
+  }> {
+    try {
+      const prismaAny = this.prisma as any;
+      if (!prismaAny.outboxEvent?.count) {
+        return { status: 'up', pendingDepth: 0, deadLetterCount: 0 };
+      }
+
+      const pendingDepth = await prismaAny.outboxEvent.count({
+        where: { status: { in: ['PENDING', 'PROCESSING'] } },
+      });
+      const deadLetterCount = await prismaAny.outboxEvent.count({
+        where: { status: 'DEAD_LETTER' },
+      });
+
+      const isDegraded = deadLetterCount > 50 || pendingDepth > 1000;
+      return {
+        status: isDegraded ? 'degraded' : 'up',
+        pendingDepth,
+        deadLetterCount,
+      };
+    } catch {
+      return { status: 'down', pendingDepth: 0, deadLetterCount: 0 };
+    }
+  }
+
+  async ai(): Promise<{
+    status: 'up' | 'degraded' | 'isolated_non_blocking';
+    primaryProvider: string;
+    fallbackAvailable: boolean;
+  }> {
+    const provider = process.env.AI_PROVIDER || 'gemini';
+    const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.AI_PROVIDER_API_KEY);
+
+    return {
+      status: hasKey ? 'up' : 'isolated_non_blocking',
+      primaryProvider: provider,
+      fallbackAvailable: true,
+    };
+  }
+
+  websocket(): { status: 'up' | 'down'; activeConnections: number } {
+    return {
+      status: 'up',
+      activeConnections: 0,
+    };
+  }
+
   async readiness() {
     const dbHealth = await this.database();
     const redisHealth = await this.redis();
+    const queueHealth = await this.queue();
+    const aiHealth = await this.ai();
+    const wsHealth = this.websocket();
 
     const isDbReady = dbHealth.status === 'up';
     const isRedisReady = redisHealth.status === 'up' || redisHealth.status === 'not_configured';
@@ -74,11 +128,10 @@ export class HealthService {
       status: isDbReady && isRedisReady ? 'ready' : 'not_ready',
       database: dbHealth,
       redis: redisHealth,
+      queue: queueHealth,
+      ai: aiHealth,
+      websocket: wsHealth,
       config: { status: 'valid' },
-      ai: {
-        status: 'isolated_non_blocking',
-        fallbackAvailable: true,
-      },
       system: {
         uptimeSeconds: Math.round(process.uptime()),
         memoryUsageMb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),

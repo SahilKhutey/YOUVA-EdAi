@@ -63,6 +63,8 @@ import { AutonomousLearningModule } from './autonomous-learning/autonomous-learn
 import { CredentialNetworkModule } from './credential-network/credential-network.module';
 import { InteroperabilityModule } from './interoperability/p16.module';
 import { TelemetryModule } from './telemetry/telemetry.module';
+import { ReliabilityModule } from './reliability/reliability.module';
+import { SyntheticModule } from './synthetic/synthetic.module';
 import { validateEnvironment } from './config/env.validation';
 
 @Module({
@@ -113,6 +115,8 @@ import { validateEnvironment } from './config/env.validation';
     HealthModule,
     SecurityModule,
     ObservabilityModule,
+    ReliabilityModule,
+    SyntheticModule,
     EventsModule,
     TenantsModule,
     LearnerStateModule,

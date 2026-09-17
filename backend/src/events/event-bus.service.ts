@@ -65,13 +65,19 @@ export class EventBusService {
       matchingHandlers.map((handler) => handler(event)),
     );
 
+    let firstFailure: any = null;
     results.forEach((result, idx) => {
       if (result.status === 'rejected') {
         this.logger.error(
           `Handler #${idx} for event [${event.eventType}] failed: ${result.reason?.message || result.reason}`,
         );
+        if (!firstFailure) firstFailure = result.reason;
       }
     });
+
+    if (firstFailure) {
+      throw firstFailure instanceof Error ? firstFailure : new Error(String(firstFailure));
+    }
   }
 
   /**
