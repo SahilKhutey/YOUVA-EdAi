@@ -65,6 +65,7 @@ import { InteroperabilityModule } from './interoperability/p16.module';
 import { TelemetryModule } from './telemetry/telemetry.module';
 import { ReliabilityModule } from './reliability/reliability.module';
 import { SyntheticModule } from './synthetic/synthetic.module';
+import { PilotModule } from './pilot/pilot.module';
 import { validateEnvironment } from './config/env.validation';
 
 @Module({
@@ -73,6 +74,7 @@ import { validateEnvironment } from './config/env.validation';
       isGlobal: true,
       validate: validateEnvironment,
     }),
+    PilotModule,
     AuthModule,
     UsersModule,
     PrismaModule,
