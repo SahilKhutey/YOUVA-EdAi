@@ -66,6 +66,7 @@ import { TelemetryModule } from './telemetry/telemetry.module';
 import { ReliabilityModule } from './reliability/reliability.module';
 import { SyntheticModule } from './synthetic/synthetic.module';
 import { PilotModule } from './pilot/pilot.module';
+import { PersonalizationModule } from './personalization/personalization.module';
 import { validateEnvironment } from './config/env.validation';
 
 @Module({
@@ -75,6 +76,7 @@ import { validateEnvironment } from './config/env.validation';
       validate: validateEnvironment,
     }),
     PilotModule,
+    PersonalizationModule,
     AuthModule,
     UsersModule,
     PrismaModule,
