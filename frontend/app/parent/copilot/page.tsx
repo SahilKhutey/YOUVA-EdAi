@@ -14,8 +14,11 @@ import {
   Smartphone,
   Sparkles,
   Volume2,
+  ShieldAlert,
 } from "lucide-react";
 import { useState } from "react";
+import { ParentCoPilotDashboard } from "@/components/early-childhood/ParentCoPilotDashboard";
+import { ChildSafetyMonitor } from "@/components/early-childhood/ChildSafetyMonitor";
 
 interface TranscriptEntry {
   time: string;
@@ -24,6 +27,7 @@ interface TranscriptEntry {
 }
 
 export default function ParentCopilotPage() {
+  const [activeTab, setActiveTab] = useState<"COPILOT" | "SUPERVISORY" | "SAFETY">("COPILOT");
   const [sessionStatus, setSessionStatus] = useState<"ACTIVE" | "PAUSED" | "STOPPED">("ACTIVE");
   const [elapsedMinutes, setElapsedMinutes] = useState(4.2);
   const maxMinutes = 15.0;
@@ -42,153 +46,205 @@ export default function ParentCopilotPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6 font-sans">
-        {/* Parent Co-Pilot Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-border gap-4">
+      <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6 font-sans">
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-                Live Co-Pilot Bridge • Ages 4–6
+              <span className="px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider bg-teal-500/10 text-teal-700 dark:text-teal-400 border border-teal-500/20">
+                Cycle N13 Early Childhood Platform
               </span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                DPDP §9 Guardian Co-Presence
+                DPDP §9 &amp; COPPA Safe
               </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-              Parent Co-Pilot Supervisory Terminal
+              Parent Guardian Portal
             </h1>
-            <p className="text-sm text-muted-foreground mt-1 font-mono">
-              Paired Junior Learner: {childToken} (Delhi Public School Early Years)
-            </p>
           </div>
 
-          {/* Parental Control Kill Switch & Pause */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-muted p-1.5 rounded-2xl">
             <button
-              onClick={handlePause}
-              disabled={sessionStatus === "STOPPED"}
-              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-                sessionStatus === "PAUSED"
-                  ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                  : "bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-50"
+              onClick={() => setActiveTab("COPILOT")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === "COPILOT"
+                  ? "bg-teal-600 text-white shadow"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {sessionStatus === "PAUSED" ? (
-                <>
-                  <Play className="w-4 h-4" /> Resume Session
-                </>
-              ) : (
-                <>
-                  <Pause className="w-4 h-4" /> Pause Session
-                </>
-              )}
+              <HeartHandshake className="h-4 w-4" />
+              Parent Co-Pilot
             </button>
-
             <button
-              onClick={handleTerminate}
-              disabled={sessionStatus === "STOPPED"}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors disabled:opacity-50"
+              onClick={() => setActiveTab("SUPERVISORY")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === "SUPERVISORY"
+                  ? "bg-teal-600 text-white shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <AlertOctagon className="w-4 h-4" /> Terminate Session
+              <Eye className="h-4 w-4" />
+              Live Supervision
+            </button>
+            <button
+              onClick={() => setActiveTab("SAFETY")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === "SAFETY"
+                  ? "bg-rose-600 text-white shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <ShieldAlert className="h-4 w-4" />
+              Safety Governance
             </button>
           </div>
         </div>
 
-        {/* Screen-Time Hard Guard Bar */}
-        <div className="p-5 rounded-2xl border border-border bg-card shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-amber-600" />
-              <span className="font-semibold text-foreground text-sm">Mandatory 15-Minute Screen Time Guard</span>
-            </div>
-            <span className="font-mono text-xs font-semibold text-muted-foreground">
-              {elapsedMinutes.toFixed(1)}m elapsed / {(maxMinutes - elapsedMinutes).toFixed(1)}m remaining
-            </span>
-          </div>
+        {/* Tab 1: Parent Co-Pilot Dashboard */}
+        {activeTab === "COPILOT" && <ParentCoPilotDashboard />}
 
-          <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all rounded-full ${
-                elapsedMinutes > 12 ? "bg-red-500" : "bg-amber-500"
-              }`}
-              style={{ width: `${(elapsedMinutes / maxMinutes) * 100}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            In accordance with early childhood health directives, sessions automatically lock after 15 minutes for a compulsory 10-minute non-digital rest break.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Mirrored Audio Transcript */}
-          <div className="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Ear className="w-5 h-5 text-primary" />
-                <h2 className="font-bold text-foreground text-base">Live Spoken Audio Transcript</h2>
-              </div>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                <Volume2 className="w-3.5 h-3.5" /> &lt; 65 dB SPL
-              </span>
-            </div>
-
-            {transcripts.length === 0 ? (
-              <div className="text-center py-10 border border-dashed border-border rounded-xl p-6 text-muted-foreground">
-                <Ear className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-60" />
-                <p className="text-xs font-semibold text-foreground">Waiting for Child Voice or Interaction Event</p>
-                <p className="text-[11px] text-muted-foreground mt-1 max-w-sm mx-auto">
-                  Live spoken audio prompts and tactile interaction responses will stream here in real-time as your child engages with the session.
+        {/* Tab 2: Live Supervision Terminal */}
+        {activeTab === "SUPERVISORY" && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 border-b border-border gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Live Co-Pilot Supervisory Terminal</h2>
+                <p className="text-sm text-muted-foreground mt-1 font-mono">
+                  Paired Junior Learner: {childToken} (Delhi Public School Early Years)
                 </p>
               </div>
-            ) : (
-              <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                {transcripts.map((entry, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-3 rounded-xl text-xs font-mono ${
-                      entry.speaker === "AI_VOICE"
-                        ? "bg-amber-500/10 border border-amber-500/20 text-amber-950 dark:text-amber-200"
-                        : "bg-muted border border-border text-foreground"
-                    }`}
-                  >
-                    <div className="flex justify-between text-muted-foreground text-[10px] mb-1">
-                      <span>{entry.speaker === "AI_VOICE" ? "YOUVA Voice Prompt" : "Child Interaction"}</span>
-                      <span>{entry.time}</span>
-                    </div>
-                    <p className="text-sm font-sans font-semibold">{entry.text}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* Co-Play Interaction Guidance for Parents */}
-          <div className="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-4">
-            <div className="flex items-center gap-2">
-              <HeartHandshake className="w-5 h-5 text-emerald-600" />
-              <h2 className="font-bold text-foreground text-base">Parental Co-Play Suggestions</h2>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handlePause}
+                  disabled={sessionStatus === "STOPPED"}
+                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                    sessionStatus === "PAUSED"
+                      ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                      : "bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-50"
+                  }`}
+                >
+                  {sessionStatus === "PAUSED" ? (
+                    <>
+                      <Play className="w-4 h-4" /> Resume Session
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="w-4 h-4" /> Pause Session
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleTerminate}
+                  disabled={sessionStatus === "STOPPED"}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors disabled:opacity-50"
+                >
+                  <AlertOctagon className="w-4 h-4" /> Terminate Session
+                </button>
+              </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                <Sparkles className="w-4 h-4" /> Active Activity Co-Play Prompt:
+            {/* Screen-Time Hard Guard Bar */}
+            <div className="p-5 rounded-2xl border border-border bg-card shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                  <span className="font-semibold text-foreground text-sm">Mandatory 15-Minute Screen Time Guard</span>
+                </div>
+                <span className="font-mono text-xs font-semibold text-muted-foreground">
+                  {elapsedMinutes.toFixed(1)}m elapsed / {(maxMinutes - elapsedMinutes).toFixed(1)}m remaining
+                </span>
               </div>
-              <p className="text-sm text-emerald-900 dark:text-emerald-200 leading-relaxed">
-                &ldquo;Encourage your child to count the apples using their fingers! Ask: &lsquo;Can you show me three fingers like the apples?&rsquo;&rdquo;
+
+              <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all rounded-full ${
+                    elapsedMinutes > 12 ? "bg-red-500" : "bg-amber-500"
+                  }`}
+                  style={{ width: `${(elapsedMinutes / maxMinutes) * 100}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                In accordance with early childhood health directives, sessions automatically lock after 15 minutes for a compulsory 10-minute non-digital rest break.
               </p>
             </div>
 
-            <div className="text-xs text-muted-foreground space-y-2">
-              <p className="font-semibold text-foreground">Why Co-Play Matters at Ages 4–6:</p>
-              <ul className="list-disc pl-4 space-y-1">
-                <li>Grounds digital concepts in tactile, real-world physical objects.</li>
-                <li>Prevents passive screen absorption through active conversational reinforcement.</li>
-                <li>Validates DPDP Act 2023 §9 guardian supervision requirements.</li>
-              </ul>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Mirrored Audio Transcript */}
+              <div className="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Ear className="w-5 h-5 text-primary" />
+                    <h3 className="font-bold text-foreground text-base">Live Spoken Audio Transcript</h3>
+                  </div>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                    <Volume2 className="w-3.5 h-3.5" /> &lt; 65 dB SPL
+                  </span>
+                </div>
+
+                {transcripts.length === 0 ? (
+                  <div className="text-center py-10 border border-dashed border-border rounded-xl p-6 text-muted-foreground">
+                    <Ear className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-60" />
+                    <p className="text-xs font-semibold text-foreground">Waiting for Child Voice or Interaction Event</p>
+                    <p className="text-[11px] text-muted-foreground mt-1 max-w-sm mx-auto">
+                      Live spoken audio prompts and tactile interaction responses will stream here in real-time as your child engages with the session.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                    {transcripts.map((entry, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded-xl text-xs font-mono ${
+                          entry.speaker === "AI_VOICE"
+                            ? "bg-amber-500/10 border border-amber-500/20 text-amber-950 dark:text-amber-200"
+                            : "bg-muted border border-border text-foreground"
+                        }`}
+                      >
+                        <div className="flex justify-between text-muted-foreground text-[10px] mb-1">
+                          <span>{entry.speaker === "AI_VOICE" ? "YOUVA Voice Prompt" : "Child Interaction"}</span>
+                          <span>{entry.time}</span>
+                        </div>
+                        <p className="text-sm font-sans font-semibold">{entry.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Co-Play Guidance */}
+              <div className="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-4">
+                <div className="flex items-center gap-2">
+                  <HeartHandshake className="w-5 h-5 text-emerald-600" />
+                  <h3 className="font-bold text-foreground text-base">Parental Co-Play Suggestions</h3>
+                </div>
+
+                <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                    <Sparkles className="w-4 h-4" /> Active Activity Co-Play Prompt:
+                  </div>
+                  <p className="text-sm text-emerald-900 dark:text-emerald-200 leading-relaxed">
+                    &ldquo;Encourage your child to count the apples using their fingers! Ask: &lsquo;Can you show me three fingers like the apples?&rsquo;&rdquo;
+                  </p>
+                </div>
+
+                <div className="text-xs text-muted-foreground space-y-2">
+                  <p className="font-semibold text-foreground">Why Co-Play Matters at Ages 4–6:</p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>Grounds digital concepts in tactile, real-world physical objects.</li>
+                    <li>Prevents passive screen absorption through active conversational reinforcement.</li>
+                    <li>Validates DPDP Act 2023 §9 guardian supervision requirements.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Tab 3: Child Safety Monitor */}
+        {activeTab === "SAFETY" && <ChildSafetyMonitor />}
       </div>
     </MainLayout>
   );
