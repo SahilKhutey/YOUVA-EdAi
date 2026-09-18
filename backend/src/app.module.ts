@@ -68,6 +68,7 @@ import { SyntheticModule } from './synthetic/synthetic.module';
 import { PilotModule } from './pilot/pilot.module';
 import { PersonalizationModule } from './personalization/personalization.module';
 import { MultimodalModule } from './multimodal/multimodal.module';
+import { CredentialsModule } from './credentials/credentials.module';
 import { validateEnvironment } from './config/env.validation';
 
 @Module({
@@ -79,6 +80,7 @@ import { validateEnvironment } from './config/env.validation';
     PilotModule,
     PersonalizationModule,
     MultimodalModule,
+    CredentialsModule,
     AuthModule,
     UsersModule,
     PrismaModule,
