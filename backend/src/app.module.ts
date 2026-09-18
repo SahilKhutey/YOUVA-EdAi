@@ -70,6 +70,7 @@ import { PersonalizationModule } from './personalization/personalization.module'
 import { MultimodalModule } from './multimodal/multimodal.module';
 import { CredentialsModule } from './credentials/credentials.module';
 import { EarlyChildhoodModule } from './early-childhood/early-childhood.module';
+import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { validateEnvironment } from './config/env.validation';
 
 @Module({
@@ -78,6 +79,7 @@ import { validateEnvironment } from './config/env.validation';
       isGlobal: true,
       validate: validateEnvironment,
     }),
+    InfrastructureModule,
     EarlyChildhoodModule,
     PilotModule,
     PersonalizationModule,

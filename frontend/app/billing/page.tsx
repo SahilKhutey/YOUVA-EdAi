@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CommercialBillingPortal } from '@/components/infrastructure/CommercialBillingPortal';
 
 type Plan = {
   plan: string;
@@ -11,6 +12,8 @@ export default function BillingPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'individual' | 'institutional'>('institutional');
+
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -86,6 +89,38 @@ export default function BillingPage() {
         </div>
       )}
 
+      {/* Tabs */}
+      <div className="mb-8 flex justify-center">
+        <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+          <button
+            onClick={() => setActiveTab('institutional')}
+            className={`rounded-lg px-5 py-2 text-sm font-semibold transition-all ${
+              activeTab === 'institutional'
+                ? 'bg-white text-teal-700 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Institutional &amp; Enterprise Billing
+          </button>
+          <button
+            onClick={() => setActiveTab('individual')}
+            className={`rounded-lg px-5 py-2 text-sm font-semibold transition-all ${
+              activeTab === 'individual'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Individual &amp; Family Plans
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'institutional' ? (
+        <div className="space-y-8">
+          <CommercialBillingPortal />
+        </div>
+      ) : (
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {plans.map((item) => {
           const isFamily = item.plan === 'FAMILY';
@@ -149,6 +184,7 @@ export default function BillingPage() {
           );
         })}
       </div>
+      )}
     </main>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
+import { TenantAdministrationConsole } from '@/components/infrastructure/TenantAdministrationConsole';
 
 interface JurisdictionStatus {
   id: string;
@@ -47,7 +48,7 @@ interface GovernanceCadence {
 }
 
 export default function InstitutionalTrustTerminal() {
-  const [activeTab, setActiveTab] = useState<'jurisdictions' | 'credentials' | 'district' | 'governance' | 'dataroom'>('jurisdictions');
+  const [activeTab, setActiveTab] = useState<'jurisdictions' | 'credentials' | 'district' | 'governance' | 'dataroom' | 'tenants'>('tenants');
 
   // Jurisdictions State
   const [jurisdictions] = useState<JurisdictionStatus[]>([
@@ -228,6 +229,16 @@ export default function InstitutionalTrustTerminal() {
       {/* Tabs */}
       <div className="max-w-7xl mx-auto mb-6 flex gap-2 border-b border-slate-800 pb-2">
         <button
+          onClick={() => setActiveTab('tenants')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+            activeTab === 'tenants'
+              ? 'bg-indigo-600 text-white'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+          }`}
+        >
+          Multi-Tenant Governance (N14)
+        </button>
+        <button
           onClick={() => setActiveTab('jurisdictions')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
             activeTab === 'jurisdictions'
@@ -281,6 +292,13 @@ export default function InstitutionalTrustTerminal() {
 
       {/* Tab Contents */}
       <div className="max-w-7xl mx-auto">
+        {/* Tab 0: Multi-Tenant Governance */}
+        {activeTab === 'tenants' && (
+          <div className="space-y-6">
+            <TenantAdministrationConsole />
+          </div>
+        )}
+
         {/* Tab 1: Jurisdictions */}
         {activeTab === 'jurisdictions' && (
           <div className="space-y-6">

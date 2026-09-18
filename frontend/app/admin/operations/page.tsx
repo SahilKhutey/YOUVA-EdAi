@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ProductionOperationsDashboard } from '@/components/infrastructure/ProductionOperationsDashboard';
+import { DisasterRecoveryConsole } from '@/components/infrastructure/DisasterRecoveryConsole';
 
 interface HumanControl {
   controlId: string;
@@ -46,7 +48,7 @@ interface OperatingCadence {
 }
 
 export default function ContinuousOperationsTerminal() {
-  const [activeTab, setActiveTab] = useState<'controls' | 'safety' | 'integration' | 'release' | 'rhythm'>('release');
+  const [activeTab, setActiveTab] = useState<'controls' | 'safety' | 'integration' | 'release' | 'rhythm' | 'operations' | 'dr'>('operations');
 
   const humanControls: HumanControl[] = [
     {
@@ -208,6 +210,26 @@ export default function ContinuousOperationsTerminal() {
       {/* Tabs */}
       <div className="max-w-7xl mx-auto mb-6 flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
         <button
+          onClick={() => setActiveTab('operations')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+            activeTab === 'operations'
+              ? 'bg-emerald-600 text-white'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+          }`}
+        >
+          Operations &amp; AI FinOps
+        </button>
+        <button
+          onClick={() => setActiveTab('dr')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+            activeTab === 'dr'
+              ? 'bg-emerald-600 text-white'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+          }`}
+        >
+          Disaster Recovery (DR-001..015)
+        </button>
+        <button
           onClick={() => setActiveTab('release')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
             activeTab === 'release'
@@ -261,6 +283,20 @@ export default function ContinuousOperationsTerminal() {
 
       {/* Tab Contents */}
       <div className="max-w-7xl mx-auto">
+        {/* Tab: Operations & AI FinOps */}
+        {activeTab === 'operations' && (
+          <div className="space-y-6">
+            <ProductionOperationsDashboard />
+          </div>
+        )}
+
+        {/* Tab: Disaster Recovery */}
+        {activeTab === 'dr' && (
+          <div className="space-y-6">
+            <DisasterRecoveryConsole />
+          </div>
+        )}
+
         {/* Tab: Release Conditions */}
         {activeTab === 'release' && (
           <div className="space-y-6">
