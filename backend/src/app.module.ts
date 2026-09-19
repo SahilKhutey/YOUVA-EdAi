@@ -78,6 +78,7 @@ import { CognitivePersonalizationModule } from './cognitive-personalization/cogn
 import { SkillsCredentialNetworkModule } from './skills-credential-network/skills-credential-network.module';
 import { CapabilityLifelongOsModule } from './capability-lifelong-os/capability-lifelong-os.module';
 import { EcosystemIntelligenceModule } from './ecosystem-intelligence/ecosystem-intelligence.module';
+import { CapabilityExchangeModule } from './capability-exchange/capability-exchange.module';
 import { validateEnvironment } from './config/env.validation';
 
 @Module({
@@ -86,6 +87,7 @@ import { validateEnvironment } from './config/env.validation';
       isGlobal: true,
       validate: validateEnvironment,
     }),
+    CapabilityExchangeModule,
     EcosystemIntelligenceModule,
     CapabilityLifelongOsModule,
     SkillsCredentialNetworkModule,

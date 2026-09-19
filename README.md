@@ -2,34 +2,35 @@
 ## Continuous Evolution, Global Learning Intelligence, Research & Ecosystem Network
 
 [![CI Pipeline](https://github.com/SahilKhutey/YOUVA-EdAi/actions/workflows/ci.yml/badge.svg)](https://github.com/SahilKhutey/YOUVA-EdAi/actions)
-[![Milestone N21 Release](https://img.shields.io/badge/Milestone%20N21-GLOBAL%20ECOSYSTEM%20INTELLIGENCE-success.svg)](docs/governance/n21-ecosystem-intelligence-report.md)
-[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-6%2C411%2F6%2C411%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n21-ecosystem-intelligence-report.md)
+[![CI Pipeline](https://github.com/SahilKhutey/YOUVA-EdAi/actions/workflows/ci.yml/badge.svg)](https://github.com/SahilKhutey/YOUVA-EdAi/actions)
+[![Milestone N22 Release](https://img.shields.io/badge/Milestone%20N22-CAPABILITY%20EXCHANGE%20%26%20OPPORTUNITY%20NETWORK-success.svg)](docs/governance/n22-capability-exchange-report.md)
+[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-6%2C931%2F6%2C931%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n22-capability-exchange-report.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0%20%2F%20Commercial-blue.svg)](COMMERCIAL_LICENSE.md)
 [![Backend](https://img.shields.io/badge/Backend-NestJS%2011%20%7C%20Prisma%205.22-E0234E.svg)](backend/)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js%2016.3%20%7C%20Tailwind-black.svg)](frontend/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20Redis-336791.svg)](backend/prisma/)
-[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2021%20Certified-success.svg)](docs/governance/n21-ecosystem-intelligence-charter.md)
+[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2022%20Certified-success.svg)](docs/governance/n22-capability-exchange-charter.md)
 
 **YOUVA-EdAI** (युवा — *Youth*) is an institutionally trusted, globally extensible, commercially sustainable, and continuously governed **Global AI Learning Operating System** spanning learners ages 3 to 18+ (Preschool, Elementary, Middle School, High School, and Skills Ecosystem), educators, parents, research institutions, and enterprise school districts.
 
-Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, controlled AI autonomy, the Milestone N17 Permanent Evolution Operating System, Milestone N18 Advanced Learning Science, Milestone N19 Global Skills, Evidence & Credential Network, Milestone N20 Lifelong Learning OS & Human Capability Graph, and **Milestone N21 Global Learning & Human Capability Ecosystem Intelligence**.
+Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, controlled AI autonomy, the Milestone N17 Permanent Evolution Operating System, Milestone N18 Advanced Learning Science, Milestone N19 Global Skills, Evidence & Credential Network, Milestone N20 Lifelong Learning OS & Human Capability Graph, Milestone N21 Global Learning & Human Capability Ecosystem Intelligence, and **Milestone N22 Global Human Capability Exchange, Lifelong Opportunity Network & Trusted Learning Economy**.
 
 ---
 
 ## 🏛️ The Permanent Evolution Operating Model
 
-Following the completion of the 16-phase buildout (`Build → Validate → Pilot → Scale → Govern`), Milestone N17 established the permanent post-roadmap **Evolution OS**, Milestone N18 established the **Advanced Learning Science Engine**, Milestone N19 established the **Global Skills, Evidence & Credential Network**, Milestone N20 established the **Lifelong Human Capability Operating System**, and Milestone N21 establishes the **Global Ecosystem Intelligence Layer**:
+Following the completion of the 16-phase buildout (`Build → Validate → Pilot → Scale → Govern`), Milestone N17 established the permanent post-roadmap **Evolution OS**, Milestone N18 established the **Advanced Learning Science Engine**, Milestone N19 established the **Global Skills, Evidence & Credential Network**, Milestone N20 established the **Lifelong Human Capability Operating System**, Milestone N21 established the **Global Ecosystem Intelligence Layer**, and Milestone N22 delivers the **Global Human Capability Exchange**:
 
 $$\begin{matrix}
-\text{Learner} \longleftrightarrow \text{Teacher} \longleftrightarrow \text{Institution} \longleftrightarrow \text{Issuer} \longleftrightarrow \text{Mentor} \longleftrightarrow \text{Researcher} \longleftrightarrow \text{Opportunity} \longleftrightarrow \text{Employer}
+\text{LEARN} \to \text{PRACTICE} \to \text{DEMONSTRATE} \to \text{VALIDATE} \to \text{EVIDENCE} \to \text{SKILL} \to \text{CAPABILITY} \to \text{CREDENTIAL} \to \text{OPPORTUNITY} \to \text{EXPERIENCE} \to \text{OUTCOME} \to \text{REFLECT} \to \text{RESKILL} \to \text{LEARN AGAIN}
 \end{matrix}$$
 
-### The N21 Core Doctrine & 7-Layer Truth Model
-$$\mathbf{\text{Learner Truth} \ne \text{Institution Truth} \ne \text{Evidence Truth} \ne \text{Credential Truth} \ne \text{Capability Truth} \ne \text{Opportunity Truth} \ne \text{Employment Truth}}$$
+### The N22 Core Doctrine & 9-Layer Constitutional Separation
+$$\mathbf{\text{Learning Truth} \ne \text{Evidence Truth} \ne \text{Credential Truth} \ne \text{Employment Decision} \ne \text{Recommendation} \ne \text{Prediction} \ne \text{Experience} \ne \text{Capability} \ne \text{Human Worth}}$$
 
 ---
 
-## 🗺️ The Complete Development & Evolution Roadmap (N1 $\rightarrow$ N21)
+## 🗺️ The Complete Development & Evolution Roadmap (N1 $\rightarrow$ N22)
 
 | Phase | Milestone Name | Strategic Architecture Delivered | E2E Tests | Status |
 | :---: | :--- | :--- | :---: | :---: |
@@ -53,8 +54,9 @@ $$\mathbf{\text{Learner Truth} \ne \text{Institution Truth} \ne \text{Evidence T
 | **N18** | **Advanced Learning Science & Personalization** | Bayesian Mastery 2.0 with credibility bounds, 6-level evidence hierarchy, 8-fold error taxonomy, 5-tier hints, 6-stage metacognition, AI removal test, simplicity benchmark gate | 510 / 510 | **VERIFIED** |
 | **N19** | **Global Skills, Evidence & Credential Network** | Skills Graph, 8-fold evidence types, immutable lineage, W3C VC & Open Badges 3.0 adapters, zero-PII verification, Skills Passport wallet, anti-inflation risk engine | 520 / 520 | **VERIFIED** |
 | **N20** | **Lifelong Learning OS & Capability Graph** | Human Capability Graph (5-dim vectors), multi-pathway goals (Project, Practice, Mentor), Opportunity Graph with prompt-injection shield, longitudinal outcome tracking (correlation $\ne$ causality), AI Coach with AI removal test & teacher override | 520 / 520 | **VERIFIED** |
-| **N21** | **Global Ecosystem Intelligence** | Global Ecosystem Graph (multi-party nodes/edges), Partner Gateway with scoped authorization & decoupling offboarding, untrusted event bus with replay protection & authority matrix, curriculum intelligence with qualitative gap analysis, federated analytics with small-cohort protection ($n < 10$) | 520 / 520 | **CERTIFIED (100%)** |
-| **TOTAL** | **Full Platform Integration** | **Complete 21-Milestone Enterprise Operating System** | **6,411 / 6,411** | **100% GREEN** |
+| **N21** | **Global Ecosystem Intelligence** | Global Ecosystem Graph (multi-party nodes/edges), Partner Gateway with scoped authorization & decoupling offboarding, untrusted event bus with replay protection & authority matrix, curriculum intelligence with qualitative gap analysis, federated analytics with small-cohort protection ($n < 10$) | 520 / 520 | **VERIFIED** |
+| **N22** | **Global Human Capability Exchange & Opportunity Network** | Capability Alignment Engine (zero pay-to-win, non-predictive matching), Sovereign Human Capability Passport with purpose-bound selective disclosure, 12 canonical opportunity archetypes, minor safeguards, provider trust signals, fraud reporting, strictly governed non-consequential agent actions | 520 / 520 | **CERTIFIED (100%)** |
+| **TOTAL** | **Full Platform Integration** | **Complete 22-Milestone Enterprise Operating System** | **6,931 / 6,931** | **100% GREEN** |
 
 ---
 
