@@ -2,42 +2,34 @@
 ## Continuous Evolution, Global Learning Intelligence, Research & Ecosystem Network
 
 [![CI Pipeline](https://github.com/SahilKhutey/YOUVA-EdAi/actions/workflows/ci.yml/badge.svg)](https://github.com/SahilKhutey/YOUVA-EdAi/actions)
-[![Milestone N20 Release](https://img.shields.io/badge/Milestone%20N20-LIFELONG%20LEARNING%20OS%20%26%20CAPABILITY%20GRAPH-success.svg)](docs/governance/n20-lifelong-capability-report.md)
-[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-5%2C891%2F5%2C891%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n20-lifelong-capability-report.md)
+[![Milestone N21 Release](https://img.shields.io/badge/Milestone%20N21-GLOBAL%20ECOSYSTEM%20INTELLIGENCE-success.svg)](docs/governance/n21-ecosystem-intelligence-report.md)
+[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-6%2C411%2F6%2C411%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n21-ecosystem-intelligence-report.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0%20%2F%20Commercial-blue.svg)](COMMERCIAL_LICENSE.md)
 [![Backend](https://img.shields.io/badge/Backend-NestJS%2011%20%7C%20Prisma%205.22-E0234E.svg)](backend/)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js%2016.3%20%7C%20Tailwind-black.svg)](frontend/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20Redis-336791.svg)](backend/prisma/)
-[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2020%20Certified-success.svg)](docs/governance/n20-lifelong-capability-charter.md)
+[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2021%20Certified-success.svg)](docs/governance/n21-ecosystem-intelligence-charter.md)
 
 **YOUVA-EdAI** (युवा — *Youth*) is an institutionally trusted, globally extensible, commercially sustainable, and continuously governed **Global AI Learning Operating System** spanning learners ages 3 to 18+ (Preschool, Elementary, Middle School, High School, and Skills Ecosystem), educators, parents, research institutions, and enterprise school districts.
 
-Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, controlled AI autonomy, the Milestone N17 Permanent Evolution Operating System, Milestone N18 Advanced Learning Science, Milestone N19 Global Skills, Evidence & Credential Network, and **Milestone N20 Lifelong Learning OS & Human Capability Graph**.
+Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, controlled AI autonomy, the Milestone N17 Permanent Evolution Operating System, Milestone N18 Advanced Learning Science, Milestone N19 Global Skills, Evidence & Credential Network, Milestone N20 Lifelong Learning OS & Human Capability Graph, and **Milestone N21 Global Learning & Human Capability Ecosystem Intelligence**.
 
 ---
 
 ## 🏛️ The Permanent Evolution Operating Model
 
-Following the completion of the 16-phase buildout (`Build → Validate → Pilot → Scale → Govern`), Milestone N17 established the permanent post-roadmap **Evolution OS**, Milestone N18 established the **Advanced Learning Science Engine**, Milestone N19 established the **Global Skills, Evidence & Credential Network**, and Milestone N20 establishes the **Lifelong Human Capability Operating System**:
+Following the completion of the 16-phase buildout (`Build → Validate → Pilot → Scale → Govern`), Milestone N17 established the permanent post-roadmap **Evolution OS**, Milestone N18 established the **Advanced Learning Science Engine**, Milestone N19 established the **Global Skills, Evidence & Credential Network**, Milestone N20 established the **Lifelong Human Capability Operating System**, and Milestone N21 establishes the **Global Ecosystem Intelligence Layer**:
 
 $$\begin{matrix}
-\text{Learning} \longrightarrow \text{Capability} \longrightarrow \text{Opportunity} \longrightarrow \text{Application} \longrightarrow \text{Outcome} \longrightarrow \text{Continuous Reskilling}
+\text{Learner} \longleftrightarrow \text{Teacher} \longleftrightarrow \text{Institution} \longleftrightarrow \text{Issuer} \longleftrightarrow \text{Mentor} \longleftrightarrow \text{Researcher} \longleftrightarrow \text{Opportunity} \longleftrightarrow \text{Employer}
 \end{matrix}$$
 
-### The N20 Core Doctrine & Foundational Truth Invariants
-$$\mathbf{\text{Prediction} \ne \text{Capability} \ne \text{Credential} \ne \text{Course Completion} \ne \text{AI Recommendation} \ne \text{Interest} \ne \text{Potential}}$$
-
-$$\begin{aligned}
-\mathbf{\text{Learning Truth}}     &\longrightarrow \text{What the learner demonstrated in authentic activity} \\
-\mathbf{\text{Evidence Truth}}     &\longrightarrow \text{What immutable artifacts and observations support that demonstration} \\
-\mathbf{\text{Capability Truth}}   &\longrightarrow \text{Multidimensional integration of skills, independence, and transfer} \\
-\mathbf{\text{Opportunity Truth}}  &\longrightarrow \text{Non-consequential exploratory compatibility (Matching } \ne \text{ Selection)} \\
-\mathbf{\text{Outcome Truth}}      &\longrightarrow \text{Empirical longitudinal real-world milestones (Correlation } \ne \text{ Causality)}
-\end{aligned}$$
+### The N21 Core Doctrine & 7-Layer Truth Model
+$$\mathbf{\text{Learner Truth} \ne \text{Institution Truth} \ne \text{Evidence Truth} \ne \text{Credential Truth} \ne \text{Capability Truth} \ne \text{Opportunity Truth} \ne \text{Employment Truth}}$$
 
 ---
 
-## 🗺️ The Complete Development & Evolution Roadmap (N1 $\rightarrow$ N20)
+## 🗺️ The Complete Development & Evolution Roadmap (N1 $\rightarrow$ N21)
 
 | Phase | Milestone Name | Strategic Architecture Delivered | E2E Tests | Status |
 | :---: | :--- | :--- | :---: | :---: |
@@ -60,8 +52,9 @@ $$\begin{aligned}
 | **N17** | **Continuous Evolution & Research OS** | 12-track research portfolio, model competition (BKT vs DKT), tutor benchmark, CBI budget | 510 / 510 | **VERIFIED** |
 | **N18** | **Advanced Learning Science & Personalization** | Bayesian Mastery 2.0 with credibility bounds, 6-level evidence hierarchy, 8-fold error taxonomy, 5-tier hints, 6-stage metacognition, AI removal test, simplicity benchmark gate | 510 / 510 | **VERIFIED** |
 | **N19** | **Global Skills, Evidence & Credential Network** | Skills Graph, 8-fold evidence types, immutable lineage, W3C VC & Open Badges 3.0 adapters, zero-PII verification, Skills Passport wallet, anti-inflation risk engine | 520 / 520 | **VERIFIED** |
-| **N20** | **Lifelong Learning OS & Capability Graph** | Human Capability Graph (5-dim vectors), multi-pathway goals (Project, Practice, Mentor), Opportunity Graph with prompt-injection shield, longitudinal outcome tracking (correlation $\ne$ causality), AI Coach with AI removal test & teacher override | 520 / 520 | **CERTIFIED (100%)** |
-| **TOTAL** | **Full Platform Integration** | **Complete 20-Milestone Enterprise Operating System** | **5,891 / 5,891** | **100% GREEN** |
+| **N20** | **Lifelong Learning OS & Capability Graph** | Human Capability Graph (5-dim vectors), multi-pathway goals (Project, Practice, Mentor), Opportunity Graph with prompt-injection shield, longitudinal outcome tracking (correlation $\ne$ causality), AI Coach with AI removal test & teacher override | 520 / 520 | **VERIFIED** |
+| **N21** | **Global Ecosystem Intelligence** | Global Ecosystem Graph (multi-party nodes/edges), Partner Gateway with scoped authorization & decoupling offboarding, untrusted event bus with replay protection & authority matrix, curriculum intelligence with qualitative gap analysis, federated analytics with small-cohort protection ($n < 10$) | 520 / 520 | **CERTIFIED (100%)** |
+| **TOTAL** | **Full Platform Integration** | **Complete 21-Milestone Enterprise Operating System** | **6,411 / 6,411** | **100% GREEN** |
 
 ---
 
