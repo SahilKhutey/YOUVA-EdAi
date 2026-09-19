@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { AgentRegistryConsole } from '@/components/autonomy/AgentRegistryConsole';
+import { HumanAuthorizationDrawer } from '@/components/autonomy/HumanAuthorizationDrawer';
+import { TeacherAutonomyTerminal } from '@/components/autonomy/TeacherAutonomyTerminal';
+import { AutonomySafetyScorecard } from '@/components/autonomy/AutonomySafetyScorecard';
 
 interface Capability {
   id: string;
@@ -20,6 +24,7 @@ interface DriftMetric {
 }
 
 export default function AutonomousGovernanceTerminal() {
+  const [activeTab, setActiveTab] = useState<'scorecard' | 'registry' | 'human-auth' | 'teacher' | 'circuit-breaker'>('scorecard');
   const [capabilities, setCapabilities] = useState<Capability[]>([
     {
       id: 'CAP-001',
@@ -148,13 +153,74 @@ export default function AutonomousGovernanceTerminal() {
           </div>
         )}
 
-        {/* Top Cards: Autonomy Principles & FinOps */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Governance Invariant Card */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
-            <h2 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
-              Permanent Human-Only Invariants
-            </h2>
+        {/* N15 Autonomy Navigation Tabs */}
+        <div className="flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('scorecard')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+              activeTab === 'scorecard'
+                ? 'bg-rose-600 text-white shadow'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            Safety Scorecard &amp; Kill Switches
+          </button>
+          <button
+            onClick={() => setActiveTab('registry')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+              activeTab === 'registry'
+                ? 'bg-indigo-600 text-white shadow'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            Agent Identity Registry (N15.10)
+          </button>
+          <button
+            onClick={() => setActiveTab('human-auth')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+              activeTab === 'human-auth'
+                ? 'bg-amber-600 text-white shadow'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            Human Authorization &amp; Previews
+          </button>
+          <button
+            onClick={() => setActiveTab('teacher')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+              activeTab === 'teacher'
+                ? 'bg-teal-600 text-white shadow'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            Teacher Autonomy &amp; Overrides
+          </button>
+          <button
+            onClick={() => setActiveTab('circuit-breaker')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+              activeTab === 'circuit-breaker'
+                ? 'bg-slate-700 text-white shadow'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            Phase 8 Drift &amp; Capabilities
+          </button>
+        </div>
+
+        {activeTab === 'scorecard' && <AutonomySafetyScorecard />}
+        {activeTab === 'registry' && <AgentRegistryConsole />}
+        {activeTab === 'human-auth' && <HumanAuthorizationDrawer />}
+        {activeTab === 'teacher' && <TeacherAutonomyTerminal />}
+
+        {activeTab === 'circuit-breaker' && (
+          <>
+            {/* Top Cards: Autonomy Principles & FinOps */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Governance Invariant Card */}
+              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+                <h2 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                  Permanent Human-Only Invariants
+                </h2>
             <div className="text-sm font-semibold text-white">4 Inviolable Boundaries</div>
             <div className="space-y-1.5 text-xs text-slate-300">
               <div className="flex items-center gap-2">
@@ -345,6 +411,8 @@ export default function AutonomousGovernanceTerminal() {
             </table>
           </div>
         </section>
+        </>
+        )}
       </div>
     </div>
   );
