@@ -73,6 +73,7 @@ import { EarlyChildhoodModule } from './early-childhood/early-childhood.module';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { ControlledAutonomyModule } from './controlled-autonomy/controlled-autonomy.module';
 import { InstitutionalGovernanceModule } from './institutional-governance/institutional-governance.module';
+import { EvolutionIntelligenceModule } from './evolution-intelligence/evolution-intelligence.module';
 import { validateEnvironment } from './config/env.validation';
 
 @Module({
@@ -81,6 +82,7 @@ import { validateEnvironment } from './config/env.validation';
       isGlobal: true,
       validate: validateEnvironment,
     }),
+    EvolutionIntelligenceModule,
     InstitutionalGovernanceModule,
     ControlledAutonomyModule,
     InfrastructureModule,

@@ -1,34 +1,44 @@
 # YOUVA-EdAI — Global AI Learning Operating System
-## Institutional & Market Scale, Controlled Autonomy & Continuous Governance
+## Continuous Evolution, Global Learning Intelligence, Research & Ecosystem Network
 
 [![CI Pipeline](https://github.com/SahilKhutey/YOUVA-EdAi/actions/workflows/ci.yml/badge.svg)](https://github.com/SahilKhutey/YOUVA-EdAi/actions)
-[![Final Phase Gate](https://img.shields.io/badge/Milestone%20N16-ALL%2016%20PHASES%20VALIDATED%20(GO)-success.svg)](docs/governance/n16-institutional-scale-report.md)
-[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-3%2C831%2F3%2C831%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n16-institutional-scale-report.md)
+[![Milestone N17 Release](https://img.shields.io/badge/Milestone%20N17-CONTINUOUS%20EVOLUTION%20OS-success.svg)](docs/governance/n17-continuous-evolution-report.md)
+[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-4%2C341%2F4%2C341%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n17-continuous-evolution-report.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0%20%2F%20Commercial-blue.svg)](COMMERCIAL_LICENSE.md)
 [![Backend](https://img.shields.io/badge/Backend-NestJS%2011%20%7C%20Prisma%205.22-E0234E.svg)](backend/)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js%2016.3%20%7C%20Tailwind-black.svg)](frontend/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20Redis-336791.svg)](backend/prisma/)
-[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2016%20Certified-success.svg)](docs/governance/n16-institutional-scale-charter.md)
+[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2017%20Certified-success.svg)](docs/governance/n17-continuous-evolution-charter.md)
 
-**YOUVA-EdAI** (युवा — *Youth*) is an institutionally trusted, globally extensible, commercially sustainable, and continuously governed **Global AI Learning Operating System** spanning learners ages 3 to 18+ (Preschool, Elementary, Middle School, High School, and Skills Ecosystem), educators, parents, and enterprise school districts.
+**YOUVA-EdAI** (युवा — *Youth*) is an institutionally trusted, globally extensible, commercially sustainable, and continuously governed **Global AI Learning Operating System** spanning learners ages 3 to 18+ (Preschool, Elementary, Middle School, High School, and Skills Ecosystem), educators, parents, research institutions, and enterprise school districts.
 
-Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, and controlled AI autonomy.
-
----
-
-## 🏛️ The 4 Permanent Governing Invariants
-
-The platform deterministically enforces four co-equal architectural invariants:
-
-1. **Demand-Gated Scaling**: *"No infrastructure without demonstrated demand ($D_0 \to D_5$)."*
-2. **Empirical Verification**: *"No safety claim without independent empirical verification."*
-3. **Consequential Human Authority**: *"No AI action on a consequential decision without human authorization ($\mathbf{Capability \ne Authority}$)."*
-4. **Contextual Governance Invariant (The N16 Principle)**:
-   $$\mathbf{\text{No market expansion without evidence that existing safety, privacy, educational, operational, and governance controls remain valid in the new context.}}$$
+Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, controlled AI autonomy, and the **Milestone N17 Permanent Evolution Operating System**.
 
 ---
 
-## 🗺️ The Complete 16-Phase Authoritative Roadmap (N1 $\rightarrow$ N16)
+## 🏛️ The Permanent Evolution Operating Model
+
+Following the completion of the 16-phase buildout (`Build → Validate → Pilot → Scale → Govern`), Milestone N17 establishes the permanent post-roadmap **Evolution OS**:
+
+$$\begin{matrix}
+\text{Learn} \longrightarrow \text{Research} \longrightarrow \text{Benchmark} \longrightarrow \text{Improve} \longrightarrow \text{Re-Verify}
+\end{matrix}$$
+
+### The N17 Core Doctrine
+$$\begin{aligned}
+\mathbf{\text{Evidence}} &> \mathbf{\text{Assumption}} \\
+\mathbf{\text{Learning Outcome}} &> \mathbf{\text{Engagement}} \\
+\mathbf{\text{Human Agency}} &> \mathbf{\text{Automation}} \\
+\mathbf{\text{Safety}} &> \mathbf{\text{Growth}} \\
+\mathbf{\text{Privacy}} &> \mathbf{\text{Data Accumulation}} \\
+\mathbf{\text{Educational Validity}} &> \mathbf{\text{AI Novelty}} \\
+\mathbf{\text{Reversibility}} &> \mathbf{\text{Irreversible Automation}} \\
+\mathbf{\text{Independent Verification}} &> \mathbf{\text{Self-Certification}}
+\end{aligned}$$
+
+---
+
+## 🗺️ The Complete Development & Evolution Roadmap (N1 $\rightarrow$ N17)
 
 | Phase | Milestone Name | Strategic Architecture Delivered | E2E Tests | Status |
 | :---: | :--- | :--- | :---: | :---: |
@@ -47,31 +57,21 @@ The platform deterministically enforces four co-equal architectural invariants:
 | **N13** | **Early Childhood & Child Safety** | Preschool (3–7) and Elementary (7–12) voice-first sandbox, Parent Co-Pilot | 530 / 530 | **VERIFIED** |
 | **N14** | **Scale Infrastructure & Multi-Tenancy** | Demand-gated scaling ($D_0 \to D_5$), Stripe HMAC billing, 15-point DR drill (RTO 38s) | 490 / 490 | **VERIFIED** |
 | **N15** | **Controlled AI Autonomy & Gates** | 11-step execution pipeline, 12 consequential action gates, tool firewall, red teaming | 510 / 510 | **VERIFIED** |
-| **N16** | **Institutional Trust & Continuous Governance** | Global jurisdiction registry, 10-step activation gates, product claims registry, trust center | 510 / 510 | **CERTIFIED (GO)** |
-| **TOTAL** | **Full Platform Integration** | **Complete 16-Phase Enterprise Operating System** | **3,831 / 3,831** | **100% GREEN** |
-
----
-
-## 🔄 The Permanent Operating Model
-
-At N16, governance is not a project workstream that terminates upon release. There is **no permanent DONE state**. Instead, YOUVA operates as a continuous, self-healing institutional loop:
-
-$$\text{Learn} \longrightarrow \text{Personalize} \longrightarrow \text{Teach} \longrightarrow \text{Assess} \longrightarrow \text{Evidence} \longrightarrow \text{Credential} \longrightarrow \text{Verify} \longrightarrow \text{Operate} \longrightarrow \text{Govern} \longrightarrow \text{Improve}$$
+| **N16** | **Institutional Trust & Global Scale** | Global jurisdiction registry, 10-step activation gates, product claims registry, trust center | 510 / 510 | **VERIFIED** |
+| **N17** | **Continuous Evolution & Research OS** | 12-track research portfolio, model competition (BKT vs DKT), tutor benchmark, CBI budget | 510 / 510 | **CERTIFIED (100%)** |
+| **TOTAL** | **Full Platform Integration** | **Complete 17-Milestone Enterprise Operating System** | **4,341 / 4,341** | **100% GREEN** |
 
 ---
 
 ## 🛡️ Enterprise Architectural Invariants
 
-The platform deterministically enforces the full cryptographic execution chain:
-
-$$\text{AUTHENTICATION} \longrightarrow \text{AUTHORIZATION} \longrightarrow \text{TENANT SCOPE} \longrightarrow \text{RESOURCE OWNERSHIP} \longrightarrow \text{VALIDATION} \longrightarrow \text{TRANSACTION} \longrightarrow \text{AUDIT}$$
-
-* **Consequential Execution Invariant**: All 12 consequential action types (`LEARNING_STATE_CHANGE`, `MASTERY_OVERRIDE`, `ASSESSMENT_RESULT`, `SAFETY_RESOLUTION`, `CONSENT_CHANGE`, `PRIVACY_EXCEPTION`, `CREDENTIAL_ISSUANCE`, `CREDENTIAL_REVOCATION`, `RBAC_CHANGE`, `EXTERNAL_COMMUNICATION`, `FINANCIAL_TRANSACTION`, `ACCOUNT_DELETION`) strictly require valid, non-expired human authorization tickets.
-* **Separation of Truths**: $\mathbf{\text{Learning Truth} \ne \text{Evidence Truth} \ne \text{Credential Truth}}$.
-* **External Learning Data Rule**: External systems (LMS, SIS) can never directly mutate database learning state; data is ingested strictly as unverified evidence, evaluated by the learning engine, and only then updates state.
-* **Tool Firewall**: Direct database queries, arbitrary Redis operations, and operating system shell invocations are structurally blocked (`TOOL-004`, `TOOL-005`, `TOOL-006`).
-* **Sovereign Data Residency**: Enforces regional data localization (`ap-south-1`, `eu-central-1`, `us-west-2`, `eu-west-2`) with automatic fallback to sovereign local open models (`OLLAMA_LOCAL_SOVEREIGN`).
-* **Governance Debt Gate**: If the Governance Debt Index crosses 100, an automated **Governance Feature Freeze** pauses new deployments until compliance debt is remediated.
+* **Data Boundary Invariant**: $\mathbf{\text{Operational Data} \ne \text{Research Data} \ne \text{AI Context} \ne \text{Analytics Data} \ne \text{Credential Evidence}}$.
+* **Pedagogical Truth Invariants**:
+  - $\mathbf{\text{Mastery} \ne \text{Confidence}}$ (Metacognitive Calibration Index).
+  - $\mathbf{\text{Immediate Recall} \ne \text{Long-Term Retention} \ne \text{Transfer Mastery}}$.
+* **Model Competition & Promotion**: 8-stage promotion pipeline (`RESEARCH` $\to$ `GA`) with mandatory independent safety reviews and AUC-ROC $\ge 0.75$.
+* **Complexity Budget & Stop-The-Line Authority**: Hard Complexity Budget Index ceiling ($\tau = 100$) triggering automated feature freezes, paired with instantaneous circuit-breaker authority.
+* **Continuous Adversarial Red Teaming**: 100% containment across AI exfiltration, educational misconceptions, child dependency, and autonomy escalation.
 
 ---
 
@@ -83,15 +83,14 @@ $$\text{AUTHENTICATION} \longrightarrow \text{AUTHORIZATION} \longrightarrow \te
 * **ORM & Datastore**: Prisma ORM 5.22, PostgreSQL (40+ relational schemas), Redis (ephemeral caching & rate limiting)
 * **AI Provider Abstraction**: Google Gemini 1.5 Pro / Flash, Anthropic Bedrock, Ollama Local (Gemma 2 9B IT)
 * **Security & Auth**: Passport JWT, BCrypt, Timing-Safe HMAC-SHA256 signatures, SSRF protection
-* **Billing & FinOps**: Stripe Webhooks (with 300s freshness window and replay protection), hierarchical tenant spend tracking
 
 ### Frontend Applications (Next.js 16 App Router)
-* **Framework**: Next.js 16.3 (Turbopack) with 52 static and dynamic routes
-* **Administrative Consoles**:
-  - `/admin/governance`: Jurisdiction Registry, 10-Step Activation Gates, Executive Dashboard, Governance Debt & Risk Console
-  - `/admin/autonomy`: Agent Registry Console, Human Authorization Drawer, Teacher Autonomy Terminal, Safety Scorecard
-  - `/admin/institutional`: Multi-Tenant Hierarchy, Provisioning Lifecycle, Policy Controls
-  - `/admin/operations`: Live SLO Gauges, Incident Command, FinOps Spend, Emergency Kill Switches
+* **Framework**: Next.js 16.3 (Turbopack) with 54 static and dynamic routes
+* **Evolution Consoles**:
+  - `/admin/evolution`: Learning Intelligence Clusters, Research Portfolio Hub, AI Tutor Benchmark, Complexity Budget Console
+  - `/research`: Public Learning Science Research & Open Evidence Portal
+  - `/admin/governance`: Global Jurisdiction Registry, 10-Step Activation Gates, Executive Governance Dashboard
+  - `/admin/autonomy`: Agent Registry Console, Human Authorization Drawer, Safety Scorecard
   - `/trust`: Public Institutional Trust Center with verified claims and subprocessor directory
   - `/verify`: Privacy-preserving selective disclosure credential verification
 
@@ -103,19 +102,13 @@ $$\text{AUTHENTICATION} \longrightarrow \text{AUTHORIZATION} \longrightarrow \te
 # Navigate to backend directory
 cd backend
 
-# 1. Run all 3,831 automated E2E tests across all 38 suites
+# 1. Run all 4,341 automated E2E tests across all 40 suites (100% green)
 npx jest --config ./test/jest-e2e.json
 
-# 2. Run Milestone N16 Institutional Governance suite (510 tests)
-npx jest --config ./test/jest-e2e.json n16
+# 2. Run Milestone N17 Evolution & Research suite (510 tests)
+npx jest --config ./test/jest-e2e.json n17
 
-# 3. Run Milestone N15 Controlled Autonomy suite (510 tests)
-npx jest --config ./test/jest-e2e.json n15
-
-# 4. Run Milestone N14 Scale Infrastructure suite (490 tests)
-npx jest --config ./test/jest-e2e.json n14
-
-# 5. Build verification
+# 3. Build verification
 npm run build
 ```
 
@@ -123,10 +116,10 @@ npm run build
 
 ## 📄 Formal Documentation & Governance Charters
 
-* [N16 Master Governance & Operations Report](docs/governance/n16-institutional-scale-report.md) — 36-Section Complete Release Documentation
+* [N17 Master Evolution & Release Report](docs/governance/n17-continuous-evolution-report.md) — 25-Section Post-Roadmap Documentation
+* [N17 Architecture Charter](docs/governance/n17-continuous-evolution-charter.md) — Evolution Loop, 12 Research Tracks & Complexity Budget
+* [N16 Master Governance & Operations Report](docs/governance/n16-institutional-scale-report.md) — 36-Section Institutional Scale Release
 * [N16 Architecture Charter](docs/governance/n16-institutional-scale-charter.md) — Permanent Operating Model & Jurisdiction Topology
-* [N15 Autonomous AI Maturity Report](docs/governance/n15-autonomous-ai-maturity-report.md) — 34-Section Controlled Autonomy Verification
-* [N15 Architecture Charter](docs/governance/n15-autonomous-ai-maturity-charter.md) — Autonomy Matrix ($A_0 \to A_5$) & 11-Step Pipeline
 * [Master Architecture Document](docs/ARCHITECTURE.md)
 * [API Specification & Contracts](docs/API_SPECIFICATION.md)
 
@@ -135,7 +128,6 @@ npm run build
 ## 📜 Licensing
 
 YOUVA-EdAI is distributed under a **Dual-Licensing Model**:
-
 * **Open-Source Community**: Subject to the terms of the [Apache License 2.0](LICENSE).
 * **Commercial & Institutional Deployment**: Commercial SaaS hosting, school district contracts, white-label operations, and enterprise deployments require an official [Commercial Software License](COMMERCIAL_LICENSE.md).
 
