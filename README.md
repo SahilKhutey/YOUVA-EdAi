@@ -2,42 +2,42 @@
 ## Continuous Evolution, Global Learning Intelligence, Research & Ecosystem Network
 
 [![CI Pipeline](https://github.com/SahilKhutey/YOUVA-EdAi/actions/workflows/ci.yml/badge.svg)](https://github.com/SahilKhutey/YOUVA-EdAi/actions)
-[![Milestone N19 Release](https://img.shields.io/badge/Milestone%20N19-GLOBAL%20SKILLS%20%26%20CREDENTIAL%20NETWORK-success.svg)](docs/governance/n19-skills-credential-report.md)
-[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-5%2C371%2F5%2C371%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n19-skills-credential-report.md)
+[![Milestone N20 Release](https://img.shields.io/badge/Milestone%20N20-LIFELONG%20LEARNING%20OS%20%26%20CAPABILITY%20GRAPH-success.svg)](docs/governance/n20-lifelong-capability-report.md)
+[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-5%2C891%2F5%2C891%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n20-lifelong-capability-report.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0%20%2F%20Commercial-blue.svg)](COMMERCIAL_LICENSE.md)
 [![Backend](https://img.shields.io/badge/Backend-NestJS%2011%20%7C%20Prisma%205.22-E0234E.svg)](backend/)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js%2016.3%20%7C%20Tailwind-black.svg)](frontend/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20Redis-336791.svg)](backend/prisma/)
-[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2019%20Certified-success.svg)](docs/governance/n19-skills-credential-charter.md)
+[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2020%20Certified-success.svg)](docs/governance/n20-lifelong-capability-charter.md)
 
 **YOUVA-EdAI** (युवा — *Youth*) is an institutionally trusted, globally extensible, commercially sustainable, and continuously governed **Global AI Learning Operating System** spanning learners ages 3 to 18+ (Preschool, Elementary, Middle School, High School, and Skills Ecosystem), educators, parents, research institutions, and enterprise school districts.
 
-Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, controlled AI autonomy, the Milestone N17 Permanent Evolution Operating System, Milestone N18 Advanced Learning Science, and **Milestone N19 Global Skills, Evidence & Credential Network**.
+Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, controlled AI autonomy, the Milestone N17 Permanent Evolution Operating System, Milestone N18 Advanced Learning Science, Milestone N19 Global Skills, Evidence & Credential Network, and **Milestone N20 Lifelong Learning OS & Human Capability Graph**.
 
 ---
 
 ## 🏛️ The Permanent Evolution Operating Model
 
-Following the completion of the 16-phase buildout (`Build → Validate → Pilot → Scale → Govern`), Milestone N17 established the permanent post-roadmap **Evolution OS**, Milestone N18 established the **Advanced Learning Science Engine**, and Milestone N19 establishes the **Global Skills, Evidence & Credential Network**:
+Following the completion of the 16-phase buildout (`Build → Validate → Pilot → Scale → Govern`), Milestone N17 established the permanent post-roadmap **Evolution OS**, Milestone N18 established the **Advanced Learning Science Engine**, Milestone N19 established the **Global Skills, Evidence & Credential Network**, and Milestone N20 establishes the **Lifelong Human Capability Operating System**:
 
 $$\begin{matrix}
-\text{Learn} \longrightarrow \text{Research} \longrightarrow \text{Benchmark} \longrightarrow \text{Improve} \longrightarrow \text{Re-Verify}
+\text{Learning} \longrightarrow \text{Capability} \longrightarrow \text{Opportunity} \longrightarrow \text{Application} \longrightarrow \text{Outcome} \longrightarrow \text{Continuous Reskilling}
 \end{matrix}$$
 
-### The N19 Core Doctrine & 5-Layer Truth Model
-$$\begin{aligned}
-\mathbf{\text{Learning Truth}}   &\longrightarrow \text{What the learner demonstrated in authentic activity} \\
-\mathbf{\text{Evidence Truth}}   &\longrightarrow \text{What immutable artifacts and observations support that demonstration} \\
-\mathbf{\text{Credential Truth}} &\longrightarrow \text{What an authorized, accountable issuer attests under published policy} \\
-\mathbf{\text{Identity Truth}}   &\longrightarrow \text{Who cryptographically and lawfully controls the credential} \\
-\mathbf{\text{Employment Truth}} &\longrightarrow \text{Whether an external organization chooses to recognize or utilize it}
-\end{aligned}$$
+### The N20 Core Doctrine & Foundational Truth Invariants
+$$\mathbf{\text{Prediction} \ne \text{Capability} \ne \text{Credential} \ne \text{Course Completion} \ne \text{AI Recommendation} \ne \text{Interest} \ne \text{Potential}}$$
 
-$$\mathbf{\text{Participation} \ne \text{Completion} \ne \text{AI Output} \ne \text{Demonstrated Skill} \ne \text{Credential}}$$
+$$\begin{aligned}
+\mathbf{\text{Learning Truth}}     &\longrightarrow \text{What the learner demonstrated in authentic activity} \\
+\mathbf{\text{Evidence Truth}}     &\longrightarrow \text{What immutable artifacts and observations support that demonstration} \\
+\mathbf{\text{Capability Truth}}   &\longrightarrow \text{Multidimensional integration of skills, independence, and transfer} \\
+\mathbf{\text{Opportunity Truth}}  &\longrightarrow \text{Non-consequential exploratory compatibility (Matching } \ne \text{ Selection)} \\
+\mathbf{\text{Outcome Truth}}      &\longrightarrow \text{Empirical longitudinal real-world milestones (Correlation } \ne \text{ Causality)}
+\end{aligned}$$
 
 ---
 
-## 🗺️ The Complete Development & Evolution Roadmap (N1 $\rightarrow$ N19)
+## 🗺️ The Complete Development & Evolution Roadmap (N1 $\rightarrow$ N20)
 
 | Phase | Milestone Name | Strategic Architecture Delivered | E2E Tests | Status |
 | :---: | :--- | :--- | :---: | :---: |
@@ -59,8 +59,9 @@ $$\mathbf{\text{Participation} \ne \text{Completion} \ne \text{AI Output} \ne \t
 | **N16** | **Institutional Trust & Global Scale** | Global jurisdiction registry, 10-step activation gates, product claims registry, trust center | 510 / 510 | **VERIFIED** |
 | **N17** | **Continuous Evolution & Research OS** | 12-track research portfolio, model competition (BKT vs DKT), tutor benchmark, CBI budget | 510 / 510 | **VERIFIED** |
 | **N18** | **Advanced Learning Science & Personalization** | Bayesian Mastery 2.0 with credibility bounds, 6-level evidence hierarchy, 8-fold error taxonomy, 5-tier hints, 6-stage metacognition, AI removal test, simplicity benchmark gate | 510 / 510 | **VERIFIED** |
-| **N19** | **Global Skills, Evidence & Credential Network** | Skills Graph, 8-fold evidence types, immutable lineage, W3C VC & Open Badges 3.0 adapters, zero-PII verification, Skills Passport wallet, anti-inflation risk engine | 520 / 520 | **CERTIFIED (100%)** |
-| **TOTAL** | **Full Platform Integration** | **Complete 19-Milestone Enterprise Operating System** | **5,371 / 5,371** | **100% GREEN** |
+| **N19** | **Global Skills, Evidence & Credential Network** | Skills Graph, 8-fold evidence types, immutable lineage, W3C VC & Open Badges 3.0 adapters, zero-PII verification, Skills Passport wallet, anti-inflation risk engine | 520 / 520 | **VERIFIED** |
+| **N20** | **Lifelong Learning OS & Capability Graph** | Human Capability Graph (5-dim vectors), multi-pathway goals (Project, Practice, Mentor), Opportunity Graph with prompt-injection shield, longitudinal outcome tracking (correlation $\ne$ causality), AI Coach with AI removal test & teacher override | 520 / 520 | **CERTIFIED (100%)** |
+| **TOTAL** | **Full Platform Integration** | **Complete 20-Milestone Enterprise Operating System** | **5,891 / 5,891** | **100% GREEN** |
 
 ---
 
