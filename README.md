@@ -2,39 +2,42 @@
 ## Continuous Evolution, Global Learning Intelligence, Research & Ecosystem Network
 
 [![CI Pipeline](https://github.com/SahilKhutey/YOUVA-EdAi/actions/workflows/ci.yml/badge.svg)](https://github.com/SahilKhutey/YOUVA-EdAi/actions)
-[![Milestone N18 Release](https://img.shields.io/badge/Milestone%20N18-ADVANCED%20LEARNING%20SCIENCE-success.svg)](docs/governance/n18-learning-science-report.md)
-[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-4%2C851%2F4%2C851%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n18-learning-science-report.md)
+[![Milestone N19 Release](https://img.shields.io/badge/Milestone%20N19-GLOBAL%20SKILLS%20%26%20CREDENTIAL%20NETWORK-success.svg)](docs/governance/n19-skills-credential-report.md)
+[![E2E Test Suite](https://img.shields.io/badge/Platform%20Tests-5%2C371%2F5%2C371%20Passing%20(100%25)-brightgreen.svg)](docs/governance/n19-skills-credential-report.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0%20%2F%20Commercial-blue.svg)](COMMERCIAL_LICENSE.md)
 [![Backend](https://img.shields.io/badge/Backend-NestJS%2011%20%7C%20Prisma%205.22-E0234E.svg)](backend/)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js%2016.3%20%7C%20Tailwind-black.svg)](frontend/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20Redis-336791.svg)](backend/prisma/)
-[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2018%20Certified-success.svg)](docs/governance/n18-learning-science-charter.md)
+[![Architecture](https://img.shields.io/badge/Roadmap-Phase%201%20to%20Phase%2019%20Certified-success.svg)](docs/governance/n19-skills-credential-charter.md)
 
 **YOUVA-EdAI** (युवा — *Youth*) is an institutionally trusted, globally extensible, commercially sustainable, and continuously governed **Global AI Learning Operating System** spanning learners ages 3 to 18+ (Preschool, Elementary, Middle School, High School, and Skills Ecosystem), educators, parents, research institutions, and enterprise school districts.
 
-Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, controlled AI autonomy, the Milestone N17 Permanent Evolution Operating System, and **Milestone N18 Advanced Learning Science & Cognitive Personalization**.
+Unlike superficial AI chatbot wrappers, YOUVA-EdAI provides an end-to-end institutional operating foundation linking real-time Socratic dialogue, Bayesian Knowledge Tracing (BKT), multi-modal generation, educator oversight, W3C Verifiable Credentials, multi-jurisdiction sovereign data enclaves, tool firewalls, controlled AI autonomy, the Milestone N17 Permanent Evolution Operating System, Milestone N18 Advanced Learning Science, and **Milestone N19 Global Skills, Evidence & Credential Network**.
 
 ---
 
 ## 🏛️ The Permanent Evolution Operating Model
 
-Following the completion of the 16-phase buildout (`Build → Validate → Pilot → Scale → Govern`), Milestone N17 established the permanent post-roadmap **Evolution OS**, and Milestone N18 establishes the **Advanced Learning Science & Cognitive Personalization Engine**:
+Following the completion of the 16-phase buildout (`Build → Validate → Pilot → Scale → Govern`), Milestone N17 established the permanent post-roadmap **Evolution OS**, Milestone N18 established the **Advanced Learning Science Engine**, and Milestone N19 establishes the **Global Skills, Evidence & Credential Network**:
 
 $$\begin{matrix}
 \text{Learn} \longrightarrow \text{Research} \longrightarrow \text{Benchmark} \longrightarrow \text{Improve} \longrightarrow \text{Re-Verify}
 \end{matrix}$$
 
-### The N18 Core Doctrine
+### The N19 Core Doctrine & 5-Layer Truth Model
 $$\begin{aligned}
-\mathbf{\text{Observed Evidence}} &> \mathbf{\text{Inferred State}} > \mathbf{\text{Prediction}} \\
-\mathbf{\text{Learning Truth}} &\ne \mathbf{\text{Evidence Truth}} \ne \mathbf{\text{Credential Truth}} \\
-\mathbf{\text{Human Agency}} &> \mathbf{\text{Algorithmic Dependency}} \\
-\mathbf{\text{Epistemic Uncertainty Bounds}} &> \mathbf{\text{Overconfident Point Estimates}}
+\mathbf{\text{Learning Truth}}   &\longrightarrow \text{What the learner demonstrated in authentic activity} \\
+\mathbf{\text{Evidence Truth}}   &\longrightarrow \text{What immutable artifacts and observations support that demonstration} \\
+\mathbf{\text{Credential Truth}} &\longrightarrow \text{What an authorized, accountable issuer attests under published policy} \\
+\mathbf{\text{Identity Truth}}   &\longrightarrow \text{Who cryptographically and lawfully controls the credential} \\
+\mathbf{\text{Employment Truth}} &\longrightarrow \text{Whether an external organization chooses to recognize or utilize it}
 \end{aligned}$$
+
+$$\mathbf{\text{Participation} \ne \text{Completion} \ne \text{AI Output} \ne \text{Demonstrated Skill} \ne \text{Credential}}$$
 
 ---
 
-## 🗺️ The Complete Development & Evolution Roadmap (N1 $\rightarrow$ N18)
+## 🗺️ The Complete Development & Evolution Roadmap (N1 $\rightarrow$ N19)
 
 | Phase | Milestone Name | Strategic Architecture Delivered | E2E Tests | Status |
 | :---: | :--- | :--- | :---: | :---: |
@@ -55,8 +58,9 @@ $$\begin{aligned}
 | **N15** | **Controlled AI Autonomy & Gates** | 11-step execution pipeline, 12 consequential action gates, tool firewall, red teaming | 510 / 510 | **VERIFIED** |
 | **N16** | **Institutional Trust & Global Scale** | Global jurisdiction registry, 10-step activation gates, product claims registry, trust center | 510 / 510 | **VERIFIED** |
 | **N17** | **Continuous Evolution & Research OS** | 12-track research portfolio, model competition (BKT vs DKT), tutor benchmark, CBI budget | 510 / 510 | **VERIFIED** |
-| **N18** | **Advanced Learning Science & Personalization** | Bayesian Mastery 2.0 with credibility bounds, 6-level evidence hierarchy, 8-fold error taxonomy, 5-tier hints, 6-stage metacognition, AI removal test, simplicity benchmark gate | 510 / 510 | **CERTIFIED (100%)** |
-| **TOTAL** | **Full Platform Integration** | **Complete 18-Milestone Enterprise Operating System** | **4,851 / 4,851** | **100% GREEN** |
+| **N18** | **Advanced Learning Science & Personalization** | Bayesian Mastery 2.0 with credibility bounds, 6-level evidence hierarchy, 8-fold error taxonomy, 5-tier hints, 6-stage metacognition, AI removal test, simplicity benchmark gate | 510 / 510 | **VERIFIED** |
+| **N19** | **Global Skills, Evidence & Credential Network** | Skills Graph, 8-fold evidence types, immutable lineage, W3C VC & Open Badges 3.0 adapters, zero-PII verification, Skills Passport wallet, anti-inflation risk engine | 520 / 520 | **CERTIFIED (100%)** |
+| **TOTAL** | **Full Platform Integration** | **Complete 19-Milestone Enterprise Operating System** | **5,371 / 5,371** | **100% GREEN** |
 
 ---
 

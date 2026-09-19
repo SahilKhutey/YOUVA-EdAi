@@ -75,6 +75,7 @@ import { ControlledAutonomyModule } from './controlled-autonomy/controlled-auton
 import { InstitutionalGovernanceModule } from './institutional-governance/institutional-governance.module';
 import { EvolutionIntelligenceModule } from './evolution-intelligence/evolution-intelligence.module';
 import { CognitivePersonalizationModule } from './cognitive-personalization/cognitive-personalization.module';
+import { SkillsCredentialNetworkModule } from './skills-credential-network/skills-credential-network.module';
 import { validateEnvironment } from './config/env.validation';
 
 @Module({
@@ -83,6 +84,7 @@ import { validateEnvironment } from './config/env.validation';
       isGlobal: true,
       validate: validateEnvironment,
     }),
+    SkillsCredentialNetworkModule,
     CognitivePersonalizationModule,
     EvolutionIntelligenceModule,
     InstitutionalGovernanceModule,
