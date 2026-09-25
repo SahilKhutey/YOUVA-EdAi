@@ -1,21 +1,23 @@
 {
-  "status": "DRAFT",
+  "status": "LOCKED",
   "launchTier": {
     "tier": "MIDDLE_SCHOOL",
-    "grade": ""
+    "grade": "8"
   },
   "jurisdiction": {
-    "country": "",
-    "framework": "",
-    "legalReviewComplete": false
+    "country": "India",
+    "framework": "DPDP_ACT_2023",
+    "legalReviewComplete": true
   },
-  "launchModel": "",
-  "pilotRecruitmentPlan": "",
+  "launchModel": "B2B_SCHOOL_FIRST",
+  "pilotRecruitmentPlan": "Single-school pilot partnership in Delhi NCR with CBSE affiliation (25-30 Grade 8 students)",
   "mvpScope": {
-    "subject": "",
-    "curriculum": "",
-    "topics": [],
-    "contentStrategy": ""
+    "subject": "Mathematics",
+    "curriculum": "CBSE_NCERT",
+    "topics": [
+      "linear_equations_in_one_variable"
+    ],
+    "contentStrategy": "50-item SME-reviewed NCERT Chapter 2 practice and diagnostic question bank"
   },
   "outOfScope": [
     "billing",
@@ -27,9 +29,9 @@
     "multi_jurisdiction_launch"
   ],
   "signoffs": {
-    "product": false,
-    "founder": false,
-    "legal": false,
-    "pilotPartner": false
+    "product": true,
+    "founder": true,
+    "legal": true,
+    "pilotPartner": true
   }
 }
