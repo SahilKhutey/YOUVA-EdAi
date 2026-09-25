@@ -9,6 +9,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { V01Service } from './v01.service';
+import { V01TaskLoggerService } from './v01-task-logger.service';
 import {
   EnrollStudentDto,
   AttemptSubmissionDto,
@@ -17,7 +18,10 @@ import {
 
 @Controller('v01')
 export class V01Controller {
-  constructor(private readonly v01Service: V01Service) {}
+  constructor(
+    private readonly v01Service: V01Service,
+    private readonly taskLogger: V01TaskLoggerService,
+  ) {}
 
   /**
    * Enroll a student with documented guardian consent (Step 0 & 9).
@@ -98,5 +102,34 @@ export class V01Controller {
       throw new ForbiddenException('Students cannot clear teacher overrides.');
     }
     return this.v01Service.clearTeacherOverride(teacherId || 'teacher-pilot', studentId);
+  }
+
+  // --- Task Logs & Execution Control Endpoints ---
+
+  /**
+   * Retrieve all recorded task execution logs.
+   */
+  @Get('tasks/logs')
+  getTaskLogs(
+    @Param('taskId') taskId?: string,
+    @Param('track') track?: string,
+  ) {
+    return this.taskLogger.getTaskLogs({ taskId, track });
+  }
+
+  /**
+   * Record a verified task execution event.
+   */
+  @Post('tasks/log')
+  logTask(@Body() dto: any) {
+    return this.taskLogger.logTask(dto);
+  }
+
+  /**
+   * Get latest status map across all tasks.
+   */
+  @Get('tasks/status')
+  getLatestTaskStatus() {
+    return this.taskLogger.getLatestTaskStatusMap();
   }
 }
