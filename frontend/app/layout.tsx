@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Youva EdAi - Smart Learning for Everyone",
     description:
-      "Join the future of education. Personalized AI tutoring for students aged 12-24.",
+      "Join the future of education. Personalized AI tutoring for K-12 learners (ages 3–18).",
     url: "https://youva-edai.com",
     siteName: "Youva EdAi",
     locale: "en_US",
