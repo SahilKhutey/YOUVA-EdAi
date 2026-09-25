@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { V01Service } from '../v01.service';
 import { V01AdaptiveService } from '../v01-adaptive.service';
+import { V01TaskLoggerService } from '../v01-task-logger.service';
 import { V01Controller } from '../v01.controller';
 import { ForbiddenException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { V01_LEARNING_ITEMS } from '../v01-content';
@@ -8,16 +9,18 @@ import { V01_LEARNING_ITEMS } from '../v01-content';
 describe('YOUVA EdAI v0.1 — Minimum Learning Loop Test Suite (Step 10)', () => {
   let service: V01Service;
   let adaptiveService: V01AdaptiveService;
+  let taskLogger: V01TaskLoggerService;
   let controller: V01Controller;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [V01Controller],
-      providers: [V01Service, V01AdaptiveService],
+      providers: [V01Service, V01AdaptiveService, V01TaskLoggerService],
     }).compile();
 
     service = module.get<V01Service>(V01Service);
     adaptiveService = module.get<V01AdaptiveService>(V01AdaptiveService);
+    taskLogger = module.get<V01TaskLoggerService>(V01TaskLoggerService);
     controller = module.get<V01Controller>(V01Controller);
   });
 
@@ -259,6 +262,63 @@ describe('YOUVA EdAI v0.1 — Minimum Learning Loop Test Suite (Step 10)', () =>
         expect(item.explanation.length).toBeGreaterThan(10);
         expect(item.conceptId).toBe('one-step-equations');
       }
+    });
+  });
+
+  // =========================================================================
+  // 7. TASK LOGGER & EXECUTION CONTROL TESTS
+  // =========================================================================
+  describe('7. Task Logger & Execution Control Service', () => {
+    it('should seed baseline task logs for verified tracks', () => {
+      const logs = taskLogger.getTaskLogs();
+      expect(logs.length).toBeGreaterThanOrEqual(7);
+
+      const b1 = logs.find((l) => l.taskId === 'TASK-V01-B1');
+      expect(b1).toBeDefined();
+      expect(b1?.status).toBe('INTERNAL_VERIFIED');
+      expect(b1?.verifiedBy).toBe('Core Systems Architect');
+    });
+
+    it('should log new task transitions with evidence and verifier', () => {
+      const entry = taskLogger.logTask({
+        taskId: 'TASK-V01-TEST',
+        track: 'F',
+        title: 'Bottleneck Root Cause Analysis',
+        status: 'INTERNAL_VERIFIED',
+        evidence: 'Session trace confirms 0% dropoff on equation fractions.',
+        verifiedBy: 'Lead Educational Researcher',
+      });
+
+      expect(entry.id).toBeDefined();
+      expect(entry.status).toBe('INTERNAL_VERIFIED');
+      expect(entry.evidence).toContain('0% dropoff');
+
+      const queried = taskLogger.getTaskLogs({ taskId: 'TASK-V01-TEST' });
+      expect(queried.length).toBe(1);
+      expect(queried[0].verifiedBy).toBe('Lead Educational Researcher');
+    });
+
+    it('should reject task logs missing mandatory fields', () => {
+      expect(() => {
+        taskLogger.logTask({
+          taskId: '',
+          track: 'B',
+          title: 'Missing info',
+          status: 'IMPLEMENTED',
+          evidence: '',
+          verifiedBy: '',
+        });
+      }).toThrow(BadRequestException);
+    });
+
+    it('should expose task logs and status via controller endpoints', () => {
+      const controllerLogs = controller.getTaskLogs();
+      expect(Array.isArray(controllerLogs)).toBe(true);
+      expect(controllerLogs.length).toBeGreaterThan(0);
+
+      const statusMap = controller.getLatestTaskStatus();
+      expect(statusMap['TASK-V01-B1']).toBeDefined();
+      expect(statusMap['TASK-V01-B1'].status).toBe('INTERNAL_VERIFIED');
     });
   });
 });
