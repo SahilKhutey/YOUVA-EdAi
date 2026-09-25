@@ -5,6 +5,12 @@ import { HealthService } from './health.service';
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async root() {
+    return this.healthService.readiness();
+  }
+
   @Get('live')
   @HttpCode(HttpStatus.OK)
   live() {

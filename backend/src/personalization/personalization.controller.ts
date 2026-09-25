@@ -1,5 +1,23 @@
-import { Controller, Get, Post, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { PersonalizationEngineService, RecommendationRequest, RecommendationResponse } from './personalization-engine.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Headers,
+  Request,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import {
+  PersonalizationEngineService,
+  RecommendationRequest,
+  RecommendationResponse,
+} from './personalization-engine.service';
+import { KnowledgePersonalizationService } from './knowledge-personalization.service';
 import { PersonalizationPolicyService } from './personalization-policy.service';
 import { TeacherFeedbackLoopService, OverrideAnalyticsSummary } from './teacher-feedback-loop.service';
 import { SpacedRepetitionService } from './spaced-repetition.service';
@@ -10,14 +28,35 @@ import {
   SpacedRepetitionItem,
 } from './personalization-types';
 
-@Controller('personalization')
+@Controller(['v1/personalization', 'personalization'])
 export class PersonalizationController {
   constructor(
     private readonly engine: PersonalizationEngineService,
+    private readonly knowledgePersonalization: KnowledgePersonalizationService,
     private readonly policyService: PersonalizationPolicyService,
     private readonly teacherFeedback: TeacherFeedbackLoopService,
     private readonly spacedRepetition: SpacedRepetitionService,
   ) {}
+
+  /**
+   * Retrieves deterministic, explainable next personalized learning action for student.
+   */
+  @Get('next')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async getNextRecommendation(
+    @Request() req: any,
+    @Query('currentKnowledgeId') currentKnowledgeId?: string,
+    @Headers('x-tenant-id') headerTenant?: string,
+  ) {
+    const learnerId = req.user.id;
+    const tenantId = headerTenant || req.user?.tenantId || 'default-tenant';
+    return this.knowledgePersonalization.getNextRecommendation(
+      tenantId,
+      learnerId,
+      currentKnowledgeId,
+    );
+  }
 
   @Get('learner/:id/state')
   @HttpCode(HttpStatus.OK)
