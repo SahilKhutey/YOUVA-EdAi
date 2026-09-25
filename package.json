@@ -1,0 +1,11 @@
+{
+  "name": "youva-edai-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "YOUVA-EdAI Workspace & Governance Layer",
+  "type": "module",
+  "scripts": {
+    "validate:phase0": "node scripts/validate-phase-0-scope.mjs",
+    "validate:phase0:locked": "node scripts/validate-phase-0-scope.mjs --locked"
+  }
+}

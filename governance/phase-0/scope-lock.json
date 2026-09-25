@@ -1,0 +1,35 @@
+{
+  "status": "DRAFT",
+  "launchTier": {
+    "tier": "MIDDLE_SCHOOL",
+    "grade": ""
+  },
+  "jurisdiction": {
+    "country": "",
+    "framework": "",
+    "legalReviewComplete": false
+  },
+  "launchModel": "",
+  "pilotRecruitmentPlan": "",
+  "mvpScope": {
+    "subject": "",
+    "curriculum": "",
+    "topics": [],
+    "contentStrategy": ""
+  },
+  "outOfScope": [
+    "billing",
+    "full_lms_interoperability",
+    "full_sis_interoperability",
+    "credentialing",
+    "autonomous_ai_policy_engine",
+    "additional_education_tiers",
+    "multi_jurisdiction_launch"
+  ],
+  "signoffs": {
+    "product": false,
+    "founder": false,
+    "legal": false,
+    "pilotPartner": false
+  }
+}

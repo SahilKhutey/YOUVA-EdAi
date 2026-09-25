@@ -1,0 +1,66 @@
+{
+  "testSuite": "Phase 0 Governance Validation Test Suite",
+  "version": "1.0.0",
+  "tests": [
+    {
+      "id": "P0-SCOPE-001",
+      "description": "Missing scope file",
+      "expectedResult": "FAIL",
+      "expectedMessage": "Missing governance/phase-0/scope-lock.json"
+    },
+    {
+      "id": "P0-SCOPE-002",
+      "description": "Missing launch tier",
+      "expectedResult": "FAIL",
+      "expectedMessage": "Launch tier is not defined."
+    },
+    {
+      "id": "P0-SCOPE-003",
+      "description": "Missing grade",
+      "expectedResult": "FAIL",
+      "expectedMessage": "Launch grade is not defined."
+    },
+    {
+      "id": "P0-SCOPE-004",
+      "description": "Missing jurisdiction",
+      "expectedResult": "FAIL",
+      "expectedMessage": "Launch jurisdiction is not defined."
+    },
+    {
+      "id": "P0-SCOPE-005",
+      "description": "Missing legal review on locked scope",
+      "condition": { "status": "LOCKED", "legalReviewComplete": false },
+      "expectedResult": "FAIL",
+      "expectedMessage": "A locked scope requires completed legal/compliance review."
+    },
+    {
+      "id": "P0-SCOPE-006",
+      "description": "Locked scope without sign-offs",
+      "expectedResult": "FAIL",
+      "expectedMessage": "Missing required sign-off"
+    },
+    {
+      "id": "P0-SCOPE-007",
+      "description": "Empty content scope topics",
+      "expectedResult": "FAIL",
+      "expectedMessage": "At least one MVP topic is required."
+    },
+    {
+      "id": "P0-SCOPE-008",
+      "description": "Empty out-of-scope list",
+      "expectedResult": "FAIL",
+      "expectedMessage": "Out-of-scope list cannot be empty."
+    },
+    {
+      "id": "P0-SCOPE-009",
+      "description": "Valid but unlocked draft scope",
+      "expectedResult": "PASS",
+      "note": "Allows team to prepare Phase 0 without triggering locked checks"
+    },
+    {
+      "id": "P0-SCOPE-010",
+      "description": "Complete locked scope with all sign-offs and legal review",
+      "expectedResult": "PASS"
+    }
+  ]
+}
