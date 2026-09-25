@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VerificationEvidence",
+  "type": "object",
+  "required": ["id", "taskId", "evidenceType", "location", "description", "result", "performedBy", "performedAt", "independent"],
+  "properties": {
+    "id": { "type": "string" },
+    "taskId": { "type": "string" },
+    "evidenceType": {
+      "type": "string",
+      "enum": [
+        "CODE",
+        "UNIT_TEST",
+        "INTEGRATION_TEST",
+        "E2E_TEST",
+        "SECURITY_TEST",
+        "MANUAL_TEST",
+        "LEGAL_REVIEW",
+        "SAFETY_REVIEW",
+        "EXTERNAL_REVIEW",
+        "PILOT_DATA",
+        "CUSTOMER_EVIDENCE",
+        "DEPLOYMENT_RECORD"
+      ]
+    },
+    "location": { "type": "string" },
+    "description": { "type": "string" },
+    "result": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "PARTIAL"]
+    },
+    "performedBy": { "type": "string" },
+    "performedAt": { "type": "string" },
+    "independent": { "type": "boolean" },
+    "expiresAt": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}
