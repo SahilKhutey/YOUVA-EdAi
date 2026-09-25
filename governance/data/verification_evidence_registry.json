@@ -229,6 +229,90 @@
       "performedAt": "2026-09-25T02:25:00Z",
       "independent": true,
       "expiresAt": null
+    },
+    {
+      "id": "EV-V01-B001",
+      "taskId": "TASK-V01-B1",
+      "evidenceType": "CODE",
+      "location": "docs/pilot/MVP_SCOPE.md",
+      "description": "Exhaustive end-to-end trace of legacy P1/P2/P3 candidates and isolation of v0.1 engine.",
+      "result": "PASS",
+      "performedBy": "Core Systems Architect",
+      "performedAt": "2026-09-25T08:05:00Z",
+      "independent": false,
+      "expiresAt": null
+    },
+    {
+      "id": "EV-V01-B002",
+      "taskId": "TASK-V01-B2",
+      "evidenceType": "UNIT_TEST",
+      "location": "backend/src/v01/test/v01.spec.ts",
+      "description": "Deterministic math answer normalization and evaluation across whitespace, case, x=, and decimals.",
+      "result": "PASS",
+      "performedBy": "Lead Algorithmic Engineer",
+      "performedAt": "2026-09-25T08:05:00Z",
+      "independent": false,
+      "expiresAt": null
+    },
+    {
+      "id": "EV-V01-B003",
+      "taskId": "TASK-V01-B3",
+      "evidenceType": "UNIT_TEST",
+      "location": "backend/src/v01/test/v01.spec.ts",
+      "description": "Deterministic adaptive transitions verified across all EASY, MEDIUM, and HARD boundary cases.",
+      "result": "PASS",
+      "performedBy": "Pedagogical Systems Engineer",
+      "performedAt": "2026-09-25T08:05:00Z",
+      "independent": false,
+      "expiresAt": null
+    },
+    {
+      "id": "EV-V01-B004",
+      "taskId": "TASK-V01-B4",
+      "evidenceType": "UNIT_TEST",
+      "location": "backend/src/v01/test/v01.spec.ts",
+      "description": "Teacher override precedence verified: forces foundational item and blocks AI/default overwrite.",
+      "result": "PASS",
+      "performedBy": "Lead Systems Architect",
+      "performedAt": "2026-09-25T08:05:00Z",
+      "independent": false,
+      "expiresAt": null
+    },
+    {
+      "id": "EV-V01-B005",
+      "taskId": "TASK-V01-B5",
+      "evidenceType": "UNIT_TEST",
+      "location": "backend/data/v01_pilot_attempts.jsonl",
+      "description": "Immutable append-only JSONL attempt persistence and student attempt replay.",
+      "result": "PASS",
+      "performedBy": "Data Integrity Engineer",
+      "performedAt": "2026-09-25T08:05:00Z",
+      "independent": false,
+      "expiresAt": null
+    },
+    {
+      "id": "EV-V01-C001",
+      "taskId": "TASK-V01-C1",
+      "evidenceType": "CODE",
+      "location": "backend/src/v01/v01-content.ts",
+      "description": "18 hand-authored Middle School math items for one-step equations with step-by-step inverse explanations.",
+      "result": "PASS",
+      "performedBy": "Middle School Math Specialist",
+      "performedAt": "2026-09-25T08:05:00Z",
+      "independent": false,
+      "expiresAt": null
+    },
+    {
+      "id": "EV-V01-D001",
+      "taskId": "TASK-V01-D3",
+      "evidenceType": "E2E_TEST",
+      "location": "backend/src/v01/test/v01.spec.ts",
+      "description": "Supervised end-to-end dry run: student session -> attempt -> adaptive transition -> teacher override.",
+      "result": "PASS",
+      "performedBy": "Lead Systems Architect",
+      "performedAt": "2026-09-25T08:05:00Z",
+      "independent": false,
+      "expiresAt": null
     }
   ]
 }
