@@ -280,8 +280,9 @@ describe('YOUVA EdAI v0.1 — Minimum Learning Loop Test Suite (Step 10)', () =>
     });
 
     it('should log new task transitions with evidence and verifier', () => {
+      const testTaskId = `TASK-V01-TEST-${Math.random().toString(36).substring(2, 8)}`;
       const entry = taskLogger.logTask({
-        taskId: 'TASK-V01-TEST',
+        taskId: testTaskId,
         track: 'F',
         title: 'Bottleneck Root Cause Analysis',
         status: 'INTERNAL_VERIFIED',
@@ -293,7 +294,7 @@ describe('YOUVA EdAI v0.1 — Minimum Learning Loop Test Suite (Step 10)', () =>
       expect(entry.status).toBe('INTERNAL_VERIFIED');
       expect(entry.evidence).toContain('0% dropoff');
 
-      const queried = taskLogger.getTaskLogs({ taskId: 'TASK-V01-TEST' });
+      const queried = taskLogger.getTaskLogs({ taskId: testTaskId });
       expect(queried.length).toBe(1);
       expect(queried[0].verifiedBy).toBe('Lead Educational Researcher');
     });
