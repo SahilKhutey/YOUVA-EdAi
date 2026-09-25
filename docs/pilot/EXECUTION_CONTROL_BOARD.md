@@ -142,7 +142,7 @@ All prerequisite gates (Tracks B, C, D) are **100% complete and verified**.
 
 The project is now positioned for **Track A (Field Setup)** and **Track E (Live Pilot Session)**:
 
-1. **Teacher Identification:** Confirm participating educator (e.g. Mrs. Sharma / Grade 7 Math Teacher).
+1. **Teacher Identification:** Confirm participating educator (Participating Middle School Mathematics Teacher).
 2. **Student Group:** 1 to 3 middle school students.
 3. **Consent Confirmation:** Obtain signed/confirmed consent using the template in [`docs/pilot/v0.1-pilot-operating-procedure.md`](file:///c:/Users/ASUS/Documents/Youva-EdAi/YOUVA-EdAi/docs/pilot/v0.1-pilot-operating-procedure.md#L68-L95).
 4. **Conduct Session:** Facilitator and teacher run `http://localhost:3000/v01` and `http://localhost:3000/v01/teacher`.
