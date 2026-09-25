@@ -36,7 +36,6 @@ export class V01Service {
 
   constructor(private readonly adaptiveService: V01AdaptiveService) {
     this.ensureStorage();
-    this.seedDefaultPilotStudents();
   }
 
   private ensureStorage() {
@@ -54,38 +53,6 @@ export class V01Service {
       fs.appendFileSync(this.logFilePath, JSON.stringify(attempt) + '\n', 'utf8');
     } catch (err) {
       this.logger.warn(`Failed to append attempt to ${this.logFilePath}: ${err.message}`);
-    }
-  }
-
-  private seedDefaultPilotStudents() {
-    // Seed 3 standard pilot test students
-    const seedStudents: Student[] = [
-      {
-        id: 'student-a',
-        displayName: 'Aarav (Student A)',
-        guardianName: 'Priya Sharma (Parent)',
-        consentConfirmed: true,
-        enrolledAt: new Date().toISOString(),
-      },
-      {
-        id: 'student-b',
-        displayName: 'Bhavna (Student B)',
-        guardianName: 'Rajesh Patel (Parent)',
-        consentConfirmed: true,
-        enrolledAt: new Date().toISOString(),
-      },
-      {
-        id: 'student-c',
-        displayName: 'Chetan (Student C)',
-        guardianName: 'Sunita Verma (Parent)',
-        consentConfirmed: true,
-        enrolledAt: new Date().toISOString(),
-      },
-    ];
-
-    for (const s of seedStudents) {
-      this.students.set(s.id, s);
-      this.currentStudentDifficulty.set(s.id, 'EASY');
     }
   }
 

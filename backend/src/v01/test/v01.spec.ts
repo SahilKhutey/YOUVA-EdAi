@@ -147,10 +147,16 @@ describe('YOUVA EdAI v0.1 — Minimum Learning Loop Test Suite (Step 10)', () =>
   // =========================================================================
   describe('4. Teacher Authorization & Security Boundaries', () => {
     it('should allow authorized teacher to set override', () => {
+      const student = service.enrollStudent({
+        displayName: 'Test Learner Alpha',
+        guardianName: 'Guardian Alpha',
+        consentConfirmed: true,
+      });
+
       const override = controller.setTeacherOverride(
         {
-          teacherId: 'teacher-mrs-sharma',
-          studentId: 'student-b',
+          teacherId: 'teacher-auth-01',
+          studentId: student.id,
           type: 'NEEDS_HELP',
           notes: 'Student struggled with subtraction balance concept.',
         },
@@ -159,15 +165,21 @@ describe('YOUVA EdAI v0.1 — Minimum Learning Loop Test Suite (Step 10)', () =>
 
       expect(override.status).toBe('ACTIVE');
       expect(override.type).toBe('NEEDS_HELP');
-      expect(override.studentId).toBe('student-b');
+      expect(override.studentId).toBe(student.id);
     });
 
     it('should strictly prohibit students from overriding their own learning plan', () => {
+      const student = service.enrollStudent({
+        displayName: 'Test Learner Beta',
+        guardianName: 'Guardian Beta',
+        consentConfirmed: true,
+      });
+
       expect(() => {
         controller.setTeacherOverride(
           {
-            teacherId: 'student-b',
-            studentId: 'student-b',
+            teacherId: student.id,
+            studentId: student.id,
             type: 'NEEDS_HELP',
           },
           'STUDENT',
@@ -198,7 +210,7 @@ describe('YOUVA EdAI v0.1 — Minimum Learning Loop Test Suite (Step 10)', () =>
 
       // 3. Teacher observes student and triggers [ NEEDS HELP ]
       service.setTeacherOverride({
-        teacherId: 'teacher-mrs-sharma',
+        teacherId: 'teacher-auth-01',
         studentId: student.id,
         type: 'NEEDS_HELP',
         notes: 'Needs conceptual reinforcement.',
@@ -213,7 +225,7 @@ describe('YOUVA EdAI v0.1 — Minimum Learning Loop Test Suite (Step 10)', () =>
       expect(res2.nextItem.difficulty).toBe('EASY');
 
       // 5. Verify teacher overview reports this student status
-      const overview = service.getTeacherOverview('teacher-mrs-sharma');
+      const overview = service.getTeacherOverview('teacher-auth-01');
       const studentRow = overview.find((r) => r.studentId === student.id);
       expect(studentRow).toBeDefined();
       expect(studentRow?.attemptsCount).toBe(2);
@@ -229,7 +241,7 @@ describe('YOUVA EdAI v0.1 — Minimum Learning Loop Test Suite (Step 10)', () =>
 
       // Teacher sets override to target specific item
       service.setTeacherOverride({
-        teacherId: 'teacher-mrs-sharma',
+        teacherId: 'teacher-auth-01',
         studentId: student.id,
         type: 'NEXT_ITEM',
         targetDifficulty: 'EASY',

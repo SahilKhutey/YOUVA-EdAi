@@ -22,11 +22,11 @@ interface AttemptResult {
 }
 
 export default function V01StudentPage() {
-  // Pilot pre-enrolled students or custom enrollment
-  const [studentId, setStudentId] = useState<string>("student-a");
-  const [studentName, setStudentName] = useState<string>("Aarav (Student A)");
-  const [guardianName, setGuardianName] = useState<string>("Priya Sharma");
-  const [consentConfirmed, setConsentConfirmed] = useState<boolean>(true);
+  // Real student enrollment state
+  const [studentId, setStudentId] = useState<string>("");
+  const [studentName, setStudentName] = useState<string>("");
+  const [guardianName, setGuardianName] = useState<string>("");
+  const [consentConfirmed, setConsentConfirmed] = useState<boolean>(false);
 
   // Session state
   const [sessionStarted, setSessionStarted] = useState<boolean>(false);
@@ -52,9 +52,13 @@ export default function V01StudentPage() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
-  const startSession = async () => {
+  const handleEnrollAndStart = async () => {
+    if (!studentName.trim() || !guardianName.trim()) {
+      setErrorMsg("Student full name and guardian full name are both required.");
+      return;
+    }
     if (!consentConfirmed) {
-      setErrorMsg("Guardian consent must be confirmed before beginning the session.");
+      setErrorMsg("Guardian consent confirmation is strictly required by the Pilot Protocol.");
       return;
     }
 
@@ -62,11 +66,30 @@ export default function V01StudentPage() {
     setErrorMsg("");
 
     try {
-      const res = await fetch(`${API_BASE}/v01/student/${studentId}/session/start`);
-      if (!res.ok) {
-        throw new Error(`Failed to start session: ${res.statusText}`);
+      // 1. Authentically enroll the learner with documented guardian consent
+      const enrollRes = await fetch(`${API_BASE}/v01/student/enroll`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: studentName.trim(),
+          guardianName: guardianName.trim(),
+          consentConfirmed: true,
+        }),
+      });
+
+      if (!enrollRes.ok) {
+        throw new Error(`Enrollment failed: ${enrollRes.statusText}`);
       }
-      const data = await res.json();
+
+      const enrolledStudent = await enrollRes.json();
+      setStudentId(enrolledStudent.id);
+
+      // 2. Start practice session for this enrolled student
+      const sessionRes = await fetch(`${API_BASE}/v01/student/${enrolledStudent.id}/session/start`);
+      if (!sessionRes.ok) {
+        throw new Error(`Failed to start session: ${sessionRes.statusText}`);
+      }
+      const data = await sessionRes.json();
       setCurrentItem(data.firstItem);
       setCurrentDifficulty(data.currentDifficulty);
       setSessionStarted(true);
@@ -189,34 +212,33 @@ export default function V01StudentPage() {
 
           <div style={{ marginBottom: "16px" }}>
             <label style={{ display: "block", fontWeight: "600", fontSize: "14px", marginBottom: "6px" }}>
-              Select Student Profile:
+              Student Full Name:
             </label>
-            <select
-              value={studentId}
-              onChange={(e) => {
-                setStudentId(e.target.value);
-                if (e.target.value === "student-a") {
-                  setStudentName("Aarav (Student A)");
-                  setGuardianName("Priya Sharma");
-                } else if (e.target.value === "student-b") {
-                  setStudentName("Bhavna (Student B)");
-                  setGuardianName("Rajesh Patel");
-                } else {
-                  setStudentName("Chetan (Student C)");
-                  setGuardianName("Sunita Verma");
-                }
-              }}
-              style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #d1d5db", fontSize: "15px" }}
-            >
-              <option value="student-a">Aarav (Student A)</option>
-              <option value="student-b">Bhavna (Student B)</option>
-              <option value="student-c">Chetan (Student C)</option>
-            </select>
+            <input
+              type="text"
+              placeholder="e.g. Student Full Name"
+              value={studentName}
+              onChange={(e) => setStudentName(e.target.value)}
+              style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #d1d5db", fontSize: "15px", boxSizing: "border-box" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "16px" }}>
+            <label style={{ display: "block", fontWeight: "600", fontSize: "14px", marginBottom: "6px" }}>
+              Parent / Guardian Full Name:
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Guardian Full Name"
+              value={guardianName}
+              onChange={(e) => setGuardianName(e.target.value)}
+              style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #d1d5db", fontSize: "15px", boxSizing: "border-box" }}
+            />
           </div>
 
           <div style={{ backgroundColor: "#f9fafb", padding: "14px", borderRadius: "6px", border: "1px solid #e5e7eb", marginBottom: "20px" }}>
             <div style={{ fontSize: "13px", color: "#4b5563", marginBottom: "8px" }}>
-              <strong>Guardian Consent Check (DPDP Pilot Protocol):</strong>
+              <strong>Guardian Consent Confirmation (DPDP Pilot Protocol):</strong>
             </div>
             <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", color: "#374151", cursor: "pointer" }}>
               <input
@@ -226,27 +248,27 @@ export default function V01StudentPage() {
                 style={{ marginTop: "3px" }}
               />
               <span>
-                Documented consent verified for <strong>{studentName}</strong> (Guardian: {guardianName}). Minimal session data recorded solely for pilot learning.
+                I confirm that documented guardian consent has been recorded for <strong>{studentName || "this learner"}</strong> (Guardian: {guardianName || "Guardian"}). Minimal session data recorded solely for pilot learning.
               </span>
             </label>
           </div>
 
           <button
-            onClick={startSession}
-            disabled={loading || !consentConfirmed}
+            onClick={handleEnrollAndStart}
+            disabled={loading || !studentName.trim() || !guardianName.trim() || !consentConfirmed}
             style={{
               width: "100%",
               padding: "12px",
-              backgroundColor: consentConfirmed ? "#2563eb" : "#9ca3af",
+              backgroundColor: (!loading && studentName.trim() && guardianName.trim() && consentConfirmed) ? "#2563eb" : "#9ca3af",
               color: "#ffffff",
               border: "none",
               borderRadius: "6px",
               fontSize: "16px",
               fontWeight: "600",
-              cursor: consentConfirmed ? "pointer" : "not-allowed",
+              cursor: (!loading && studentName.trim() && guardianName.trim() && consentConfirmed) ? "pointer" : "not-allowed",
             }}
           >
-            {loading ? "Loading..." : "Start Math Practice"}
+            {loading ? "Enrolling & Starting..." : "Enroll & Start Math Practice"}
           </button>
         </div>
       )}
