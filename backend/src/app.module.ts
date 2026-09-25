@@ -36,6 +36,8 @@ import { EdgeSyncModule } from './edge-sync/edge-sync.module';
 import { ClassroomModule } from './classroom/classroom.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { LearningLoopModule } from './learning-loop/learning-loop.module';
+import { LearningKnowledgeModule } from './learning-knowledge/learning-knowledge.module';
+import { OrchestrationModule } from './learning-orchestration/orchestration.module';
 import { TeacherOpsModule } from './teacher-ops/teacher-ops.module';
 import { ParentModule } from './parent/parent.module';
 import { ConsentModule } from './consent/consent.module';
@@ -56,6 +58,7 @@ import { WorkflowsModule } from './workflows/workflows.module';
 import { AIGovernanceModule } from './governance/ai-governance.module';
 import { EcosystemModule } from './ecosystem/ecosystem.module';
 import { LearningOSModule } from './learning-os/learning-os.module';
+import { V01Module } from './v01/v01.module';
 import { VerifiedLearningModule } from './verified-learning/verified-learning.module';
 import { LearningInteroperabilityModule } from './learning-interoperability/learning-interoperability.module';
 import { LearningOperationsModule } from './learning-operations/learning-operations.module';
@@ -81,6 +84,12 @@ import { EcosystemIntelligenceModule } from './ecosystem-intelligence/ecosystem-
 import { CapabilityExchangeModule } from './capability-exchange/capability-exchange.module';
 import { CapabilityMobilityModule } from './capability-mobility/capability-mobility.module';
 import { NInfinityModule } from './n-infinity/n-infinity.module';
+import { LearningIntelligenceModule } from './learning-intelligence/learning-intelligence.module';
+import { LearningOptimizationModule } from './learning-optimization/learning-optimization.module';
+import { InstitutionalIntelligenceModule } from './institutional-intelligence/institutional-intelligence.module';
+import { LearningAssuranceModule } from './learning-assurance/learning-assurance.module';
+import { LearningDigitalTwinModule } from './learning-digital-twin/learning-digital-twin.module';
+import { ContinuousLearningModule } from './continuous-learning/continuous-learning.module';
 import { validateEnvironment } from './config/env.validation';
 
 @Module({
@@ -167,6 +176,15 @@ import { validateEnvironment } from './config/env.validation';
     CredentialNetworkModule,
     InteroperabilityModule,
     TelemetryModule,
+    LearningKnowledgeModule,
+    OrchestrationModule,
+    LearningIntelligenceModule,
+    LearningOptimizationModule,
+    InstitutionalIntelligenceModule,
+    LearningAssuranceModule,
+    LearningDigitalTwinModule,
+    ContinuousLearningModule,
+    V01Module,
   ],
   controllers: [AppController],
   providers: [AppService],
