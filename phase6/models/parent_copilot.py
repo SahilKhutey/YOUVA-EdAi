@@ -1,6 +1,6 @@
 """
 YOUVA-EdAi: Parent Co-Pilot Model
-Manages real-time parental observation, session gating, and co-play interaction for Junior Tier learners.
+Manages real-time parental observation, session gating, participation mode, and co-play interaction for Early Learner tier.
 """
 
 from dataclasses import dataclass, field
@@ -16,9 +16,27 @@ class ParentAction(str, Enum):
     CO_PLAY_HINT_OFFERED = "CO_PLAY_HINT_OFFERED"
 
 
+class SessionParticipationMode(str, Enum):
+    CHILD_ONLY = "CHILD_ONLY"
+    PARENT_ASSISTED = "PARENT_ASSISTED"
+    TEACHER_SUPERVISED = "TEACHER_SUPERVISED"
+
+
 class SessionStateError(Exception):
     """Raised when an action is attempted on a terminated or invalid session."""
     pass
+
+
+@dataclass
+class ParentDigest:
+    sessionId: str
+    childToken: str
+    sessionDate: str
+    summaryText: str
+    activitiesCompleted: int
+    strengthsObserved: List[str]
+    suggestedHomeActivities: List[str]
+    totalDurationMinutes: float
 
 
 @dataclass
@@ -29,6 +47,7 @@ class ParentCopilotSession:
     start_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     max_duration_minutes: float = 15.0
     current_status: str = "ACTIVE"
+    participation_mode: str = SessionParticipationMode.PARENT_ASSISTED.value
     audio_transcripts: List[Dict[str, str]] = field(default_factory=list)
     parent_interventions: List[Dict[str, str]] = field(default_factory=list)
 
@@ -102,6 +121,37 @@ class ParentCopilotSession:
             self.current_status = "AUTO_STOPPED_TIME_LIMIT"
         return self.current_status
 
+    def generate_parent_digest(
+        self,
+        activities_completed: int,
+        primary_topic: str = "Number Sense & Counting",
+        needed_scaffolding: bool = False
+    ) -> ParentDigest:
+        """
+        Converts internal learning metrics into a non-surveillance, supportive parent digest.
+        Avoids presenting raw BKT probabilities (e.g. P(L)=0.73) or error rate percentages.
+        """
+        if needed_scaffolding:
+            summary = (
+                f"Practiced {primary_topic}. Completed {activities_completed} activities. "
+                f"Enjoyed working together with gentle hints on one activity."
+            )
+        else:
+            summary = (
+                f"Practiced {primary_topic}. Confidently completed {activities_completed} activities."
+            )
+
+        return ParentDigest(
+            sessionId=self.session_id,
+            childToken=self.child_token,
+            sessionDate=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            summaryText=summary,
+            activitiesCompleted=activities_completed,
+            strengthsObserved=[f"Positive engagement in {primary_topic}", "Great persistence"],
+            suggestedHomeActivities=[f"Count everyday objects (spoons, blocks) during playtime."],
+            totalDurationMinutes=min(15.0, len(self.audio_transcripts) * 1.5)
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "sessionId": self.session_id,
@@ -110,6 +160,7 @@ class ParentCopilotSession:
             "startTime": self.start_time,
             "maxDurationMinutes": int(self.max_duration_minutes),
             "currentStatus": self.current_status,
+            "participationMode": self.participation_mode,
             "audioTranscripts": list(self.audio_transcripts),
             "parentInterventions": list(self.parent_interventions)
         }
