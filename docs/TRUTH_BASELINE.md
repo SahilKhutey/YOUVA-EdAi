@@ -3,12 +3,12 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 
 | Measure | Result |
 |---|---|
-| Files tracked | 375 (was 1,425 on main) |
+| Files tracked | 381 (was 1,425 on main) |
 | Backend TypeScript errors | 0 (was 29 at base) |
-| Unit test suites | 47 (all passing, excluding prisma.service.spec which needs a DB engine) |
-| Unit tests | 96 passing |
+| Unit test suites | 47 passed of 47 (excluding prisma.service.spec, which needs a DB engine) |
+| Unit tests | 94 passed, 0 failed |
 | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
-| Schema models / migrations | 53 / 5 |
+| Schema models / migrations | 53 / 4 |
 
 ## Honest notes
 - `BktService` is a heuristic (+20% of the gap on correct, -30% on incorrect), not full Bayesian Knowledge Tracing: P_SLIP and P_GUESS are defined but unused. Fine for an MVP, but do not call it BKT in user-facing claims.
