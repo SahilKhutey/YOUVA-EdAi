@@ -23,7 +23,7 @@ describe('LearningService', () => {
           },
         },
       ],
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<LearningService>(LearningService);
   });
