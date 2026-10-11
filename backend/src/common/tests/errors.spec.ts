@@ -30,7 +30,7 @@ describe('General Unit Tests: Error Handling & Logging Redaction (UT-GEN-013 - U
   }
 
   function sanitizeLogData(payload: Record<string, any>): Record<string, any> {
-    const sensitiveKeys = new Set(['password', 'token', 'jwt', 'secret', 'secretKey', 'apiKey', 'creditCard']);
+    const sensitiveKeys = new Set(['password', 'token', 'jwt', 'secret', 'secretKey', 'apiKey', 'creditCard'].map((k) => k.toLowerCase()));
     const sanitized: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(payload)) {
