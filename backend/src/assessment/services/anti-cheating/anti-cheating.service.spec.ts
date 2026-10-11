@@ -7,7 +7,7 @@ describe('AntiCheatingService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [AntiCheatingService],
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<AntiCheatingService>(AntiCheatingService);
   });

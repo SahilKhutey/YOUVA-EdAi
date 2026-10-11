@@ -16,7 +16,7 @@ describe('RevisionService', () => {
           },
         },
       ],
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<RevisionService>(RevisionService);
   });

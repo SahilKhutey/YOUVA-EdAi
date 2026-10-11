@@ -30,7 +30,7 @@ describe('PracticeService', () => {
           useValue: { generateText: jest.fn() },
         },
       ],
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<PracticeService>(PracticeService);
   });

@@ -7,7 +7,7 @@ describe('PromptOrchestratorService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [PromptOrchestratorService],
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<PromptOrchestratorService>(PromptOrchestratorService);
   });

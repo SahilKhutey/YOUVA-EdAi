@@ -29,7 +29,7 @@ describe('AnalyticsService', () => {
           },
         },
       ],
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<AnalyticsService>(AnalyticsService);
   });

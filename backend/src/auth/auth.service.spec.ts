@@ -24,7 +24,7 @@ describe('AuthService', () => {
           },
         },
       ],
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<AuthService>(AuthService);
   });

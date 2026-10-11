@@ -7,7 +7,7 @@ describe('ContentGenController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ContentGenController],
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     controller = module.get<ContentGenController>(ContentGenController);
   });

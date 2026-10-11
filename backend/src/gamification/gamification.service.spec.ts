@@ -7,7 +7,7 @@ describe('GamificationService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [GamificationService],
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<GamificationService>(GamificationService);
   });
