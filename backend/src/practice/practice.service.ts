@@ -1,4 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+
+const QUESTIONS_PER_QUIZ = 5;
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { GamificationService } from '../gamification/gamification.service';
@@ -15,79 +23,82 @@ export class PracticeService {
     private rlDifficultyService: RlDifficultyService,
   ) { }
 
+  /**
+   * Serves a quiz. Default source is the teacher-reviewed item bank (QUESTION_SOURCE=BANK).
+   * Runtime AI generation is opt-in (QUESTION_SOURCE=AI) and never falls back to fake questions.
+   */
   async generateQuiz(userId: string, topicId: string) {
-    const topic = await this.prisma.topic.findUnique({
-      where: { id: topicId },
-    });
+    const topic = await this.prisma.topic.findUnique({ where: { id: topicId } });
     if (!topic) throw new NotFoundException('Topic not found');
 
-    // Create session
+    const targetDifficulty = await this.rlDifficultyService.getOptimalDifficulty(userId, topicId);
+    const source = (process.env.QUESTION_SOURCE || 'BANK').toUpperCase();
+
+    let served: { id: string; content: string; options: string | null }[];
+
+    if (source === 'AI') {
+      let questionsData: any[];
+      try {
+        let level = 'medium';
+        if (targetDifficulty <= 0.3) level = 'easy';
+        else if (targetDifficulty >= 0.7) level = 'hard';
+        questionsData = await this.aiService.generateQuiz(
+          topic.title,
+          `${topic.description || ''}. Please generate questions at a ${level} difficulty level.`,
+        );
+      } catch (e) {
+        throw new ServiceUnavailableException('Quiz generation is unavailable right now. Please try again later.');
+      }
+      served = [];
+      for (const q of questionsData) {
+        const created = await this.prisma.question.create({
+          data: {
+            topicId,
+            content: q.content,
+            type: 'MCQ',
+            difficulty: Number(targetDifficulty),
+            options: JSON.stringify(q.options),
+            correctAnswer: q.correctAnswer,
+            explanation: q.explanation,
+            source: 'AI',
+          },
+        });
+        served.push({ id: created.id, content: created.content, options: created.options });
+      }
+    } else {
+      const bank = await this.prisma.question.findMany({ where: { topicId, source: 'BANK' } });
+      if (bank.length === 0) {
+        throw new NotFoundException('No reviewed questions are available for this topic yet.');
+      }
+      const answered = await this.prisma.userAnswer.findMany({
+        where: { session: { userId, topicId } },
+        select: { questionId: true },
+      });
+      const seen = new Set(answered.map((a) => a.questionId));
+      served = [...bank]
+        .sort((a, b) => {
+          const seenDiff = Number(seen.has(a.id)) - Number(seen.has(b.id)); // unseen first
+          if (seenDiff !== 0) return seenDiff;
+          const dist = Math.abs(a.difficulty - targetDifficulty) - Math.abs(b.difficulty - targetDifficulty);
+          if (dist !== 0) return dist;
+          return a.id.localeCompare(b.id);
+        })
+        .slice(0, QUESTIONS_PER_QUIZ)
+        .map((q) => ({ id: q.id, content: q.content, options: q.options }));
+    }
+
     const session = await this.prisma.practiceSession.create({
-      data: {
-        userId,
-        topicId,
-      },
+      data: { userId, topicId, servedQuestionIds: JSON.stringify(served.map((q) => q.id)) },
     });
 
-    // Determine target difficulty using RL
-    const targetDifficulty =
-      await this.rlDifficultyService.getOptimalDifficulty(userId, topicId);
-    let difficultyString = 'medium';
-    if (targetDifficulty <= 0.3) difficultyString = 'easy';
-    else if (targetDifficulty >= 0.7) difficultyString = 'hard';
-
-    // Generate questions via AI
-    let questionsData = [];
-    try {
-      questionsData = await this.aiService.generateQuiz(
-        topic.title,
-        `${topic.description || ''}. Please generate questions at a ${difficultyString} difficulty level.`,
-      );
-    } catch (e) {
-      console.error(
-        'Failed to generate quiz via AI, falling back to mock data:',
-        e,
-      );
-      // Fallback to mock questions for testing/dev without API key
-      questionsData = [
-        {
-          content: 'What is the speed of light? (Mock)',
-          options: ['300,000 km/s', '150,000 km/s', 'Unknown', 'Infinite'],
-          correctAnswer: '300,000 km/s',
-          explanation:
-            'Light travels at approximately 299,792 km/s in a vacuum.',
-        },
-        {
-          content: 'What is 2 + 2? (Mock)',
-          options: ['3', '4', '5', '22'],
-          correctAnswer: '4',
-          explanation: 'Basic arithmetic.',
-        },
-      ];
-    }
-
-    // Save questions to DB
-    const questions = [];
-    for (const q of questionsData) {
-      const question = await this.prisma.question.create({
-        data: {
-          topicId,
-          content: q.content,
-          type: 'MCQ',
-          difficulty: Number(targetDifficulty), // Prisma Float is JS Number
-          options: JSON.stringify(q.options),
-          correctAnswer: q.correctAnswer,
-          explanation: q.explanation,
-        },
-      });
-      questions.push({
-        id: question.id,
-        content: question.content,
-        options: question.options ? JSON.parse(question.options) : [], // Handle null options
-      });
-    }
-
-    return { sessionId: session.id, questions };
+    return {
+      sessionId: session.id,
+      questions: served.map((q) => ({
+        id: q.id,
+        content: q.content,
+        options: q.options ? JSON.parse(q.options) : [],
+      })),
+    };
   }
 
   async getTests(userId: string) {
@@ -129,31 +140,39 @@ export class PracticeService {
     userId: string,
     answers: { questionId: string; answer: string }[],
   ) {
-    const session = await this.prisma.practiceSession.findUnique({
-      where: { id: sessionId },
-    });
-    if (!session || session.userId !== userId)
-      throw new NotFoundException('Session not found');
+    const session = await this.prisma.practiceSession.findUnique({ where: { id: sessionId } });
+    if (!session || session.userId !== userId) throw new NotFoundException('Session not found');
+    if (session.endTime) throw new ConflictException('This quiz was already submitted.');
+    if (!Array.isArray(answers) || answers.length === 0) {
+      throw new BadRequestException('At least one answer is required.');
+    }
+    if (!session.servedQuestionIds) {
+      throw new BadRequestException('This session has no recorded questions.');
+    }
+    const served: string[] = JSON.parse(session.servedQuestionIds);
+    const seen = new Set<string>();
+    for (const ans of answers) {
+      if (!served.includes(ans.questionId)) {
+        throw new BadRequestException('Answer references a question that was not part of this quiz.');
+      }
+      if (seen.has(ans.questionId)) {
+        throw new BadRequestException('Duplicate answer for the same question.');
+      }
+      seen.add(ans.questionId);
+    }
 
     let correctCount = 0;
     const results = [];
 
     for (const ans of answers) {
-      const question = await this.prisma.question.findUnique({
-        where: { id: ans.questionId },
-      });
+      const question = await this.prisma.question.findUnique({ where: { id: ans.questionId } });
       if (!question) continue;
 
       const isCorrect = question.correctAnswer === ans.answer;
       if (isCorrect) correctCount++;
 
       await this.prisma.userAnswer.create({
-        data: {
-          sessionId,
-          questionId: ans.questionId,
-          answer: ans.answer,
-          isCorrect,
-        },
+        data: { sessionId, questionId: ans.questionId, answer: ans.answer, isCorrect },
       });
 
       results.push({
@@ -163,27 +182,28 @@ export class PracticeService {
         explanation: question.explanation,
       });
 
-      // Real-time ACLE Updates per question
       await this.bktService.updateMastery(userId, session.topicId, isCorrect);
-      await this.rlDifficultyService.updateDifficultyState(
-        userId,
-        session.topicId,
-        isCorrect,
-        question.difficulty,
-      );
+      await this.rlDifficultyService.updateDifficultyState(userId, session.topicId, isCorrect, question.difficulty);
     }
 
-    const score = (correctCount / answers.length) * 100;
+    // Unanswered questions count as incorrect: score is out of everything that was served.
+    const score = (correctCount / served.length) * 100;
+    const xpEarned = Number(10 + Math.round((score / 100) * 10));
     await this.prisma.practiceSession.update({
       where: { id: sessionId },
-      data: { score, endTime: new Date() },
+      data: { score, endTime: new Date(), isCompleted: true, xpEarned },
     });
 
-    // Gamification: Award 10 XP base + up to 10 XP based on score, and update streak
-    const xpEarned = Number(10 + Math.round((score / 100) * 10));
     await this.gamificationService.addXp(userId, xpEarned);
     await this.gamificationService.updateStreak(userId);
 
-    return { score, correctCount, total: answers.length, results, xpEarned };
+    return {
+      score,
+      correctCount,
+      total: served.length,
+      unanswered: served.length - answers.length,
+      results,
+      xpEarned,
+    };
   }
 }

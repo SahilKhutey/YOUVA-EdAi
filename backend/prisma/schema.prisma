@@ -207,6 +207,7 @@ model PracticeSession {
   isCompleted     Boolean      @default(false)
   durationSeconds Int?
   xpEarned        Int?
+  servedQuestionIds String? // JSON array of question ids served in this session
   answers         UserAnswer[]
 }
 
@@ -220,6 +221,7 @@ model Question {
   correctAnswer String
   options       String? // SQLite doesn't support Json
   explanation   String?
+  source        String  @default("AI") // "BANK" = teacher-reviewed item bank, "AI" = generated at runtime
 
   answers UserAnswer[]
 }
