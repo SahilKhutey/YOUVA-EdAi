@@ -9,6 +9,7 @@ import { TeacherRecommendationService } from './services/teacher-recommendation.
 import { TeacherInterventionOpsService } from './services/teacher-intervention-ops.service';
 import { TeacherContentOpsService } from './services/teacher-content-ops.service';
 import { TeacherAnalyticsOpsService } from './services/teacher-analytics-ops.service';
+import { TeacherDifficultyOverrideService } from './services/teacher-difficulty-override.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, LearningLoopModule],
@@ -20,6 +21,7 @@ import { TeacherAnalyticsOpsService } from './services/teacher-analytics-ops.ser
     TeacherInterventionOpsService,
     TeacherContentOpsService,
     TeacherAnalyticsOpsService,
+    TeacherDifficultyOverrideService,
   ],
   exports: [
     TeacherDashboardService,

@@ -27,6 +27,8 @@ import { OverrideRecommendationDto } from './dto/override-recommendation.dto';
 import { CreateClassDto } from './dto/create-class.dto';
 import { EnrollStudentDto } from './dto/enroll-student.dto';
 import { AssignContentDto } from './dto/assign-content.dto';
+import { OverrideDifficultyDto } from './dto/override-difficulty.dto';
+import { TeacherDifficultyOverrideService } from './services/teacher-difficulty-override.service';
 
 @Controller('teacher')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -41,7 +43,19 @@ export class TeacherOpsController {
     private readonly analyticsService: TeacherAnalyticsOpsService,
     private readonly scopeAuth: ScopeAuthorizationService,
     private readonly prisma: PrismaService,
+    private readonly difficultyOverride: TeacherDifficultyOverrideService,
   ) {}
+
+  /** Set a student's target difficulty for a topic (teacher override). */
+  @Post('students/:studentId/topics/:topicId/difficulty')
+  async overrideDifficulty(
+    @Req() req: any,
+    @Param('studentId') studentId: string,
+    @Param('topicId') topicId: string,
+    @Body() dto: OverrideDifficultyDto,
+  ) {
+    return this.difficultyOverride.override(req.user.id, studentId, topicId, dto.value, dto.reason);
+  }
 
   /**
    * Teacher Home / Dashboard Overview
