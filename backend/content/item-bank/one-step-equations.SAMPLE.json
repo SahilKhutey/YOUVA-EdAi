@@ -1,0 +1,20 @@
+{
+  "_note": "DRAFT SAMPLE written for format and testing only. NOT reviewed by a teacher. Replace with the pilot teacher's own items before any student sees them.",
+  "subject": "Mathematics",
+  "topic": "One-Step Equations",
+  "topicDescription": "Solve equations of the form x + a = b, x - a = b, ax = b and x / a = b.",
+  "items": [
+    { "content": "Solve: x + 5 = 12", "options": ["7", "17", "-7", "5"], "correctAnswer": "7", "difficulty": 0.2, "explanation": "Subtract 5 from both sides: x = 12 - 5 = 7.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Which step undoes 'x + 9 = 20'?", "options": ["Add 9 to both sides", "Subtract 9 from both sides", "Multiply both sides by 9", "Divide both sides by 9"], "correctAnswer": "Subtract 9 from both sides", "difficulty": 0.2, "explanation": "Addition is undone by subtraction, applied to both sides to keep the equation balanced.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: x - 4 = 9", "options": ["5", "13", "-5", "36"], "correctAnswer": "13", "difficulty": 0.2, "explanation": "Add 4 to both sides: x = 9 + 4 = 13.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: 3x = 18", "options": ["15", "6", "21", "54"], "correctAnswer": "6", "difficulty": 0.3, "explanation": "Divide both sides by 3: x = 18 / 3 = 6.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: x / 4 = 5", "options": ["20", "9", "1.25", "1"], "correctAnswer": "20", "difficulty": 0.3, "explanation": "Multiply both sides by 4: x = 5 x 4 = 20.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: x + 12 = 7", "options": ["19", "-5", "5", "-19"], "correctAnswer": "-5", "difficulty": 0.5, "explanation": "Subtract 12 from both sides: x = 7 - 12 = -5.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: x - 8 = -3", "options": ["-11", "-5", "5", "11"], "correctAnswer": "5", "difficulty": 0.5, "explanation": "Add 8 to both sides: x = -3 + 8 = 5.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: -2x = 14", "options": ["7", "-7", "12", "-12"], "correctAnswer": "-7", "difficulty": 0.6, "explanation": "Divide both sides by -2: x = 14 / -2 = -7.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: 5x = -35", "options": ["7", "-7", "-30", "-40"], "correctAnswer": "-7", "difficulty": 0.6, "explanation": "Divide both sides by 5: x = -35 / 5 = -7.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: 0.5x = 9", "options": ["4.5", "18", "8.5", "9.5"], "correctAnswer": "18", "difficulty": 0.7, "explanation": "Divide both sides by 0.5 (or multiply by 2): x = 18.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: x / -3 = 6", "options": ["-2", "2", "18", "-18"], "correctAnswer": "-18", "difficulty": 0.7, "explanation": "Multiply both sides by -3: x = 6 x -3 = -18.", "reviewed": false, "reviewedBy": "" },
+    { "content": "Solve: x + 3/4 = 2", "options": ["5/4", "2 3/4", "1/4", "3/2"], "correctAnswer": "5/4", "difficulty": 0.8, "explanation": "Subtract 3/4 from both sides: x = 2 - 3/4 = 8/4 - 3/4 = 5/4.", "reviewed": false, "reviewedBy": "" }
+  ]
+}
