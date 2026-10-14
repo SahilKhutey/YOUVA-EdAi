@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 |---|---|
 | Files tracked | 381 (was 1,425 on main) |
 | Backend TypeScript errors | 0 (was 29 at base) |
-| Unit test suites | 53 passed of 53 (excluding prisma.service.spec, which needs a DB engine) |
-| Unit tests | 123 passed, 0 failed |
+| Unit test suites | 54 passed of 54 (excluding prisma.service.spec, which needs a DB engine) |
+| Unit tests | 135 passed, 0 failed |
 | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
 | Schema models / migrations | 53 / 4 |
 
@@ -34,3 +34,9 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 - Pilot documents in `docs/pilot/`: consent form template, safety protocol, data handling, runbook.
 - NOT verified: erasure and consent against a real Postgres, HTTP-level behavior, the frontend, any legal review.
 - Known gaps: no consent screen in the UI; no automated wellbeing/content detection (supervision is the safeguard); `cognitiveLevel` and `onboardingComplete` remain on an anonymised account; YouTube embeds in the frontend.
+
+## Phase 4 additions (measured)
+- Pilot metrics as pure functions (9 tests, expected values hand-computed): completion, per-student first/last change, improvement share, item analysis with answer-key and difficulty flags, overrides, comparison against targets written before the pilot.
+- `npm run pilot:report` builds the numbers from the database (typechecked, NOT run against a real database). It cannot describe what happened in the room.
+- `durationSeconds` is now recorded on submit. Parent data-access export added (2 tests).
+- NOT verified: the report script against a real Postgres; any real pilot data exists yet.
