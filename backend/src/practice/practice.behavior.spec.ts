@@ -15,7 +15,7 @@ function makeDb(questions: any[]) {
       create: async ({ data }: any) => { const q = { id: id('qa'), ...data }; db.questions.push(q); return q; },
     },
     practiceSession: {
-      create: async ({ data }: any) => { const s = { id: id('s'), endTime: null, ...data }; db.sessions.push(s); return s; },
+      create: async ({ data }: any) => { const s = { id: id('s'), endTime: null, startTime: new Date(Date.now() - 90_000), ...data }; db.sessions.push(s); return s; },
       findUnique: async ({ where }: any) => db.sessions.find((s: any) => s.id === where.id) ?? null,
       update: async ({ where, data }: any) => Object.assign(db.sessions.find((s: any) => s.id === where.id), data),
     },
@@ -124,5 +124,13 @@ describe('PracticeService - reviewed item bank flow', () => {
     await svc.generateQuiz('t1', 'topic1', 'TEACHER');
     await svc.generateQuiz('a1', 'topic1', 'ADMIN');
     expect(consent.assertActiveConsent).not.toHaveBeenCalled();
+  });
+
+  it('records how long the session took (needed for pilot minutes)', async () => {
+    const { svc, db } = build([bank(1, 0.5)]);
+    const quiz = await svc.generateQuiz('u1', 'topic1');
+    await svc.submitQuiz(quiz.sessionId, 'u1', [{ questionId: 'b1', answer: 'A' }]);
+    expect(db.sessions[0].durationSeconds).toBeGreaterThanOrEqual(90);
+    expect(db.sessions[0].durationSeconds).toBeLessThan(120);
   });
 });
