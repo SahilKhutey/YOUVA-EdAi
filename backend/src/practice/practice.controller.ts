@@ -16,7 +16,7 @@ export class PracticeController {
 
   @Post('generate')
   async generateQuiz(@Request() req: any, @Body('topicId') topicId: string) {
-    return this.practiceService.generateQuiz(req.user.userId, topicId);
+    return this.practiceService.generateQuiz(req.user.userId, topicId, req.user.role);
   }
 
   @Post('submit')

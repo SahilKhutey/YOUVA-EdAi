@@ -905,3 +905,22 @@ model ContentAssignment {
 }
 
 
+
+// --- Pilot consent (Phase 3) ---
+// Kept without a foreign key to User so the proof of consent/withdrawal survives erasure of the student's data.
+model ConsentRecord {
+  id               String    @id @default(uuid())
+  studentId        String
+  guardianName     String
+  guardianRelation String    // e.g. mother, father, legal guardian
+  formVersion      String    // which consent form text was signed, e.g. "pilot-v1"
+  signedAt         DateTime
+  recordedById     String    // teacher/admin who recorded the signed form
+  notes            String?
+  createdAt        DateTime  @default(now())
+  revokedAt        DateTime?
+  revokedById      String?
+  erasedAt         DateTime?
+
+  @@index([studentId])
+}

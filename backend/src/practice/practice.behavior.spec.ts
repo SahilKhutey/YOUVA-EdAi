@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { PracticeService } from './practice.service';
 import { BktService } from '../learning-engine/services/bkt.service';
 import { RlDifficultyService } from '../learning-engine/services/rl-difficulty.service';
@@ -41,8 +41,9 @@ function build(questions: any[]) {
   const db = makeDb(questions);
   const ai = { generateQuiz: jest.fn() };
   const gam = { addXp: jest.fn(), updateStreak: jest.fn() };
-  const svc = new PracticeService(db.prisma, ai as any, gam as any, new BktService(db.prisma), new RlDifficultyService(db.prisma));
-  return { db, ai, gam, svc };
+  const consent = { assertActiveConsent: jest.fn(async () => undefined) };
+  const svc = new PracticeService(db.prisma, ai as any, gam as any, new BktService(db.prisma), new RlDifficultyService(db.prisma), consent as any);
+  return { db, ai, gam, svc, consent };
 }
 
 describe('PracticeService - reviewed item bank flow', () => {
@@ -109,5 +110,19 @@ describe('PracticeService - reviewed item bank flow', () => {
     const unseen = items.map((i) => i.id).filter((id) => !first.questions.some((f) => f.id === id));
     const secondIds = second.questions.map((q) => q.id);
     expect(unseen.every((id) => secondIds.includes(id))).toBe(true); // every unseen item is served before any repeat
+  });
+
+  it('blocks a student without active consent and creates no session', async () => {
+    const { svc, consent, db } = build([bank(1, 0.5)]);
+    consent.assertActiveConsent.mockRejectedValue(new ForbiddenException());
+    await expect(svc.generateQuiz('u1', 'topic1', 'STUDENT')).rejects.toBeInstanceOf(ForbiddenException);
+    expect(db.sessions).toHaveLength(0);
+  });
+
+  it('lets a teacher or admin preview a quiz without a student consent record', async () => {
+    const { svc, consent } = build([bank(1, 0.5)]);
+    await svc.generateQuiz('t1', 'topic1', 'TEACHER');
+    await svc.generateQuiz('a1', 'topic1', 'ADMIN');
+    expect(consent.assertActiveConsent).not.toHaveBeenCalled();
   });
 });
