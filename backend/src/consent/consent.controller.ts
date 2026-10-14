@@ -26,6 +26,14 @@ export class ConsentController {
     return this.consent.list(studentId);
   }
 
+  /** Parent's right to see the data: everything stored about the student. */
+  @Get('student/:studentId/export')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async export(@Req() req: any, @Param('studentId') studentId: string) {
+    await this.scope.assertTeacherStudentScope(req.user.id, studentId);
+    return this.consent.exportStudent(studentId);
+  }
+
   @Post('student/:studentId/revoke')
   @Roles(Role.TEACHER, Role.ADMIN)
   async revoke(@Req() req: any, @Param('studentId') studentId: string) {

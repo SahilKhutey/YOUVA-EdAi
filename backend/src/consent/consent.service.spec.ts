@@ -98,3 +98,26 @@ describe('ConsentService.eraseStudent', () => {
     await expect(svc.eraseStudent('a', 'zzz')).rejects.toBeInstanceOf(NotFoundException);
   });
 });
+
+describe('ConsentService.exportStudent', () => {
+  it('returns the student\'s own data, with question text, and no data from other students', async () => {
+    const { prisma } = makeDb({ consents: [{ id: 'c1', studentId: 's1', guardianName: 'R. Kumar', guardianRelation: 'father', formVersion: 'pilot-v1', signedAt: new Date('2026-10-01'), revokedAt: null, erasedAt: null, createdAt: new Date() }] });
+    prisma.practiceSession = { findMany: jest.fn(async ({ where }: any) => [{ startTime: new Date('2026-10-02'), endTime: new Date('2026-10-02'), score: 60, durationSeconds: 200, userId: where.userId, answers: [{ answer: '7', isCorrect: true, question: { content: 'Solve: x + 5 = 12', correctAnswer: '7' } }] }]) };
+    prisma.userTopicMastery = { findMany: jest.fn(async () => [{ topicId: 't1', masteryProbability: 0.28, difficultyState: 0.5 }]) };
+    prisma.userStats = { findUnique: jest.fn(async () => ({ totalXp: 20, currentLevel: 1, currentStreak: 1 })) };
+    prisma.teacherIntervention = { findMany: jest.fn(async () => [{ createdAt: new Date('2026-10-03'), action: 'OVERRIDE', feedback: 'Struggling with negatives' }]) };
+    const out: any = await new ConsentService(prisma).exportStudent('s1');
+    expect(prisma.practiceSession.findMany.mock.calls[0][0].where).toEqual({ userId: 's1' });
+    expect(out.account).toMatchObject({ name: 'Asha', email: 'a@x.in' });
+    expect(out.account).not.toHaveProperty('password');
+    expect(out.sessions[0].answers[0]).toEqual({ question: 'Solve: x + 5 = 12', studentAnswer: '7', correct: true, correctAnswer: '7' });
+    expect(out.teacherNotes[0].note).toBe('Struggling with negatives');
+    expect(out.consentRecords[0]).toMatchObject({ guardianName: 'R. Kumar', formVersion: 'pilot-v1' });
+  });
+  it('refuses non-students and unknown ids', async () => {
+    const { prisma } = makeDb({ users: [{ id: 't1', role: 'TEACHER' }] });
+    const svc = new ConsentService(prisma);
+    await expect(svc.exportStudent('t1')).rejects.toBeInstanceOf(BadRequestException);
+    await expect(svc.exportStudent('nope')).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
