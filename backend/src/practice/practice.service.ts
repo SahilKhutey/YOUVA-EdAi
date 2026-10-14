@@ -12,6 +12,7 @@ import { AiService } from '../ai/ai.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { BktService } from '../learning-engine/services/bkt.service';
 import { RlDifficultyService } from '../learning-engine/services/rl-difficulty.service';
+import { ConsentService } from '../consent/consent.service';
 
 @Injectable()
 export class PracticeService {
@@ -21,13 +22,16 @@ export class PracticeService {
     private gamificationService: GamificationService,
     private bktService: BktService,
     private rlDifficultyService: RlDifficultyService,
+    private consentService: ConsentService,
   ) { }
 
   /**
    * Serves a quiz. Default source is the teacher-reviewed item bank (QUESTION_SOURCE=BANK).
    * Runtime AI generation is opt-in (QUESTION_SOURCE=AI) and never falls back to fake questions.
    */
-  async generateQuiz(userId: string, topicId: string) {
+  async generateQuiz(userId: string, topicId: string, role?: string) {
+    // Students need an active parent/guardian consent record; teachers/admins previewing do not.
+    if (role !== 'TEACHER' && role !== 'ADMIN') await this.consentService.assertActiveConsent(userId);
     const topic = await this.prisma.topic.findUnique({ where: { id: topicId } });
     if (!topic) throw new NotFoundException('Topic not found');
 

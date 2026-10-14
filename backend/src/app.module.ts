@@ -37,6 +37,7 @@ import { ClassroomModule } from './classroom/classroom.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { LearningLoopModule } from './learning-loop/learning-loop.module';
 import { TeacherOpsModule } from './teacher-ops/teacher-ops.module';
+import { ConsentModule } from './consent/consent.module';
 
 @Module({
   imports: [
@@ -75,6 +76,7 @@ import { TeacherOpsModule } from './teacher-ops/teacher-ops.module';
     FeedbackModule,
     LearningLoopModule,
     TeacherOpsModule,
+    ConsentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
