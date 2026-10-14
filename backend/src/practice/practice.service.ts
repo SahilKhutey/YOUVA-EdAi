@@ -195,7 +195,13 @@ export class PracticeService {
     const xpEarned = Number(10 + Math.round((score / 100) * 10));
     await this.prisma.practiceSession.update({
       where: { id: sessionId },
-      data: { score, endTime: new Date(), isCompleted: true, xpEarned },
+      data: {
+        score,
+        endTime: new Date(),
+        isCompleted: true,
+        xpEarned,
+        durationSeconds: Math.max(0, Math.round((Date.now() - new Date(session.startTime).getTime()) / 1000)),
+      },
     });
 
     await this.gamificationService.addXp(userId, xpEarned);
