@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 |---|---|
 | Files tracked | 381 (was 1,425 on main) |
 | Backend TypeScript errors | 0 (was 29 at base) |
-| Unit test suites | 51 passed of 51 (excluding prisma.service.spec, which needs a DB engine) |
-| Unit tests | 111 passed, 0 failed |
+| Unit test suites | 53 passed of 53 (excluding prisma.service.spec, which needs a DB engine) |
+| Unit tests | 123 passed, 0 failed |
 | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
 | Schema models / migrations | 53 / 4 |
 
@@ -27,3 +27,10 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 - OPEN: migrations are SQLite-dialect (lock file says sqlite; init uses DATETIME) while schema.prisma is postgresql. `prisma migrate deploy` on Postgres will fail. Baseline must be regenerated (see Phase 2 doc).
 - OPEN: the frontend calls /practice/*; nothing calls /learning-loop/* (the richer intervention/gate flow).
 - OPEN: a teacher override sets the starting difficulty; later answers move it again (no pin).
+
+## Phase 3 additions (measured)
+- Consent records (`ConsentRecord`), a gate on `/practice/generate` for students, revocation, and withdraw-and-erase (12 tests; in-memory database).
+- A guardrail test reads the Prisma schema and fails if any table holding a user/student/teacher id is not classified in `src/consent/erasure-map.ts`.
+- Pilot documents in `docs/pilot/`: consent form template, safety protocol, data handling, runbook.
+- NOT verified: erasure and consent against a real Postgres, HTTP-level behavior, the frontend, any legal review.
+- Known gaps: no consent screen in the UI; no automated wellbeing/content detection (supervision is the safeguard); `cognitiveLevel` and `onboardingComplete` remain on an anonymised account; YouTube embeds in the frontend.
