@@ -47,6 +47,34 @@ export class ConsentService {
     return this.prisma.consentRecord.findMany({ where: { studentId }, orderBy: { createdAt: 'desc' } });
   }
 
+  /** Everything stored about a student, for a parent's request to see it. */
+  async exportStudent(studentId: string) {
+    const student = await this.prisma.user.findUnique({ where: { id: studentId } });
+    if (!student) throw new NotFoundException('Student not found');
+    if (student.role !== 'STUDENT') throw new BadRequestException('Only student accounts can be exported with this operation.');
+    const sessions = await this.prisma.practiceSession.findMany({
+      where: { userId: studentId },
+      orderBy: { startTime: 'asc' },
+      include: { answers: { include: { question: true } } },
+    });
+    const mastery = await this.prisma.userTopicMastery.findMany({ where: { userId: studentId } });
+    const stats = await this.prisma.userStats.findUnique({ where: { userId: studentId } });
+    const interventions = await this.prisma.teacherIntervention.findMany({ where: { studentId } });
+    const consents = await this.list(studentId);
+    return {
+      exportedAt: new Date().toISOString(),
+      account: { name: student.name, email: student.email, createdAt: student.createdAt },
+      sessions: sessions.map((s) => ({
+        startedAt: s.startTime, finishedAt: s.endTime, scorePercent: s.score, durationSeconds: s.durationSeconds,
+        answers: s.answers.map((a) => ({ question: a.question.content, studentAnswer: a.answer, correct: a.isCorrect, correctAnswer: a.question.correctAnswer })),
+      })),
+      topicProgress: mastery.map((m) => ({ topicId: m.topicId, masteryProbability: m.masteryProbability, targetDifficulty: m.difficultyState })),
+      points: stats ? { totalXp: stats.totalXp, level: stats.currentLevel, streak: stats.currentStreak } : null,
+      teacherNotes: interventions.map((i) => ({ at: i.createdAt, action: i.action, note: i.feedback })),
+      consentRecords: consents.map((c) => ({ guardianName: c.guardianName, relation: c.guardianRelation, formVersion: c.formVersion, signedAt: c.signedAt, revokedAt: c.revokedAt, erasedAt: c.erasedAt })),
+    };
+  }
+
   async revoke(revokedById: string, studentId: string) {
     const active = await this.prisma.consentRecord.findMany({ where: { studentId, revokedAt: null } });
     if (active.length === 0) throw new NotFoundException('No active consent to revoke.');
