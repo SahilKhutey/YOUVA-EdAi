@@ -1,0 +1,7 @@
+{
+  "_note": "Copy to success-measures.json, set your OWN targets, and commit it BEFORE the first session so the date proves they were not chosen after seeing results.",
+  "minStudentsWithSession": 3,
+  "minCompletionRate": 0.8,
+  "minImprovedShare": 0.5,
+  "minOverrides": 1
+}
