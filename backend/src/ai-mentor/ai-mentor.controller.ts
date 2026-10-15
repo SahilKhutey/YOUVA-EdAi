@@ -1,3 +1,4 @@
+import { AiFeaturesGuard } from '../common/guards/ai-features.guard';
 import { Controller, Post, Body, UseGuards, Req, Logger, Get, Param } from '@nestjs/common';
 import { PedagogyService } from './services/pedagogy/pedagogy.service';
 import { ValidatorService } from './services/validator/validator.service';
@@ -5,6 +6,7 @@ import { AiService } from '../ai/ai.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PremiumGuard } from '../auth/premium.guard';
 
+@UseGuards(AiFeaturesGuard)
 @Controller('ai-mentor')
 export class AiMentorController {
     private readonly logger = new Logger(AiMentorController.name);
