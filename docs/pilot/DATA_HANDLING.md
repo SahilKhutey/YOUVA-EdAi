@@ -2,7 +2,7 @@
 *Not legal advice. Confirm with a lawyer who knows Indian data-protection law before the pilot.*
 
 ## What the system stores for a pilot student
-Account (name, email, hashed password); practice sessions and answers; per-topic mastery and target difficulty; points/streak/badges; notifications; teacher override notes; the consent record. Everything is in the Postgres database. In bank mode no student data is sent to an AI provider.
+Account (name, email, hashed password); practice sessions and answers; per-topic mastery and target difficulty; points/streak/badges; notifications; teacher override notes; the consent record. Everything is in the Postgres database. In the practice flow with `QUESTION_SOURCE=BANK`, no student data is sent to an AI provider. Other modules (AI mentor, content generation) call Google Gemini when used and could send what a student types, so do not use them with pilot students.
 
 ## What the frontend loads from third parties
 No analytics or tracking scripts were found in the frontend code. It embeds YouTube videos (use `youtube-nocookie.com` or remove embeds for the pilot) and sample audio from soundhelix.com. The login token is kept in the browser's localStorage.

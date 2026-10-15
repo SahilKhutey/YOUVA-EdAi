@@ -6,6 +6,7 @@
 2. Supervising adult named for this session: ______________. A backup contact is reachable: ______________.
 3. Only reviewed questions are in use (`QUESTION_SOURCE=BANK`). The AI question mode is OFF for the pilot.
 4. The supervising adult has read this page.
+5. Students use the practice page only. The AI mentor, forum and other sections are not part of the pilot; do not open them with students.
 
 ## During a session
 - The supervising adult is in the room (or on the call with camera on) the whole time.
