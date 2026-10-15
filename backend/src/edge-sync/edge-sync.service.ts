@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, HttpException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 // Minimalist payload schema for 2G/3G text-only connections
 interface SyncPayload {
@@ -20,7 +20,7 @@ export class EdgeSyncService {
      * Receives compressed, batched telemetry from a local edge node
      * when the student regains internet connection.
      */
-    async processIntercalatedSync(compressedPayload: string) {
+    async processIntercalatedSync(compressedPayload: string, actingUserId: string) {
         try {
             // In a real scenario, this payload could be gzip or base64 decoded
             let parsed;
@@ -36,6 +36,10 @@ export class EdgeSyncService {
 
             if (!validatedData.userId || !validatedData.offlineEvents) {
                 throw new Error("Invalid Edge Sync Payload Structure");
+            }
+            // A caller may only sync their own data; otherwise anyone could write rows for any student.
+            if (validatedData.userId !== actingUserId) {
+                throw new ForbiddenException('You can only sync your own data.');
             }
 
             let ingestedCount = 0;
@@ -85,6 +89,7 @@ export class EdgeSyncService {
             };
 
         } catch (error) {
+            if (error instanceof HttpException) throw error;
             this.logger.error('Edge sync payload rejected', error);
             throw new Error('Failed to parse or validate Edge Sync Payload.');
         }
