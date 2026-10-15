@@ -1,0 +1,1 @@
+Put real evidence files here (a signed review letter, a lawyer's email as PDF, a scanned approval) and cite them from docs with `[evidence: docs/evidence/<file>]`. The claims check requires the file to exist. Never put student data here.
