@@ -5,6 +5,7 @@ import api from "@/lib/axios";
 import { useRouter, useParams } from "next/navigation";
 import { ThinkingIndicator } from "@/app/components/ThinkingIndicator";
 import { VoiceTutor } from "@/app/components/workspace/VoiceTutor";
+import { aiMentorEnabled, practiceLoadMessage, practiceSubmitMessage } from "@/lib/practice-errors.mjs";
 
 interface Question {
   id: string;
@@ -34,6 +35,11 @@ export default function PracticePage() {
     results: Result[];
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  // The AI mentor (typed and spoken chat with an AI) is off unless NEXT_PUBLIC_ENABLE_AI_MENTOR=true.
+  const aiOn = aiMentorEnabled(process.env.NEXT_PUBLIC_ENABLE_AI_MENTOR);
+  const gridCols = aiOn ? "lg:grid-cols-2" : "lg:grid-cols-1";
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -50,12 +56,13 @@ export default function PracticePage() {
   const generateQuiz = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const response = await api.post("/practice/generate", { topicId });
       setSessionId(response.data.sessionId);
       setQuestions(response.data.questions);
     } catch (err) {
       console.error("Failed to generate quiz:", err);
-      // Handle error
+      setLoadError(practiceLoadMessage((err as any)?.response?.status));
     } finally {
       setLoading(false);
     }
@@ -75,6 +82,7 @@ export default function PracticePage() {
     }
 
     setSubmitting(true);
+    setSubmitError(null);
     const formattedAnswers = Object.entries(answers).map(([qId, ans]) => ({
       questionId: qId,
       answer: ans,
@@ -88,6 +96,7 @@ export default function PracticePage() {
       setResults(response.data);
     } catch (err) {
       console.error("Failed to submit quiz:", err);
+      setSubmitError(practiceSubmitMessage((err as any)?.response?.status));
     } finally {
       setSubmitting(false);
     }
@@ -98,7 +107,7 @@ export default function PracticePage() {
       <div className="flex min-h-screen items-center justify-center bg-muted/20 flex-col gap-4">
         <ThinkingIndicator />
         <p className="text-muted-foreground font-medium animate-pulse">
-          Generating your personalized quiz...
+          Getting your questions...
         </p>
       </div>
     );
@@ -106,9 +115,25 @@ export default function PracticePage() {
 
   if (!user) return null;
 
+  if (loadError && questions.length === 0) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/20 p-4">
+        <div className="max-w-md rounded-lg border border-border bg-card p-6 text-center shadow-sm">
+          <p className="text-foreground" role="alert">{loadError}</p>
+          <button
+            onClick={() => router.back()}
+            className="mt-4 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            &larr; Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (results) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen bg-muted/20 gap-4 p-4">
+      <div className={`grid grid-cols-1 ${gridCols} min-h-screen bg-muted/20 gap-4 p-4`}>
         <div className="flex flex-col overflow-y-auto w-full max-w-3xl mx-auto py-8 px-4">
           <div className="bg-card shadow-sm border border-border overflow-hidden sm:rounded-lg mb-6">
             <div className="px-4 py-5 sm:px-6 text-center">
@@ -161,16 +186,18 @@ export default function PracticePage() {
           </div>
         </div>
 
-        {/* AI Mentor Sidebar */}
-        <div className="flex flex-col h-[calc(100vh-2rem)] sticky top-4">
-          <VoiceTutor topicId={topicId as string} topicTitle="Quiz Review" />
-        </div>
+        {/* AI Mentor Sidebar (off by default) */}
+        {aiOn && (
+          <div className="flex flex-col h-[calc(100vh-2rem)] sticky top-4">
+            <VoiceTutor topicId={topicId as string} topicTitle="Quiz Review" />
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen bg-muted/20 gap-4 p-4">
+    <div className={`grid grid-cols-1 ${gridCols} min-h-screen bg-muted/20 gap-4 p-4`}>
       <div className="flex flex-col overflow-y-auto w-full max-w-3xl mx-auto py-8 px-4">
         <div className="mb-8 flex items-center justify-between">
           <button
@@ -216,6 +243,9 @@ export default function PracticePage() {
           ))}
         </div>
 
+        {submitError && (
+          <p className="mt-6 text-sm text-destructive" role="alert">{submitError}</p>
+        )}
         <div className="mt-8 flex justify-end">
           <button
             onClick={submitQuiz}
@@ -227,10 +257,12 @@ export default function PracticePage() {
         </div>
       </div>
 
-      {/* AI Mentor Sidebar */}
-      <div className="flex flex-col h-[calc(100vh-2rem)] sticky top-4">
-        <VoiceTutor topicId={topicId as string} topicTitle="Practice Session" />
-      </div>
+      {/* AI Mentor Sidebar (off by default) */}
+      {aiOn && (
+        <div className="flex flex-col h-[calc(100vh-2rem)] sticky top-4">
+          <VoiceTutor topicId={topicId as string} topicTitle="Practice Session" />
+        </div>
+      )}
     </div>
   );
 }

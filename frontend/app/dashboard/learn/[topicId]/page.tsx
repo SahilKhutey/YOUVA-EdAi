@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Skeleton } from "@/app/components/ui/Skeleton";
 import { ThinkingIndicator } from "@/app/components/ThinkingIndicator";
 import { VoiceTutor } from "@/app/components/workspace/VoiceTutor";
+import { aiMentorEnabled } from "@/lib/practice-errors.mjs";
 
 interface Message {
   id: number;
@@ -185,10 +186,12 @@ export default function LearningPage() {
         </div>
       </div>
 
-      {/* New AI Mentor Sidebar */}
-      <div className="flex flex-col h-full">
-        <VoiceTutor topicId={topicId as string} topicTitle="Current Topic" />
-      </div>
+      {/* AI Mentor Sidebar (off unless NEXT_PUBLIC_ENABLE_AI_MENTOR=true) */}
+      {aiMentorEnabled(process.env.NEXT_PUBLIC_ENABLE_AI_MENTOR) && (
+        <div className="flex flex-col h-full">
+          <VoiceTutor topicId={topicId as string} topicTitle="Current Topic" />
+        </div>
+      )}
 
     </div>
   );
