@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 |---|---|
 | Files tracked | 381 (was 1,425 on main) |
 | Backend TypeScript errors | 0 (was 29 at base) |
-| Unit test suites | 56 passed of 56 (excluding prisma.service.spec, which needs a DB engine) |
-| Unit tests | 142 passed, 0 failed |
+| Unit test suites | 58 passed of 58 (excluding prisma.service.spec, which needs a DB engine) |
+| Unit tests | 149 passed, 0 failed |
 | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
 | Schema models / migrations | 53 / 4 |
 
@@ -47,3 +47,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 - Frontend: `tsc --noEmit` reports 0 errors. A production build could not be completed in the sandbox (Google Fonts download blocked); the CI workflow will run it.
 - Route usage (static grep of `api.*` calls): the existing UI calls forum, scheduling, goals, announcements, credentials, AI mentor and more; it does not call the teacher override, consent, or learning-loop endpoints. Notifications and feedback use `fetch` and are not counted by that grep.
 - NOT verified: the CI workflow has not run on GitHub; real Postgres; real pilot data.
+
+## Phase 6 additions (measured)
+- Found by reading the code: the practice page embedded a voice/text AI sidebar; `/ai/generate` required no login; `/edge-sync/*` required no login, accepted writes for any user id, and returned the correct answers for a whole topic. All fixed with tests (7 tests).
+- Frontend: practice page now shows plain-language errors (consent missing, no questions, already submitted, no connection) instead of a blank page; 4 Node tests for the message helper and AI switch (`npm test` in `frontend/`); `tsc` 0 errors.
+- Still open: migrations vs PostgreSQL schema (Prisma's schema engine could not be downloaded in the sandbox, so no baseline was generated); no rate limiting or login brute-force protection; production frontend build not completed in the sandbox.

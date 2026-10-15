@@ -28,3 +28,13 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
 - Context: earlier generated documents described a pilot and an evaluator that no record supports.
 - Decision: CI runs `scripts/check-claims.ts`; sign-off, review and pilot claims require `[evidence: <existing file>]` on the same line.
 - Evidence: `backend/src/governance/claims-check.ts` and tests.
+
+## D-007: Student-facing AI chat is off by default, enforced on the server
+- Context: the practice page embedded an AI mentor that sends typed and spoken text to Google Gemini (and, in Chrome, browser speech recognition typically sends audio to a cloud service). This contradicted the pilot premise of reviewed questions with no free text.
+- Decision: `ENABLE_AI_FEATURES` (backend, default off) guards the AI mentor, learning chat/start, and `/ai/generate`; `NEXT_PUBLIC_ENABLE_AI_MENTOR` (frontend, default off) hides the sidebar. The server check matters because a hidden button does not stop a direct API call.
+- Evidence: `backend/src/common/guards/ai-features.guard.ts` and its tests; `frontend/lib/practice-errors.test.mjs`.
+
+## D-008: Endpoints that were open to the internet now require login
+- Context: `POST /ai/generate` forwarded any prompt to a paid AI API with no login; `POST /edge-sync/flush` let anyone write learning and cognitive-state rows for any user id; `GET /edge-sync/curriculum/:topicId` returned every question with its correct answer.
+- Decision: login required on both controllers; sync accepts only the caller's own user id; the answer-bearing curriculum pack is teacher/admin only.
+- Evidence: `backend/src/edge-sync/edge-sync.spec.ts`, `backend/src/common/guards/ai-features.guard.spec.ts`. Still open: no rate limiting or login brute-force protection anywhere.

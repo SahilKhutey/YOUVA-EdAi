@@ -11,10 +11,10 @@ An early-stage prototype of an adaptive practice tool for school students, built
 Run the checks yourself: `cd backend && npx tsc --noEmit && npx jest --testPathIgnorePatterns=e2e`.
 
 ## What it does not do
-No distress or content detection (a supervising adult is required), no teacher override screen (it is an API call), no consent screen (entered through the API), and no measured learning outcomes. The mastery update is a simple rule, not a full Bayesian model. Several other modules exist in the code (forum, scheduling, credentials, AI mentor, and more) that are **not part of the pilot** and have not been reviewed for it.
+No distress or content detection (a supervising adult is required), no login brute-force protection or rate limiting, no teacher override screen (it is an API call), no consent screen (entered through the API), and no measured learning outcomes. The mastery update is a simple rule, not a full Bayesian model. Several other modules exist in the code (forum, scheduling, credentials, AI mentor, and more) that are **not part of the pilot** and have not been reviewed for it.
 
 ## Stack
-Backend: NestJS 11, Prisma 5 with PostgreSQL. Frontend: Next.js 16, React 19, Tailwind 4. Quiz questions never come from an AI unless `QUESTION_SOURCE=AI`. Other modules (AI mentor, content generation) call Google Gemini when used; they are outside the pilot, so do not use them with pilot students.
+Backend: NestJS 11, Prisma 5 with PostgreSQL. Frontend: Next.js 16, React 19, Tailwind 4. Quiz questions never come from an AI unless `QUESTION_SOURCE=AI`. The AI mentor and learning-chat endpoints, where a student's typed or spoken text reaches Google Gemini, are **switched off by default** (`ENABLE_AI_FEATURES`). Other modules (content generation, revision, assessment) can also call Gemini and are outside the pilot.
 
 ## Run locally
 ```bash
@@ -38,7 +38,9 @@ NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
 | `JWT_SECRET` | Required. Long random string used to sign login tokens |
 | `QUESTION_SOURCE` | `BANK` (default): only teacher-reviewed items. `AI`: generate at runtime (not for pilots) |
 | `REQUIRE_CONSENT` | Default on. Set `false` only on a local development database |
-| `GEMINI_API_KEY` | Only needed when `QUESTION_SOURCE=AI` |
+| `ENABLE_AI_FEATURES` | Default off. `true` lets student free text and voice reach the AI mentor. Keep off for pilots |
+| `NEXT_PUBLIC_ENABLE_AI_MENTOR` | Frontend. Default off. `true` shows the AI mentor sidebar on practice and learn pages |
+| `GEMINI_API_KEY` | Only needed for AI features or `QUESTION_SOURCE=AI` |
 
 ## Add questions
 Write items in the format of `backend/content/item-bank/one-step-equations.SAMPLE.json` (the sample is an unreviewed draft), then `npm run import:items -- <file>`. The importer refuses items that are not marked reviewed by a named person.

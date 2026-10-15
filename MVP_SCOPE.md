@@ -7,6 +7,7 @@ learning-engine (mastery + difficulty), practice, assessment, learning-loop, tea
 ## Present in the code, not needed by the pilot path
 The existing UI also calls forum, scheduling, goals, announcements, credentials and an AI mentor. These are not needed for the pilot (login, topic, quiz, results, teacher view) and have not been reviewed for it. Do not extend them; supervising adults should point students to the practice page only.
 No frontend code calls the teacher override, consent, or learning-loop endpoints: they have no UI yet.
+The Learn page is built around AI chat, so it does not work while `ENABLE_AI_FEATURES` is off (the default). Keep pilot students on the Practice page.
 
 ## Rule for adding anything
 Needs a written reason tied to something observed with a real student or teacher, a typecheck, and a passing test.
