@@ -1,3 +1,4 @@
+import { AiFeaturesGuard } from '../common/guards/ai-features.guard';
 import {
   Controller,
   Post,
@@ -15,11 +16,13 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class LearningController {
   constructor(private readonly learningService: LearningService) {}
 
+  @UseGuards(AiFeaturesGuard)
   @Post('start')
   async startSession(@Request() req: any, @Body('topicId') topicId: string) {
     return this.learningService.startSession(req.user.userId, topicId);
   }
 
+  @UseGuards(AiFeaturesGuard)
   @Post('chat')
   async chat(
     @Request() req: any,
