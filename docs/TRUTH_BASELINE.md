@@ -1,11 +1,11 @@
 # Truth Baseline (measured, not claimed)
-Measured on a sandbox with Prisma types generated but no query engine (so DB-instantiating tests fail there).
-Re-run `scripts/truth-baseline.sh` on a normal machine and replace these numbers with your own.
+Measured on local environment (Windows x64, Node v24.18.0, npm 11.16.0, Jest 29) on 2026-10-15.
+Re-run via `cd backend && npx jest --testPathIgnorePatterns="e2e"`.
 
 | Measure | Result |
 |---|---|
-| Backend TypeScript errors (after `prisma generate`) | **0** |
-| Unit tests (non-e2e) | 835 found, 815 passed, 20 failed (18 suites) |
+| Backend TypeScript errors (after `prisma generate`) | **0** (`npx tsc --noEmit`) |
+| Unit tests (non-e2e) | **832 found, 813 passed, 19 failed (18 suites failed, 179 suites passed)** |
 | Static `it(`/`test(` blocks incl. e2e (e2e not run: needs DB/Redis) | ~3,100 |
 | Models in schema.prisma | 196 |
 | `CREATE TABLE` in migrations | 147 (one migration only; verify with `prisma migrate diff`) |
