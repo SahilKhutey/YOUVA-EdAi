@@ -38,6 +38,9 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { LearningLoopModule } from './learning-loop/learning-loop.module';
 import { TeacherOpsModule } from './teacher-ops/teacher-ops.module';
 import { ConsentModule } from './consent/consent.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { DEFAULT_THROTTLE } from './security/throttle-config';
 
 @Module({
   imports: [
@@ -77,8 +80,9 @@ import { ConsentModule } from './consent/consent.module';
     LearningLoopModule,
     TeacherOpsModule,
     ConsentModule,
+    ThrottlerModule.forRoot([DEFAULT_THROTTLE]),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule { }
