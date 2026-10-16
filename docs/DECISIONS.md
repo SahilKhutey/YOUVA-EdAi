@@ -38,3 +38,25 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
 - Context: `POST /ai/generate` forwarded any prompt to a paid AI API with no login; `POST /edge-sync/flush` let anyone write learning and cognitive-state rows for any user id; `GET /edge-sync/curriculum/:topicId` returned every question with its correct answer.
 - Decision: login required on both controllers; sync accepts only the caller's own user id; the answer-bearing curriculum pack is teacher/admin only.
 - Evidence: `backend/src/edge-sync/edge-sync.spec.ts`, `backend/src/common/guards/ai-features.guard.spec.ts`. Still open: no rate limiting or login brute-force protection anywhere.
+
+## D-009: Public sign-up creates students only, and can be closed
+- Context: `POST /auth/register` wrote the request body straight into the user table, so an anonymous caller could register as ADMIN or TEACHER (and set any other user field), and the response returned the password hash.
+- Decision: a validated request type accepts only email, password (8 to 72 characters), name and grade level; the role is always STUDENT; the hash is never returned; `ALLOW_PUBLIC_REGISTRATION=false` closes sign-up. Staff accounts are created with `npm run create:user`.
+- Evidence: `backend/src/auth/auth.http.spec.ts` (real controller, service and validation; a mutation that re-allowed the role made the test fail).
+
+## D-010: The billing webhook is disabled without a signing secret
+- Context: with no `STRIPE_WEBHOOK_SECRET` the handler used a dummy secret and, when the signature check failed, trusted the unsigned JSON, so anyone could mark any user as premium.
+- Decision: no secret means the webhook returns 503; an invalid signature returns 400 and grants nothing.
+- Evidence: `backend/src/subscription/webhook.security.spec.ts`.
+
+## D-011: Rate limiting, and deployment settings read from the environment
+- Decision: a global limit of 120 requests per minute per address, 20 for login and 10 for sign-up (`@nestjs/throttler`). `TRUST_PROXY_HOPS` makes the limiter see real client addresses behind a proxy; `CORS_ORIGINS` replaces the hardcoded localhost origin (a deployed frontend would otherwise be blocked by the browser); API docs are off in production unless `ENABLE_SWAGGER=true`.
+- Evidence: `backend/src/auth/auth.http.spec.ts` (the 21st login and 11th sign-up in a minute return 429), `backend/src/security/http-config.spec.ts`.
+- Limits: the limit is per address, not per account, so many students behind one school address share it; there is no account lockout.
+
+## D-012: Content search and engagement require login and use the logged-in user
+- Context: `/content/search` and `/content/engage` were open and trusted a `userId` sent by the caller.
+- Evidence: `backend/src/content-intelligence/content-auth.spec.ts`.
+
+## D-013: Correction to D-008 about edge sync
+- `EdgeSyncModule` is imported in `app.module.ts` but never listed in the module's `imports`, so in this branch its routes do not exist at runtime. D-008 described them as open to the internet; that was true of the code, not of the running application here. The login and own-data checks stay as protection in case the module is registered later. A test now lists any controller that exists but is not registered.

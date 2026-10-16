@@ -2,7 +2,9 @@
 ## Week before
 - [ ] Teacher and 3-8 students confirmed; topic agreed in writing
 - [ ] Teacher's items imported (`npm run import:items`), reviewed and signed off by the teacher
-- [ ] Student and teacher accounts created; teacher assigned to students
+- [ ] Student and teacher accounts created with `npm run create:user` (individual passwords of 12+ characters); `ALLOW_PUBLIC_REGISTRATION=false` so nobody else can sign up
+- [ ] Teacher assigned to students (class and enrolment)
+- [ ] `CORS_ORIGINS` set to the frontend's address and `TRUST_PROXY_HOPS` set to match the hosting; a login from the real frontend works
 - [ ] Every consent form signed, filed, and entered in the system (`POST /consent`)
 - [ ] `JWT_SECRET` set, `QUESTION_SOURCE=BANK`, `REQUIRE_CONSENT` not set to false
 - [ ] Dry run: you as a student end to end, then a friendly adult

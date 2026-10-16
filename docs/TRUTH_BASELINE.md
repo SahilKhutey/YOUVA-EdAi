@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 |---|---|
 | Files tracked | 381 (was 1,425 on main) |
 | Backend TypeScript errors | 0 (was 29 at base) |
-| Unit test suites | 58 passed of 58 (excluding prisma.service.spec, which needs a DB engine) |
-| Unit tests | 149 passed, 0 failed |
+| Unit test suites | 63 passed of 63 (excluding prisma.service.spec, which needs a DB engine) |
+| Unit tests | 167 passed, 0 failed |
 | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
 | Schema models / migrations | 53 / 4 |
 
@@ -52,3 +52,9 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 - Found by reading the code: the practice page embedded a voice/text AI sidebar; `/ai/generate` required no login; `/edge-sync/*` required no login, accepted writes for any user id, and returned the correct answers for a whole topic. All fixed with tests (7 tests).
 - Frontend: practice page now shows plain-language errors (consent missing, no questions, already submitted, no connection) instead of a blank page; 4 Node tests for the message helper and AI switch (`npm test` in `frontend/`); `tsc` 0 errors.
 - Still open: migrations vs PostgreSQL schema (Prisma's schema engine could not be downloaded in the sandbox, so no baseline was generated); no rate limiting or login brute-force protection; production frontend build not completed in the sandbox.
+
+## Phase 7 additions (measured)
+- A route inventory built from the real decorator metadata (`npm run` script `scripts/route-audit.ts`; output in `docs/ROUTE_AUDIT.generated.md`): 132 routes at the time of writing, 5 without login, all reviewed. A test fails if a new route is added without login unless it is added to a short reviewed list.
+- Found and fixed (with tests, 18 new): anonymous registration as ADMIN or TEACHER and mass assignment of any user field; password hash returned on registration; forged billing webhooks accepted when no secret was set; content search/engage open and trusting a caller-supplied user id; no rate limiting; CORS hardcoded to localhost; API docs public in production.
+- Correction: the edge-sync routes described as open in Phase 6 were not registered in this branch (see D-013).
+- Still open: migrations vs PostgreSQL schema; no account lockout; per-address rate limit shared by students on one school address; handlers' ownership checks (whether a student can read another student's data by id) were not reviewed route by route; global validation does not strip unknown fields; no security headers middleware; frontend production build and CI not run here.
