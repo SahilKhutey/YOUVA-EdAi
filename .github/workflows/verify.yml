@@ -9,6 +9,8 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/youva_test"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,6 +19,7 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
+      - run: npx prisma validate
       - run: npx prisma generate
       - run: npx tsc --noEmit
       - run: npx jest --testPathIgnorePatterns=e2e

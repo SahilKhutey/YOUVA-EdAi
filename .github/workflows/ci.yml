@@ -11,6 +11,9 @@ jobs:
     name: Backend Build, Schema Validation & Learning Loop Tests
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/youva_test"
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -30,13 +33,21 @@ jobs:
         working-directory: backend
         run: npx prisma validate
 
+      - name: Generate Prisma Client
+        working-directory: backend
+        run: npx prisma generate
+
       - name: Compile Backend TypeScript
         working-directory: backend
         run: npm run build
 
-      - name: Run Core Human–AI Learning Loop Verification Suite
+      - name: Run Backend Unit & Behavioral Test Suite
         working-directory: backend
-        run: npm test -- --coverage src/learning-loop
+        run: npx jest --testPathIgnorePatterns=e2e
+
+      - name: Run Governance Claims Check
+        working-directory: backend
+        run: npx ts-node scripts/check-claims.ts
 
   frontend-verification:
     name: Frontend Typecheck & Build
@@ -56,6 +67,14 @@ jobs:
       - name: Install Frontend Dependencies
         working-directory: frontend
         run: npm ci
+
+      - name: Typecheck Frontend
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Run Frontend Tests
+        working-directory: frontend
+        run: npm test
 
       - name: Build Next.js Application
         working-directory: frontend
