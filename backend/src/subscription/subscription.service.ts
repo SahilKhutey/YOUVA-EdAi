@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import Stripe from 'stripe';
 
@@ -60,7 +60,12 @@ export class SubscriptionService {
 
   async handleStripeWebhook(signature: string, payload: Buffer) {
     try {
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_dummy';
+      // Without a real signing secret the webhook is disabled. It used to fall back to a dummy secret and trust
+      // unsigned JSON, which let anyone mark any user as premium.
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        throw new ServiceUnavailableException('Stripe webhook is not configured.');
+      }
 
       let event: Stripe.Event;
       try {
@@ -73,12 +78,7 @@ export class SubscriptionService {
         this.logger.error(
           `Webhook signature verification failed: ${err.message}`,
         );
-        // If dummy key, bypass verification for local testing purposes
-        if (webhookSecret === 'whsec_dummy') {
-          event = JSON.parse(payload.toString());
-        } else {
-          throw new Error(`Webhook Error: ${err.message}`);
-        }
+        throw new BadRequestException('Webhook signature verification failed.');
       }
 
       if (event.type === 'checkout.session.completed') {
