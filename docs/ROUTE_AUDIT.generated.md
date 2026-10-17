@@ -20,7 +20,7 @@ Read from decorator metadata. "Login" = JwtAuthGuard present. Ownership checks i
 | DELETE | /announcements/:id | yes | TEACHER, ADMIN | AnnouncementController |
 | GET | /announcements | yes | - | AnnouncementController |
 | POST | /announcements | yes | TEACHER, ADMIN | AnnouncementController |
-| POST | /assessment-intelligence/assign | yes | - | AssessmentIntelligenceController |
+| POST | /assessment-intelligence/assign | yes | TEACHER, ADMIN | AssessmentIntelligenceController |
 | POST | /assessment-intelligence/evaluate/:id | yes | - | AssessmentIntelligenceController |
 | POST | /assessment/:sessionId/log-anomaly | yes | - | AssessmentController |
 | POST | /assessment/:sessionId/submit | yes | - | AssessmentController |
@@ -28,18 +28,18 @@ Read from decorator metadata. "Login" = JwtAuthGuard present. Ownership checks i
 | PATCH | /auth/complete-onboarding | yes | - | AuthController |
 | POST | /auth/login | **NO** | - | AuthController |
 | POST | /auth/register | **NO** | - | AuthController |
-| PUT | /classroom/lesson-plan/:id/publish | yes | - | ClassroomController |
+| PUT | /classroom/lesson-plan/:id/publish | yes | TEACHER, ADMIN | ClassroomController |
 | GET | /classroom/lesson-plan/:id | yes | - | ClassroomController |
-| POST | /classroom/lesson-plan/generate | yes | - | ClassroomController |
-| GET | /classroom/lesson-plan | yes | - | ClassroomController |
+| POST | /classroom/lesson-plan/generate | yes | TEACHER, ADMIN | ClassroomController |
+| GET | /classroom/lesson-plan | yes | TEACHER, ADMIN | ClassroomController |
 | GET | /classroom/session/:id | yes | - | ClassroomController |
-| POST | /classroom/session/start | yes | - | ClassroomController |
-| PUT | /classroom/worksheet/:id/publish | yes | - | ClassroomController |
+| POST | /classroom/session/start | yes | TEACHER, ADMIN | ClassroomController |
+| PUT | /classroom/worksheet/:id/publish | yes | TEACHER, ADMIN | ClassroomController |
 | POST | /classroom/worksheet/:id/submit | yes | - | ClassroomController |
 | GET | /classroom/worksheet/:id | yes | - | ClassroomController |
-| POST | /classroom/worksheet/generate | yes | - | ClassroomController |
+| POST | /classroom/worksheet/generate | yes | TEACHER, ADMIN | ClassroomController |
 | GET | /classroom/worksheet/submission/:id | yes | - | ClassroomController |
-| GET | /classroom/worksheet | yes | - | ClassroomController |
+| GET | /classroom/worksheet | yes | TEACHER, ADMIN | ClassroomController |
 | POST | /cognitive-state/hebbian-transfer | yes | - | NeuralCognitiveController |
 | POST | /cognitive-state/log | yes | - | NeuralCognitiveController |
 | POST | /consent/student/:studentId/erase | yes | ADMIN | ConsentController |
@@ -47,9 +47,9 @@ Read from decorator metadata. "Login" = JwtAuthGuard present. Ownership checks i
 | POST | /consent/student/:studentId/revoke | yes | TEACHER, ADMIN | ConsentController |
 | GET | /consent/student/:studentId | yes | TEACHER, ADMIN | ConsentController |
 | POST | /consent | yes | TEACHER, ADMIN | ConsentController |
-| GET | /content-gen/drafts | yes | - | ContentGenController |
-| POST | /content-gen/generate | yes | - | ContentGenController |
-| PUT | /content-gen/publish/:draftId | yes | - | ContentGenController |
+| GET | /content-gen/drafts | yes | TEACHER, ADMIN | ContentGenController |
+| POST | /content-gen/generate | yes | TEACHER, ADMIN | ContentGenController |
+| PUT | /content-gen/publish/:draftId | yes | TEACHER, ADMIN | ContentGenController |
 | POST | /content/engage | yes | - | ContentSearchController |
 | GET | /content/search | yes | - | ContentSearchController |
 | GET | /credential-mesh/my-credentials | yes | - | CredentialMeshController |

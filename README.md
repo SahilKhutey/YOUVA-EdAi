@@ -44,6 +44,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
 | `ALLOW_PUBLIC_REGISTRATION` | Default `true` (creates student accounts only). `false` closes public sign-up; create accounts with `npm run create:user` |
 | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (for example your frontend's URL). Default: `http://localhost:3000` only |
 | `TRUST_PROXY_HOPS` | Number of reverse proxies in front of the server (0 to 3). Set `1` on Render or behind nginx, or rate limiting will treat everyone as one user |
+| `ENABLE_SHARED_BOARD` | Default off. The shared whiteboard uses one room for every user, so it stays off for pilots; when on, a login token is still required |
 | `ENABLE_SWAGGER` | API docs are served at `/api` outside production; set `true` to serve them in production |
 | `STRIPE_WEBHOOK_SECRET` | Billing webhook is disabled unless this is set |
 

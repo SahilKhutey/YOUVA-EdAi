@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 |---|---|
 | Files tracked | 381 (was 1,425 on main) |
 | Backend TypeScript errors | 0 (was 29 at base) |
-| Unit test suites | 63 passed of 63 (excluding prisma.service.spec, which needs a DB engine) |
-| Unit tests | 167 passed, 0 failed |
+| Unit test suites | 66 passed of 66 (excluding prisma.service.spec, which needs a DB engine) |
+| Unit tests | 191 passed, 0 failed |
 | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
 | Schema models / migrations | 53 / 4 |
 
@@ -58,3 +58,9 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 - Found and fixed (with tests, 18 new): anonymous registration as ADMIN or TEACHER and mass assignment of any user field; password hash returned on registration; forged billing webhooks accepted when no secret was set; content search/engage open and trusting a caller-supplied user id; no rate limiting; CORS hardcoded to localhost; API docs public in production.
 - Correction: the edge-sync routes described as open in Phase 6 were not registered in this branch (see D-013).
 - Still open: migrations vs PostgreSQL schema; no account lockout; per-address rate limit shared by students on one school address; handlers' ownership checks (whether a student can read another student's data by id) were not reviewed route by route; global validation does not strip unknown fields; no security headers middleware; frontend production build and CI not run here.
+
+## Phase 7 additions, part 2 (measured)
+- Read the 23 login-only routes that take an id in the URL. Found and fixed, each with tests (23 new in classroom, gateways, content and assessment): classroom routes with no role or owner checks (publish anyone's plan or worksheet, read any worksheet with its answer key or any submission, create a session naming any student, session lookup returning password hashes); an unauthenticated classroom websocket (join any session, hear and send whiteboard and video signalling, change the lesson step); a shared board that put every user in one room; content publishing and project assignment/evaluation with no ownership checks; free-text worksheet answers sent to the AI by default.
+- Two mutation checks (removing the gateway membership check; removing the publish owner check) each made a test fail.
+- Also fixed: the `learning-loop` audit-trail route let any teacher read any student's trail; teachers now need the student in their scope (1 test).
+- Still open: notifications, scheduler and learning-session id routes were read and are scoped to the caller, but forum and the other login-only routes were not each read; AI-graded free text can be manipulated by the student's wording; global validation does not strip unknown fields; no security-headers middleware.

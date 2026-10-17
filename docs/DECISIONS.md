@@ -60,3 +60,23 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
 
 ## D-013: Correction to D-008 about edge sync
 - `EdgeSyncModule` is imported in `app.module.ts` but never listed in the module's `imports`, so in this branch its routes do not exist at runtime. D-008 described them as open to the internet; that was true of the code, not of the running application here. The login and own-data checks stay as protection in case the module is registered later. A test now lists any controller that exists but is not registered.
+
+## D-014: Classroom routes check the role and who owns the item
+- Context: any logged-in user, including a student, could publish any teacher's lesson plan or worksheet, read any worksheet (with its answer key) or any submission by id, start a classroom session naming any other student (which also blocks that student's erasure), and read both users' full records, password hashes included, from a session id.
+- Decision: teacher tools need TEACHER or ADMIN; drafts are visible only to their owner or an admin; students see published worksheets without the answer key; a submission is visible to its student, the worksheet's teacher, or an admin; a session starts only with a student in the teacher's scope and is visible only to its two participants or an admin, returning names only. Worksheet submissions must be to a published worksheet, for its own questions, once each.
+- Evidence: `backend/src/classroom/classroom-access.spec.ts` (mutation-checked: removing the owner check on publishing made a test fail).
+
+## D-015: Websocket gateways need a login token; the shared board is off by default
+- Context: the classroom gateway accepted any client from any origin: anyone knowing a session id could join its room, receive the whiteboard and video-call signalling, send events into it, and change the saved lesson step. The shared board used one hardcoded room for all users.
+- Decision: a valid login token is required to connect; a client can join, send to and hear from a session only as its teacher, its student, or an admin; only the teacher or an admin changes the step; allowed origins come from `CORS_ORIGINS`. The board gateway is off unless `ENABLE_SHARED_BOARD=true` and then still needs a token. The frontend now sends the token on both connections.
+- Evidence: `backend/src/classroom/gateways.security.spec.ts` (mutation-checked).
+- Limit: the allowed-origin list is read when the application starts, so set `CORS_ORIGINS` in the real environment, not only in a `.env` file loaded later.
+
+## D-016: Content generation, project assignment and evaluation are restricted
+- Decision: content generation and publishing are teacher/admin only and only the author can publish a draft; assigning a project needs teacher/admin and a student in scope; evaluating a project needs its student, their teacher, or an admin, and is off unless `ENABLE_AI_FEATURES=true`; free-text worksheet answers are not sent to an AI unless that switch is on (they wait for the teacher).
+- Evidence: `backend/src/content-gen/ownership.spec.ts`, `backend/src/security/route-coverage.spec.ts`.
+
+## D-017: A teacher reads a student's audit trail only within their own scope
+- Context: the route blocked other students but let any teacher read any student's trail.
+- Decision: teachers need the student in their class or assignment (admins unchanged).
+- Evidence: `backend/src/learning-loop/learning-loop.controller.spec.ts`.
