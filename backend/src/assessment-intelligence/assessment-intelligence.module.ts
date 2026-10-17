@@ -4,9 +4,10 @@ import { AssessmentIntelligenceController } from './assessment-intelligence.cont
 import { PrismaModule } from '../prisma/prisma.module';
 import { AiModule } from '../ai/ai.module';
 import { CredentialMeshModule } from '../credential-mesh/credential-mesh.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-    imports: [PrismaModule, AiModule, CredentialMeshModule],
+    imports: [PrismaModule, AiModule, CredentialMeshModule, AuthModule],
     controllers: [AssessmentIntelligenceController],
     providers: [AssessmentIntelligenceService],
     exports: [AssessmentIntelligenceService],

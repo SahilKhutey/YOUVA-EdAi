@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { CredentialMeshService } from '../credential-mesh/credential-mesh.service';
+import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
 
 /**
  * Handles continuous, embedded, and project-based AI assessments.
@@ -11,7 +12,8 @@ export class AssessmentIntelligenceService {
     constructor(
         private prisma: PrismaService,
         private aiService: AiService,
-        private credentialMesh: CredentialMeshService
+        private credentialMesh: CredentialMeshService,
+        private scope: ScopeAuthorizationService,
     ) { }
 
     /**
@@ -32,13 +34,18 @@ export class AssessmentIntelligenceService {
      * The AI evaluates a submitted project, scoring logic and originality.
      * If the student passes spectacularly, a Skill Credential is minted.
      */
-    async evaluateSubmission(projectId: string, submissionContent: string) {
+    async evaluateSubmission(projectId: string, submissionContent: string, actor: { id: string; role: string }) {
         const project = await this.prisma.assessmentProject.findUnique({
             where: { id: projectId },
             include: { topic: true }
         });
 
         if (!project) throw new NotFoundException('Project not found');
+        // The student it was assigned to, a teacher of that student, or an admin.
+        if (project.userId !== actor.id && actor.role !== 'ADMIN') {
+            if (actor.role !== 'TEACHER') throw new NotFoundException('Project not found');
+            await this.scope.assertTeacherStudentScope(actor.id, project.userId);
+        }
 
         // AI grading prompt evaluating Logic Trees and Originality against the Rubric
         const evalPrompt = "You are an expert AI Examiner evaluating a complex project submission.\n" +

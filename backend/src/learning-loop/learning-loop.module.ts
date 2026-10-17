@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LearningEngineModule } from '../learning-engine/learning-engine.module';
 import { LearningLoopController } from './learning-loop.controller';
@@ -11,7 +12,7 @@ import { TeacherInterventionService } from './intervention/teacher-intervention.
 import { LearningLoopAuditService } from './audit/learning-loop-audit.service';
 
 @Module({
-  imports: [PrismaModule, LearningEngineModule],
+  imports: [PrismaModule, LearningEngineModule, AuthModule],
   controllers: [LearningLoopController],
   providers: [
     LearningLoopService,

@@ -1,3 +1,4 @@
+import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { LearningLoopController } from './learning-loop.controller';
 import { LearningLoopService } from './learning-loop.service';
@@ -7,6 +8,8 @@ import { LearningLoopAuditService } from './audit/learning-loop-audit.service';
 import { ForbiddenException } from '@nestjs/common';
 import { Role } from '../auth/role.enum';
 import { InterventionAction, ActivityType } from './domain/enums';
+
+let scopeAuth: any;
 
 describe('LearningLoopController', () => {
   let controller: LearningLoopController;
@@ -36,6 +39,8 @@ describe('LearningLoopController', () => {
       getStudentAuditTrail: jest.fn().mockResolvedValue([]),
     };
 
+    scopeAuth = { assertTeacherStudentScope: jest.fn().mockResolvedValue(true) };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LearningLoopController],
       providers: [
@@ -43,6 +48,7 @@ describe('LearningLoopController', () => {
         { provide: TeacherInterventionService, useValue: teacherInterventionService },
         { provide: EscalationStateMachineService, useValue: escalationStateMachine },
         { provide: LearningLoopAuditService, useValue: auditService },
+        { provide: ScopeAuthorizationService, useValue: scopeAuth },
       ],
     }).compile();
 
@@ -50,6 +56,14 @@ describe('LearningLoopController', () => {
   });
 
   describe('Authorization & Scoping Tests', () => {
+    it('lets a teacher read an audit trail only for a student in their scope', async () => {
+      const teacherReq = { user: { id: 'teacher-1', role: Role.TEACHER } };
+      await controller.getAuditTrail(teacherReq, 'student-1');
+      expect(scopeAuth.assertTeacherStudentScope).toHaveBeenCalledWith('teacher-1', 'student-1');
+      scopeAuth.assertTeacherStudentScope.mockRejectedValueOnce(new ForbiddenException());
+      await expect(controller.getAuditTrail(teacherReq, 'student-other')).rejects.toThrow(ForbiddenException);
+    });
+
     it('should reject a student attempting to view another students gate status', async () => {
       const studentReq = {
         user: { id: 'student-1', role: Role.STUDENT },

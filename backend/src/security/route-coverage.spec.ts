@@ -44,6 +44,20 @@ describe('route coverage', () => {
     expect(find('GET', '/consent/student/:studentId/export').roles).toEqual(['TEACHER', 'ADMIN']);
   });
 
+  it('keeps teacher tools and publishing restricted to teachers and admins', () => {
+    const find = (m: string, p: string) => routes.find((r) => r.method === m && r.path === p);
+    const staff = ['TEACHER', 'ADMIN'];
+    for (const [m, p] of [
+      ['POST', '/classroom/session/start'], ['POST', '/classroom/lesson-plan/generate'], ['PUT', '/classroom/lesson-plan/:id/publish'],
+      ['POST', '/classroom/worksheet/generate'], ['PUT', '/classroom/worksheet/:id/publish'],
+      ['PUT', '/content-gen/publish/:draftId'], ['POST', '/content-gen/generate'], ['POST', '/assessment-intelligence/assign'],
+    ]) {
+      expect(find(m, p)?.roles).toEqual(staff);
+    }
+    // the AI-sending evaluation route also needs the AI switch
+    expect(find('POST', '/assessment-intelligence/evaluate/:id')?.guards).toContain('AiFeaturesGuard');
+  });
+
   it('has no controller class that exists in the code but is silently not registered', () => {
     // EdgeSyncController is imported in app.module.ts but its module is never added to `imports`, so its routes
     // do not exist at runtime. It is listed here on purpose; remove it from this list if you register the module.

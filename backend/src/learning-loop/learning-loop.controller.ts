@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../auth/role.enum';
+import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
 import { LearningLoopService } from './learning-loop.service';
 import { TeacherInterventionService } from './intervention/teacher-intervention.service';
 import { EscalationStateMachineService } from './escalation/escalation-state-machine.service';
@@ -32,6 +33,7 @@ export class LearningLoopController {
     private readonly teacherInterventionService: TeacherInterventionService,
     private readonly escalationStateMachine: EscalationStateMachineService,
     private readonly auditService: LearningLoopAuditService,
+    private readonly scopeAuth: ScopeAuthorizationService,
   ) {}
 
   /**
@@ -130,6 +132,10 @@ export class LearningLoopController {
   async getAuditTrail(@Req() req: any, @Param('studentId') studentId: string) {
     if (req.user.role === Role.STUDENT && req.user.id !== studentId) {
       throw new ForbiddenException('Access denied: Students can only view their own audit trail.');
+    }
+    // Teachers can read the trail only for students in their own class or assignment.
+    if (req.user.role === Role.TEACHER) {
+      await this.scopeAuth.assertTeacherStudentScope(req.user.id, studentId);
     }
 
     return this.auditService.getStudentAuditTrail(studentId);

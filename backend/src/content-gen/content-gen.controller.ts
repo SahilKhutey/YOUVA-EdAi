@@ -1,9 +1,14 @@
 import { Controller, Post, Body, Req, UseGuards, Put, Param, Get } from '@nestjs/common';
 import { PromptOrchestratorService } from './services/prompt-orchestrator/prompt-orchestrator.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../auth/role.enum';
 
+// Content generation is a teacher tool: students could otherwise send their own text to the AI.
 @Controller('content-gen')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.TEACHER, Role.ADMIN)
 export class ContentGenController {
     constructor(private promptOrchestrator: PromptOrchestratorService) { }
 
@@ -33,9 +38,10 @@ export class ContentGenController {
 
     @Put('publish/:draftId')
     async approveAndPublish(
+        @Req() req: any,
         @Param('draftId') draftId: string,
         @Body('overrides') overrides: any
     ) {
-        return this.promptOrchestrator.publishContent(draftId, overrides);
+        return this.promptOrchestrator.publishContent(draftId, overrides, { id: req.user.id, role: req.user.role });
     }
 }

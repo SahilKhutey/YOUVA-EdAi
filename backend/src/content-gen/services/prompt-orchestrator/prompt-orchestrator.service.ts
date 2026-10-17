@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AiService } from '../../../ai/ai.service';
 import { PedagogicalCoreService } from '../../../agei/pedagogical-core/pedagogical-core.service';
@@ -86,10 +86,12 @@ export class PromptOrchestratorService {
         }
     }
 
-    async publishContent(draftId: string, overrides: any) {
+    async publishContent(draftId: string, overrides: any, actor: { id: string; role: string }) {
         // Overrides allows the teacher to save their edits from the Human Review Panel
         const existing = await this.prisma.generatedContent.findUnique({ where: { id: draftId } });
         if (!existing) throw new NotFoundException('Draft not found');
+        // Only the teacher who generated the draft (or an admin) may edit and publish it.
+        if (existing.teacherId !== actor.id && actor.role !== 'ADMIN') throw new ForbiddenException('You do not own this draft.');
 
         return this.prisma.generatedContent.update({
             where: { id: draftId },
