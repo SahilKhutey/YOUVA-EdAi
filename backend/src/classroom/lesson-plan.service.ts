@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Actor, assertOwnerOrAdmin, canRead } from './access';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 
@@ -75,14 +76,20 @@ Supported types: INTRODUCTION, EXPLANATION, EXAMPLE, GUIDED_PRACTICE, WORKSHEET,
         });
     }
 
-    async getLessonPlanById(id: string) {
-        return this.prisma.lessonPlan.findUnique({
+    /** Owner/admin can read any of their own plans; everyone else only sees published ones. */
+    async getLessonPlanById(id: string, actor: Actor) {
+        const plan = await this.prisma.lessonPlan.findUnique({
             where: { id },
             include: { steps: { orderBy: { order: 'asc' } } }
         });
+        if (!plan || !canRead(plan.teacherId, plan.status, actor)) throw new NotFoundException('Lesson plan not found');
+        return plan;
     }
 
-    async publishLessonPlan(id: string) {
+    async publishLessonPlan(id: string, actor: Actor) {
+        const plan = await this.prisma.lessonPlan.findUnique({ where: { id } });
+        if (!plan) throw new NotFoundException('Lesson plan not found');
+        assertOwnerOrAdmin(plan.teacherId, actor);
         return this.prisma.lessonPlan.update({
             where: { id },
             data: { status: 'PUBLISHED' }

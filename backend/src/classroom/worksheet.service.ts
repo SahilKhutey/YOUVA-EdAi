@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Actor, assertOwnerOrAdmin, canRead, isAdmin } from './access';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 
@@ -77,14 +78,21 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
         });
     }
 
-    async getWorksheetById(id: string) {
-        return this.prisma.worksheet.findUnique({
+    /** Owner/admin see the full worksheet. Others only see published ones, without the answer key. */
+    async getWorksheetById(id: string, actor: Actor) {
+        const ws = await this.prisma.worksheet.findUnique({
             where: { id },
             include: { questions: { orderBy: { order: 'asc' } } }
         });
+        if (!ws || !canRead(ws.teacherId, ws.status, actor)) throw new NotFoundException('Worksheet not found');
+        if (ws.teacherId === actor.id || isAdmin(actor)) return ws;
+        return { ...ws, questions: ws.questions.map(({ correctAnswer, explanation, ...safe }) => safe) };
     }
 
-    async publishWorksheet(id: string) {
+    async publishWorksheet(id: string, actor: Actor) {
+        const ws = await this.prisma.worksheet.findUnique({ where: { id } });
+        if (!ws) throw new NotFoundException('Worksheet not found');
+        assertOwnerOrAdmin(ws.teacherId, actor);
         return this.prisma.worksheet.update({
             where: { id },
             data: { status: 'PUBLISHED' }
@@ -92,6 +100,18 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
     }
 
     async submitWorksheet(studentId: string, worksheetId: string, payload: { answers: { questionId: string, studentAnswer: string }[] }) {
+        // 0. Only published worksheets can be submitted, and only for questions that belong to them, once each.
+        const worksheet = await this.prisma.worksheet.findUnique({ where: { id: worksheetId }, include: { questions: true } });
+        if (!worksheet || worksheet.status !== 'PUBLISHED') throw new NotFoundException('Worksheet not found');
+        if (!Array.isArray(payload?.answers) || payload.answers.length === 0) throw new BadRequestException('At least one answer is required.');
+        const allowed = new Set(worksheet.questions.map((q) => q.id));
+        const seen = new Set<string>();
+        for (const a of payload.answers) {
+            if (!allowed.has(a.questionId)) throw new BadRequestException('An answer refers to a question that is not on this worksheet.');
+            if (seen.has(a.questionId)) throw new BadRequestException('Duplicate answer for the same question.');
+            seen.add(a.questionId);
+        }
+
         // 1. Create submission
         const submission = await this.prisma.worksheetSubmission.create({
             data: {
@@ -119,6 +139,9 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
 
             if (q.type === 'MCQ') {
                 isCorrect = ans.studentAnswer === q.correctAnswer;
+            } else if ((process.env.ENABLE_AI_FEATURES ?? 'false').toLowerCase() !== 'true') {
+                // Free-text answers are not sent to an AI unless ENABLE_AI_FEATURES=true; they wait for the teacher.
+                ans.feedback = 'Awaiting teacher review';
             } else {
                 // For SHORT_ANSWER, PROBLEM_SOLVING etc, use AI to evaluate
                 const prompt = `Evaluate the student's answer for this question. Question: "${q.content}". Correct Answer/Context: "${q.correctAnswer || q.explanation}". Student Answer: "${ans.studentAnswer}". Output ONLY JSON: { "isCorrect": true/false, "feedback": "brief reasoning" }`;
@@ -143,7 +166,7 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
             });
         }
 
-        const score = (earnedPoints / totalPoints) * 100;
+        const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
         return this.prisma.worksheetSubmission.update({
             where: { id: submission.id },
             data: { score, status: 'GRADED' },
@@ -151,10 +174,15 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
         });
     }
 
-    async getSubmission(submissionId: string) {
-        return this.prisma.worksheetSubmission.findUnique({
+    /** The student who submitted it, the teacher who owns the worksheet, or an admin. */
+    async getSubmission(submissionId: string, actor: Actor) {
+        const sub = await this.prisma.worksheetSubmission.findUnique({
             where: { id: submissionId },
             include: { answers: { include: { question: true } }, worksheet: true }
         });
+        if (!sub || !(sub.studentId === actor.id || sub.worksheet.teacherId === actor.id || isAdmin(actor))) {
+            throw new NotFoundException('Submission not found');
+        }
+        return sub;
     }
 }
