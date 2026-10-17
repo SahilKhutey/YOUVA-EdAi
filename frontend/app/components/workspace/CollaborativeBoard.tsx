@@ -123,6 +123,7 @@ export default function CollaborativeBoard({
     // Connect to namespace
     const newSocket = io(`${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'}/board`, {
       transports: ["websocket"],
+      auth: { token: localStorage.getItem("token") },
     });
 
     newSocket.on("connect", () => {

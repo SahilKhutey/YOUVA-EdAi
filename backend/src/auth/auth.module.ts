@@ -28,6 +28,6 @@ import { ResourceScopeGuard } from './guards/resource-scope.guard';
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, ScopeAuthorizationService, ResourceScopeGuard],
   controllers: [AuthController],
-  exports: [AuthService, ScopeAuthorizationService, ResourceScopeGuard],
+  exports: [AuthService, ScopeAuthorizationService, ResourceScopeGuard, JwtModule],
 })
 export class AuthModule { }

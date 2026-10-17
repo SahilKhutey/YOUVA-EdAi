@@ -9,11 +9,17 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { authenticateSocket } from '../security/socket-auth';
+import { corsOrigins } from '../security/http-config';
 
+/**
+ * Shared whiteboard. OFF unless ENABLE_SHARED_BOARD=true, because the frontend uses one hardcoded room
+ * ("default-room") for every user, which would put unrelated students in the same room. When enabled,
+ * a valid login token is required.
+ */
 @WebSocketGateway({
-  cors: {
-    origin: '*', // In production, restrict this
-  },
+  cors: { origin: corsOrigins(process.env.CORS_ORIGINS), credentials: true },
   namespace: 'board',
 })
 export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -23,14 +29,24 @@ export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private logger: Logger = new Logger('BoardGateway');
   private activeUsers: Map<string, any> = new Map();
 
+  constructor(private readonly jwt: JwtService) {}
+
   handleConnection(client: Socket) {
+    const enabled = (process.env.ENABLE_SHARED_BOARD ?? 'false').toLowerCase() === 'true';
+    const user = enabled ? authenticateSocket(client, this.jwt) : null;
+    if (!user) {
+      client.emit('error', { message: enabled ? 'unauthorized' : 'shared board is turned off' });
+      client.disconnect(true);
+      return;
+    }
+    client.data.user = user;
     this.logger.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
     this.activeUsers.delete(client.id);
-    this.server.emit('user-left', { id: client.id });
+    if (client.data?.user) this.server.emit('user-left', { id: client.id });
   }
 
   @SubscribeMessage('join-board')

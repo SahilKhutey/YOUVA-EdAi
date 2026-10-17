@@ -30,7 +30,10 @@ export default function ClassroomWorkspace() {
         };
         fetchSession();
 
-        const newSocket = io(`${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'}`);
+        // The server only accepts connections that carry the login token, and only for sessions you take part in.
+        const newSocket = io(`${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'}`, {
+            auth: { token: localStorage.getItem('token') },
+        });
         setSocket(newSocket);
 
         newSocket.on('connect', () => {
