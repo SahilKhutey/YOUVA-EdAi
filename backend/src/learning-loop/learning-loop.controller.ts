@@ -42,9 +42,9 @@ export class LearningLoopController {
   @Post('context')
   @HttpCode(HttpStatus.OK)
   async getContext(@Req() req: any, @Body() body: { topicId: string; studentId?: string }) {
-    const studentId = body.studentId && (req.user.role === Role.TEACHER || req.user.role === Role.ADMIN)
-      ? body.studentId
-      : req.user.id;
+    const staff = req.user.role === Role.TEACHER || req.user.role === Role.ADMIN;
+    const studentId = body.studentId && staff ? body.studentId : req.user.id;
+    if (studentId !== req.user.id) await this.scopeAuth.assertTeacherStudentScope(req.user.id, studentId);
 
     return this.learningLoopService.getContext(studentId, body.topicId);
   }
@@ -81,6 +81,9 @@ export class LearningLoopController {
     if (req.user.role === Role.STUDENT && req.user.id !== studentId) {
       throw new ForbiddenException('Access denied: Cannot query policy gate for another student.');
     }
+    if (req.user.role === Role.TEACHER) {
+      await this.scopeAuth.assertTeacherStudentScope(req.user.id, studentId);
+    }
 
     const topicId = body?.topicId || 'default-topic';
     return this.learningLoopService.getGateStatus(studentId, topicId);
@@ -116,6 +119,9 @@ export class LearningLoopController {
     @Param('id') escalationId: string,
     @Body() dto: ResolveEscalationDto,
   ) {
+    // A teacher can resolve an escalation only for a student in their own scope.
+    const studentId = await this.escalationStateMachine.getEscalationStudentId(escalationId);
+    await this.scopeAuth.assertTeacherStudentScope(req.user.id, studentId);
     return this.escalationStateMachine.transitionState(
       escalationId,
       dto.status,

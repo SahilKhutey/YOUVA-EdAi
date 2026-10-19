@@ -54,6 +54,13 @@ export class EscalationStateMachineService {
    * Transitions an escalation event's state.
    * STRICT POLICY: AI or STUDENT actors can NEVER resolve an escalation!
    */
+  /** The student an escalation belongs to (used to check a teacher's scope before they act on it). */
+  async getEscalationStudentId(escalationId: string): Promise<string> {
+    const escalation = await this.prisma.escalationEvent.findUnique({ where: { id: escalationId } });
+    if (!escalation) throw new NotFoundException(`Escalation with ID ${escalationId} not found.`);
+    return escalation.userId;
+  }
+
   async transitionState(
     escalationId: string,
     targetStatus: EscalationStatus,

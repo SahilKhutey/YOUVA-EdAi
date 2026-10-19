@@ -11,16 +11,18 @@ export class TeacherAnalyticsService {
      * - Avg engagement score per subject
      * - Total active students (those with at least one PracticeSession)
      */
-    async getCohortOverview() {
+    async getCohortOverview(studentIds: string[]) {
         const subjects = await this.prisma.subject.findMany({
             include: { topics: true },
         });
 
         const allMastery = await this.prisma.userTopicMastery.findMany({
+            where: { userId: { in: studentIds } },
             include: { topic: { include: { subject: true } } },
         });
 
         const allEngagement = await this.prisma.engagementLog.findMany({
+            where: { userId: { in: studentIds } },
             include: { topic: { include: { subject: true } } },
         });
 
@@ -51,12 +53,13 @@ export class TeacherAnalyticsService {
         const activeStudentCount = await this.prisma.user.count({
             where: {
                 role: 'STUDENT',
+                id: { in: studentIds },
                 practiceSessions: { some: {} },
             },
         });
 
         const totalStudentCount = await this.prisma.user.count({
-            where: { role: 'STUDENT' },
+            where: { role: 'STUDENT', id: { in: studentIds } },
         });
 
         return {
@@ -71,9 +74,9 @@ export class TeacherAnalyticsService {
      * Returns a list of all STUDENT users with their gamification stats
      * attached, for the class roster table.
      */
-    async getAllStudents() {
+    async getAllStudents(studentIds: string[]) {
         const students = await this.prisma.user.findMany({
-            where: { role: 'STUDENT' },
+            where: { role: 'STUDENT', id: { in: studentIds } },
             select: {
                 id: true,
                 name: true,
@@ -227,8 +230,8 @@ export class TeacherAnalyticsService {
     /**
      * Serialises all student stats to a RFC-4180 CSV string.
      */
-    async exportStudentsCsv(): Promise<string> {
-        const rows = await this.getAllStudents();
+    async exportStudentsCsv(studentIds: string[]): Promise<string> {
+        const rows = await this.getAllStudents(studentIds);
 
         const headers = [
             'Name',
