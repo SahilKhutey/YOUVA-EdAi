@@ -10,11 +10,34 @@ export function trustProxyHops(env: string | undefined): number {
   return n;
 }
 
-/** Browser origins allowed to call the API. Comma-separated; defaults to local development only. */
-export function corsOrigins(env: string | undefined): string[] {
-  const list = (env ?? '').split(',').map((o) => o.trim().replace(/\/+$/, '')).filter(Boolean);
+/**
+ * Browser origins allowed to call the API. `CORS_ORIGINS` (comma-separated) wins; otherwise `FRONTEND_URL`
+ * (already set by render.yaml) is used; otherwise local development only.
+ */
+export function corsOrigins(env: string | undefined, frontendUrl?: string): string[] {
+  const clean = (v: string | undefined) => (v ?? '').split(',').map((o) => o.trim().replace(/\/+$/, '')).filter(Boolean);
+  const list = clean(env);
   if (list.includes('*')) throw new Error('CORS_ORIGINS must list exact origins; "*" is not allowed.');
-  return list.length ? list : ['http://localhost:3000'];
+  if (list.length) return list;
+  const fallback = clean(frontendUrl);
+  if (fallback.includes('*')) throw new Error('FRONTEND_URL must be an exact origin; "*" is not allowed.');
+  return fallback.length ? fallback : ['http://localhost:3000'];
+}
+
+/** The origins to use, read from the real environment. */
+export function allowedOrigins(): string[] {
+  return corsOrigins(process.env.CORS_ORIGINS, process.env.FRONTEND_URL);
+}
+
+/**
+ * Optional URL prefix for every HTTP route (for example "api"). The frontend in render.yaml calls
+ * https://backend/api/..., so set API_PREFIX=api there. Empty means routes are served at the root.
+ */
+export function apiPrefix(env: string | undefined): string {
+  const v = (env ?? '').trim().replace(/^\/+|\/+$/g, '');
+  if (v === '') return '';
+  if (!/^[A-Za-z0-9-]+$/.test(v)) throw new Error('API_PREFIX may contain only letters, digits and hyphens.');
+  return v;
 }
 
 /** API docs are served only outside production unless explicitly enabled. */

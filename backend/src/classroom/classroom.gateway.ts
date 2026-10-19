@@ -11,14 +11,14 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { authenticateSocket } from '../security/socket-auth';
-import { corsOrigins } from '../security/http-config';
+import { allowedOrigins } from '../security/http-config';
 
 /**
  * Live 1-on-1 classroom: whiteboard, lesson steps and video-call signalling.
  * A connection must carry a valid login token, and a client can only join, send to, or hear from a session
  * that it is a participant of (the session's teacher, its student, or an admin).
  */
-@WebSocketGateway({ cors: { origin: corsOrigins(process.env.CORS_ORIGINS), credentials: true } })
+@WebSocketGateway({ cors: { origin: allowedOrigins(), credentials: true } })
 export class ClassroomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;

@@ -11,7 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { authenticateSocket } from '../security/socket-auth';
-import { corsOrigins } from '../security/http-config';
+import { allowedOrigins } from '../security/http-config';
 
 /**
  * Shared whiteboard. OFF unless ENABLE_SHARED_BOARD=true, because the frontend uses one hardcoded room
@@ -19,7 +19,7 @@ import { corsOrigins } from '../security/http-config';
  * a valid login token is required.
  */
 @WebSocketGateway({
-  cors: { origin: corsOrigins(process.env.CORS_ORIGINS), credentials: true },
+  cors: { origin: allowedOrigins(), credentials: true },
   namespace: 'board',
 })
 export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {

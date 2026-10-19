@@ -13,13 +13,18 @@ services:
         value: "https://youva-edai-backend.onrender.com"
       - key: NEXT_PUBLIC_FRONTEND_URL
         value: "https://youva-edai-frontend.onrender.com"
+      # The AI mentor sidebar is off for pilots (see docs/DECISIONS.md D-007). Baked in at build time.
+      - key: NEXT_PUBLIC_ENABLE_AI_MENTOR
+        value: "false"
 
   - type: web
     name: youva-edai-backend
     env: node
     rootDir: backend
     plan: free
-    buildCommand: npm install --include=dev && npx prisma generate && npx prisma db push --accept-data-loss && npm run build
+    # `db push` WITHOUT --accept-data-loss: a schema change that would delete data now fails the deploy instead of
+    # silently dropping it. Once real student data exists, move to migrations (see MVP_SCOPE.md).
+    buildCommand: npm install --include=dev && npx prisma generate && npx prisma db push && npm run build
     startCommand: npm run start:prod
     envVars:
       - key: DATABASE_URL
@@ -34,7 +39,28 @@ services:
         value: "3001"
       - key: GEMINI_API_KEY
         sync: false
+      - key: NODE_ENV
+        value: production
+      # The frontend above calls https://<backend>/api/..., so the backend serves routes under /api.
+      - key: API_PREFIX
+        value: api
+      - key: CORS_ORIGINS
+        value: "https://youva-edai-frontend.onrender.com"
+      # One reverse proxy sits in front of the server; needed so rate limiting sees each user's real address.
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: ALLOW_PUBLIC_REGISTRATION
+        value: "false"
+      - key: QUESTION_SOURCE
+        value: BANK
+      - key: ENABLE_AI_FEATURES
+        value: "false"
+      - key: ENABLE_SHARED_BOARD
+        value: "false"
 
 databases:
   - name: youva-edai-db
+    # A FREE Render Postgres database expires 30 days after creation (14-day grace period to upgrade, then the data
+    # is deleted) and has no backups. Use a paid plan for any pilot that runs longer than a few weeks, or export
+    # the pilot report numbers and data before the expiry date. Check render.com/docs/free for current terms.
     plan: free
