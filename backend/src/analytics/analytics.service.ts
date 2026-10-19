@@ -125,6 +125,7 @@ export class AnalyticsService {
     });
 
     return weakMastery.map((r) => ({
+      topicId: r.topic.id,
       topic: r.topic.title,
       subject: r.topic.subject.name,
       score: Math.round(r.masteryProbability * 100),

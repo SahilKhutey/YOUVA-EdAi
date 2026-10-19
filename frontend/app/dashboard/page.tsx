@@ -39,7 +39,7 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       const [statsRes, gamificationRes, weakRes, testsRes, recsRes] =
-        await Promise.all([
+        await Promise.allSettled([
           api.get("/analytics/dashboard-stats"),
           api.get("/gamification/stats"),
           api.get("/analytics/weak-topics"),
@@ -47,11 +47,11 @@ export default function DashboardPage() {
           api.get("/analytics/recommendations"),
         ]);
 
-      setStats(statsRes.data);
-      setGamificationStats(gamificationRes.data);
-      setWeakTopics(weakRes.data);
-      setUpcomingTests(testsRes.data);
-      setRecommendations(recsRes.data);
+      if (statsRes.status === "fulfilled") setStats(statsRes.value.data);
+      if (gamificationRes.status === "fulfilled") setGamificationStats(gamificationRes.value.data);
+      if (weakRes.status === "fulfilled") setWeakTopics(weakRes.value.data || []);
+      if (testsRes.status === "fulfilled") setUpcomingTests(testsRes.value.data || []);
+      if (recsRes.status === "fulfilled") setRecommendations(recsRes.value.data || []);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
     } finally {

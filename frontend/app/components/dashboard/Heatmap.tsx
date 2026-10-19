@@ -1,17 +1,26 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 interface HeatmapProps {
-  topics: { topic: string; subject: string; score: number }[];
+  topics: { topicId?: string; topic: string; subject: string; score: number }[];
 }
 
 export default function Heatmap({ topics = [] }: HeatmapProps) {
+  const router = useRouter();
+
   return (
     <div className="clay-card p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="font-bold text-lg text-foreground">
-          Weak Topics Heatmap
-        </h3>
-        <select className="text-sm border-none bg-transparent text-muted-foreground focus:ring-0 cursor-pointer">
+        <div>
+          <h3 className="font-bold text-lg text-foreground">
+            Weak Topics Heatmap
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Click any topic to practice adaptive questions immediately
+          </p>
+        </div>
+        <select className="text-xs border border-border bg-card rounded-lg px-2.5 py-1 text-muted-foreground focus:ring-0 cursor-pointer">
           <option>Last 30 Days</option>
           <option>All Time</option>
         </select>
@@ -22,25 +31,32 @@ export default function Heatmap({ topics = [] }: HeatmapProps) {
           topics.map((t, idx) => (
             <div
               key={idx}
-              className="flex items-center justify-between p-4 bg-red-50 rounded-xl border border-red-100"
+              onClick={() =>
+                router.push(
+                  t.topicId
+                    ? `/dashboard/practice/${t.topicId}`
+                    : "/dashboard/subjects"
+                )
+              }
+              className="flex items-center justify-between p-4 bg-destructive/10 rounded-xl border border-destructive/20 hover:border-primary/50 cursor-pointer transition-all group shadow-sm"
             >
-              <div>
+              <div className="min-w-0 flex-1 pr-2">
                 <h4
-                  className="font-semibold text-red-900 truncate max-w-[120px]"
+                  className="font-semibold text-foreground truncate text-sm group-hover:text-primary transition-colors"
                   title={t.topic}
                 >
                   {t.topic}
                 </h4>
-                <p className="text-xs text-red-700">{t.subject}</p>
+                <p className="text-xs text-muted-foreground truncate">{t.subject}</p>
               </div>
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-xl font-bold text-destructive shrink-0">
                 {Math.round(t.score)}%
               </div>
             </div>
           ))
         ) : (
-          <div className="col-span-3 text-center text-muted-foreground py-4">
-            No weak topics found. Keep it up!
+          <div className="col-span-3 text-center text-muted-foreground py-6 text-sm border border-dashed border-border rounded-xl">
+            No weak topics found. Keep up the great work!
           </div>
         )}
       </div>

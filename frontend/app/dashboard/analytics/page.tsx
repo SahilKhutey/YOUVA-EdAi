@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
+import MainLayout from "@/app/components/MainLayout";
 import {
   BarChart,
   Bar,
@@ -26,6 +27,8 @@ import {
   CheckCircle2,
   Clock,
   ArrowRight,
+  ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -46,8 +49,8 @@ interface RecentSession {
 
 // ──────── helpers ────────
 function AccuracyColor(pct: number) {
-  if (pct >= 80) return "text-emerald-600";
-  if (pct >= 60) return "text-amber-600";
+  if (pct >= 80) return "text-emerald-600 dark:text-emerald-400";
+  if (pct >= 60) return "text-amber-600 dark:text-amber-400";
   return "text-red-500";
 }
 function MasteryBar({ pct }: { pct: number }) {
@@ -74,43 +77,49 @@ export default function AnalyticsPage() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [summaryRes, subjectRes, sessionRes] = await Promise.all([
+      const [summaryRes, subjectRes, sessionRes] = await Promise.allSettled([
         api.get("/analytics/summary"),
         api.get("/analytics/subject-breakdown"),
         api.get("/analytics/recent-sessions"),
       ]);
-      setData(summaryRes.data);
-      setSubjects(subjectRes.data);
-      setSessions(sessionRes.data);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+      if (summaryRes.status === "fulfilled") setData(summaryRes.value.data);
+      if (subjectRes.status === "fulfilled") setSubjects(subjectRes.value.data || []);
+      if (sessionRes.status === "fulfilled") setSessions(sessionRes.value.data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { if (user) fetchAll(); }, [user, fetchAll]);
 
   if (authLoading || loading)
-    return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading analytics…</div>;
+    return (
+      <MainLayout>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center text-muted-foreground gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm">Loading learning analytics…</p>
+        </div>
+      </MainLayout>
+    );
+
   if (!user) return null;
 
   const sortedSubjects = [...subjects].sort((a, b) => b.accuracy - a.accuracy);
   const avgAccuracy = subjects.length > 0 ? Math.round(subjects.reduce((s, x) => s + x.accuracy, 0) / subjects.length) : 0;
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      {/* Old-style nav kept for continuity */}
-      <nav className="bg-card shadow-sm border-b border-border">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between items-center">
-            <div className="flex items-center gap-4">
-              <button onClick={() => router.push("/dashboard")} className="text-muted-foreground hover:text-foreground transition-colors">
-                ← Back
-              </button>
-              <span className="text-xl font-bold text-primary">Analytics & Performance</span>
-            </div>
-          </div>
+    <MainLayout>
+      <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-8">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            Analytics & Performance
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Track your knowledge mastery, session accuracy, and subject breakdown over time.
+          </p>
         </div>
-      </nav>
-
-      <main className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8 space-y-8">
 
         {/* ── Quick stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -181,8 +190,10 @@ export default function AnalyticsPage() {
               {subjects.length === 0 ? (
                 <div className="bg-card border border-dashed border-border rounded-2xl p-12 text-center">
                   <p className="font-semibold text-foreground mb-2">No subject data yet</p>
-                  <Link href="/dashboard/learn"
-                    className="inline-flex items-center gap-1.5 px-5 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors">
+                  <Link
+                    href="/dashboard/subjects"
+                    className="inline-flex items-center gap-1.5 px-5 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
+                  >
                     Start Practicing <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
@@ -225,15 +236,15 @@ export default function AnalyticsPage() {
                   </div>
                   {sortedSubjects.length >= 2 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
-                        <p className="text-xs font-bold text-emerald-700 uppercase mb-1">🏆 Strongest</p>
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5">
+                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase mb-1">🏆 Strongest</p>
                         <p className="text-xl font-bold text-foreground">{sortedSubjects[0].name}</p>
-                        <p className="text-sm text-emerald-700 mt-0.5">{sortedSubjects[0].accuracy}% accuracy · {sortedSubjects[0].avgMastery}% mastery</p>
+                        <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-0.5">{sortedSubjects[0].accuracy}% accuracy · {sortedSubjects[0].avgMastery}% mastery</p>
                       </div>
-                      <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
-                        <p className="text-xs font-bold text-red-600 uppercase mb-1">📌 Needs Work</p>
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-5">
+                        <p className="text-xs font-bold text-destructive uppercase mb-1">📌 Needs Work</p>
                         <p className="text-xl font-bold text-foreground">{sortedSubjects[sortedSubjects.length - 1].name}</p>
-                        <p className="text-sm text-red-600 mt-0.5">{sortedSubjects[sortedSubjects.length - 1].accuracy}% accuracy · {sortedSubjects[sortedSubjects.length - 1].avgMastery}% mastery</p>
+                        <p className="text-sm text-destructive mt-0.5">{sortedSubjects[sortedSubjects.length - 1].accuracy}% accuracy · {sortedSubjects[sortedSubjects.length - 1].avgMastery}% mastery</p>
                       </div>
                     </div>
                   )}
@@ -247,34 +258,36 @@ export default function AnalyticsPage() {
               {sessions.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground text-sm">No completed sessions yet.</div>
               ) : (
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50 border-b border-border">
-                    <tr>
-                      {["Topic", "Subject", "Accuracy", "Score", "Duration", "Date"].map((h) => (
-                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {sessions.map((s) => (
-                      <tr key={s.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="px-4 py-3 font-medium text-foreground">{s.topicTitle}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{s.subjectName}</td>
-                        <td className={`px-4 py-3 font-bold ${AccuracyColor(s.accuracy)}`}>{s.accuracy}%</td>
-                        <td className="px-4 py-3 text-foreground">{s.score}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{s.durationMinutes > 0 ? `${s.durationMinutes}m` : "—"}</td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">
-                          {new Date(s.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" })}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50 border-b border-border">
+                      <tr>
+                        {["Topic", "Subject", "Accuracy", "Score", "Duration", "Date"].map((h) => (
+                          <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {sessions.map((s) => (
+                        <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-4 py-3 font-medium text-foreground">{s.topicTitle}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{s.subjectName}</td>
+                          <td className={`px-4 py-3 font-bold ${AccuracyColor(s.accuracy)}`}>{s.accuracy}%</td>
+                          <td className="px-4 py-3 text-foreground">{s.score}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{s.durationMinutes > 0 ? `${s.durationMinutes}m` : "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground text-xs">
+                            {new Date(s.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

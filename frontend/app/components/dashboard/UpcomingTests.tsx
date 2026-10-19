@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface UpcomingTestsProps {
   tests: {
@@ -13,12 +14,17 @@ interface UpcomingTestsProps {
 }
 
 export default function UpcomingTests({ tests = [] }: UpcomingTestsProps) {
+  const router = useRouter();
+
   return (
     <div className="clay-card p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-lg text-foreground">Upcoming Tests</h3>
-        <button className="text-sm text-primary hover:underline">
-          View Calendar
+        <button
+          onClick={() => router.push("/dashboard/mock-tests")}
+          className="text-xs font-semibold text-primary hover:underline"
+        >
+          View All Tests
         </button>
       </div>
 
@@ -36,11 +42,12 @@ export default function UpcomingTests({ tests = [] }: UpcomingTestsProps) {
             return (
               <div
                 key={test.id}
+                onClick={() => router.push("/dashboard/mock-tests")}
                 className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors group cursor-pointer border border-transparent hover:border-border/50"
               >
-                <div className="flex flex-col items-center justify-center w-12 h-12 bg-blue-50 text-blue-700 rounded-lg font-bold">
-                  <span className="text-xs uppercase">{month}</span>
-                  <span className="text-lg">{day}</span>
+                <div className="flex flex-col items-center justify-center w-12 h-12 bg-primary/10 text-primary rounded-xl font-bold">
+                  <span className="text-[10px] uppercase">{month}</span>
+                  <span className="text-base leading-tight">{day}</span>
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
