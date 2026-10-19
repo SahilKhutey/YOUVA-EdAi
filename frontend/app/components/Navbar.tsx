@@ -58,10 +58,8 @@ export default function Navbar() {
                 title="Search (⌘K)"
               >
                 <Search className="h-3.5 w-3.5" />
-                <span>Search</span>
                 <kbd className="ml-1 text-[10px] font-mono bg-background border border-border rounded px-1">⌘K</kbd>
               </button>
-              <ThemeToggle />
               <button
                 onClick={logout}
                 className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors"

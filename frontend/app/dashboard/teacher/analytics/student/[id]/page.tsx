@@ -15,6 +15,11 @@ import {
     Loader2,
     BrainCircuit,
     Printer,
+    Download,
+    Sliders,
+    ShieldCheck,
+    ShieldAlert,
+    X,
 } from "lucide-react";
 import {
     LineChart,
@@ -39,6 +44,15 @@ interface PracticeSession {
     topic: { title: string };
 }
 
+interface ConsentRecord {
+    id: string;
+    guardianName: string;
+    guardianRelation: string;
+    formVersion: string;
+    signedAt: string;
+    revokedAt: string | null;
+}
+
 interface StudentDetail {
     id: string;
     name: string;
@@ -54,8 +68,9 @@ interface StudentDetail {
     } | null;
     badges: { badge: { name: string; icon: string; description: string } }[];
     topicMastery: {
+        targetDifficulty?: number;
         masteryProbability: number;
-        topic: { title: string; subject: { name: string } };
+        topic: { id: string; title: string; subject: { name: string } };
     }[];
     practiceSessions: PracticeSession[];
     mistakeLogs: MistakeLog[];
@@ -87,11 +102,55 @@ export default function StudentDetailPage() {
     const [student, setStudent] = useState<StudentDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"mastery" | "sessions" | "mistakes">("mastery");
+    const [exporting, setExporting] = useState(false);
+    const [consentList, setConsentList] = useState<ConsentRecord[]>([]);
+
+    const [overrideModal, setOverrideModal] = useState<{
+        isOpen: boolean;
+        topicId: string;
+        topicTitle: string;
+        value: number;
+        reason: string;
+        isSubmitting: boolean;
+        error: string | null;
+    }>({
+        isOpen: false,
+        topicId: "",
+        topicTitle: "",
+        value: 0.5,
+        reason: "",
+        isSubmitting: false,
+        error: null,
+    });
+
+    const [consentModal, setConsentModal] = useState<{
+        isOpen: boolean;
+        guardianName: string;
+        guardianRelation: "mother" | "father" | "legal guardian";
+        formVersion: string;
+        signedAt: string;
+        notes: string;
+        isSubmitting: boolean;
+        error: string | null;
+    }>({
+        isOpen: false,
+        guardianName: "",
+        guardianRelation: "legal guardian",
+        formVersion: "v1.0",
+        signedAt: new Date().toISOString().slice(0, 10),
+        notes: "",
+        isSubmitting: false,
+        error: null,
+    });
 
     const fetchStudent = useCallback(async () => {
         try {
-            const res = await api.get(`/teacher-analytics/student/${id}`);
-            setStudent(res.data);
+            const [studentRes, consentRes] = await Promise.allSettled([
+                api.get(`/teacher-analytics/student/${id}`),
+                api.get(`/consent/student/${id}`),
+            ]);
+            if (studentRes.status === "fulfilled") setStudent(studentRes.value.data);
+            if (consentRes.status === "fulfilled") setConsentList(consentRes.value.data || []);
         } catch (e) {
             console.error(e);
         } finally {
@@ -102,6 +161,69 @@ export default function StudentDetailPage() {
     useEffect(() => {
         if (user && id) fetchStudent();
     }, [user, id, fetchStudent]);
+
+    const handleExportData = async () => {
+        if (!student) return;
+        setExporting(true);
+        try {
+            const res = await api.get(`/consent/student/${id}/export`);
+            const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `student-${(student.name || "export").replace(/[^a-zA-Z0-9]/g, "_")}-data.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err: any) {
+            alert(err?.response?.data?.message || "Failed to export student data.");
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    const handleSaveDifficulty = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!overrideModal.topicId || !overrideModal.reason.trim()) return;
+        setOverrideModal((prev) => ({ ...prev, isSubmitting: true, error: null }));
+        try {
+            await api.post(`/teacher/students/${id}/topics/${overrideModal.topicId}/difficulty`, {
+                value: Number(overrideModal.value),
+                reason: overrideModal.reason.trim(),
+            });
+            setOverrideModal((prev) => ({ ...prev, isOpen: false, isSubmitting: false }));
+            await fetchStudent();
+        } catch (err: any) {
+            setOverrideModal((prev) => ({
+                ...prev,
+                isSubmitting: false,
+                error: err?.response?.data?.message || "Failed to set target difficulty",
+            }));
+        }
+    };
+
+    const handleRecordConsent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!consentModal.guardianName.trim()) return;
+        setConsentModal((prev) => ({ ...prev, isSubmitting: true, error: null }));
+        try {
+            await api.post("/consent", {
+                studentId: id,
+                guardianName: consentModal.guardianName.trim(),
+                guardianRelation: consentModal.guardianRelation,
+                formVersion: consentModal.formVersion.trim(),
+                signedAt: new Date(consentModal.signedAt).toISOString(),
+                notes: consentModal.notes.trim() || undefined,
+            });
+            setConsentModal((prev) => ({ ...prev, isOpen: false, isSubmitting: false }));
+            await fetchStudent();
+        } catch (err: any) {
+            setConsentModal((prev) => ({
+                ...prev,
+                isSubmitting: false,
+                error: err?.response?.data?.message || "Failed to record consent",
+            }));
+        }
+    };
 
     if (loading) {
         return (
@@ -118,6 +240,9 @@ export default function StudentDetailPage() {
             </div>
         );
     }
+
+    // Active consent check
+    const activeConsent = consentList.find((c) => !c.revokedAt);
 
     // Group topic mastery by subject
     const bySubject: Record<string, typeof student.topicMastery> = {};
@@ -141,8 +266,8 @@ export default function StudentDetailPage() {
 
     return (
         <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-6">
-            {/* Back navigation + Print */}
-            <div className="flex items-center justify-between">
+            {/* Back navigation + Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <button
                     onClick={() => router.back()}
                     className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -150,15 +275,62 @@ export default function StudentDetailPage() {
                     <ArrowLeft className="h-4 w-4" />
                     Back to Analytics Hub
                 </button>
-                <a
-                    href={`/dashboard/teacher/analytics/student/${id}/report`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-4 py-2 bg-card border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                    <Printer className="h-4 w-4 text-primary" />
-                    Print Report
-                </a>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleExportData}
+                        disabled={exporting}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-card border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                        title="Download complete student export (JSON)"
+                    >
+                        <Download className="h-4 w-4 text-emerald-500" />
+                        {exporting ? "Exporting..." : "Export Data"}
+                    </button>
+                    <a
+                        href={`/dashboard/teacher/analytics/student/${id}/report`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-card border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                    >
+                        <Printer className="h-4 w-4 text-primary" />
+                        Print Report
+                    </a>
+                </div>
+            </div>
+
+            {/* Guardian Consent Status Card */}
+            <div className="bg-card rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                <div className="flex items-center gap-3.5">
+                    {activeConsent ? (
+                        <div className="h-11 w-11 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+                            <ShieldCheck className="h-6 w-6" />
+                        </div>
+                    ) : (
+                        <div className="h-11 w-11 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0">
+                            <ShieldAlert className="h-6 w-6" />
+                        </div>
+                    )}
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-base font-semibold text-foreground">Parent / Guardian Consent</span>
+                            <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${activeConsent ? 'bg-emerald-500/15 text-emerald-600' : 'bg-amber-500/15 text-amber-600'}`}>
+                                {activeConsent ? 'Active & On File' : 'Consent Missing / Revoked'}
+                            </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            {activeConsent
+                                ? `Authorized by ${activeConsent.guardianName} (${activeConsent.guardianRelation}) on ${new Date(activeConsent.signedAt).toLocaleDateString()}`
+                                : 'A parent or guardian consent record is required before a student can start adaptive practice sessions.'}
+                        </p>
+                    </div>
+                </div>
+                {!activeConsent && (
+                    <button
+                        onClick={() => setConsentModal((prev) => ({ ...prev, isOpen: true, error: null }))}
+                        className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shrink-0 shadow-sm"
+                    >
+                        Record Guardian Consent
+                    </button>
+                )}
             </div>
 
             {/* Student profile header */}
@@ -279,12 +451,37 @@ export default function StudentDetailPage() {
                             {topics.map((m) => (
                                 <div
                                     key={m.topic.title}
-                                    className="px-5 py-3 flex items-center gap-3"
+                                    className="px-5 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap"
                                 >
-                                    <span className="text-sm text-foreground w-52 truncate shrink-0">
-                                        {m.topic.title}
-                                    </span>
+                                    <div className="w-52 shrink-0">
+                                        <p className="text-sm font-medium text-foreground truncate">
+                                            {m.topic.title}
+                                        </p>
+                                        {m.targetDifficulty !== undefined && (
+                                            <p className="text-[11px] text-primary font-medium">
+                                                Target: {Math.round(m.targetDifficulty * 100)}%
+                                            </p>
+                                        )}
+                                    </div>
                                     <MasteryBar value={m.masteryProbability} />
+                                    <button
+                                        onClick={() =>
+                                            setOverrideModal({
+                                                isOpen: true,
+                                                topicId: m.topic.id,
+                                                topicTitle: m.topic.title,
+                                                value: m.targetDifficulty ?? 0.5,
+                                                reason: "",
+                                                isSubmitting: false,
+                                                error: null,
+                                            })
+                                        }
+                                        className="ml-auto flex items-center gap-1.5 px-3 py-1 bg-muted/60 hover:bg-primary/10 hover:text-primary text-muted-foreground rounded-lg text-xs font-medium transition-colors shrink-0"
+                                        title="Adjust target difficulty for adaptive practice"
+                                    >
+                                        <Sliders className="h-3.5 w-3.5" />
+                                        Override Target
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -379,6 +576,276 @@ export default function StudentDetailPage() {
                             </span>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Modal: Target Difficulty Override */}
+            {overrideModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+                    <div className="bg-card border border-border rounded-2xl p-6 shadow-xl w-full max-w-md animate-in fade-in zoom-in-95">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Sliders className="h-5 w-5 text-primary" />
+                                <h3 className="font-semibold text-foreground text-base">
+                                    Set Target Difficulty
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() =>
+                                    setOverrideModal((p) => ({ ...p, isOpen: false, error: null }))
+                                }
+                                className="text-muted-foreground hover:text-foreground"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground mb-4">
+                            Topic: <strong className="text-foreground">{overrideModal.topicTitle}</strong>.
+                            Adjust the difficulty baseline for future adaptive quizzes.
+                        </p>
+
+                        <form onSubmit={handleSaveDifficulty} className="space-y-4">
+                            <div>
+                                <div className="flex justify-between text-xs font-medium mb-1.5">
+                                    <span className="text-muted-foreground">Difficulty Target</span>
+                                    <span className="text-primary font-bold">
+                                        {Math.round(overrideModal.value * 100)}% (
+                                        {overrideModal.value < 0.35
+                                            ? "Easy"
+                                            : overrideModal.value < 0.7
+                                                ? "Moderate"
+                                                : "Challenging"}
+                                        )
+                                    </span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="0.1"
+                                    max="1.0"
+                                    step="0.05"
+                                    value={overrideModal.value}
+                                    onChange={(e) =>
+                                        setOverrideModal((p) => ({
+                                            ...p,
+                                            value: parseFloat(e.target.value),
+                                        }))
+                                    }
+                                    className="w-full accent-primary cursor-pointer"
+                                />
+                                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                                    <span>10% (Foundational)</span>
+                                    <span>50% (Standard)</span>
+                                    <span>100% (Advanced)</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-foreground mb-1">
+                                    Pedagogical Reason <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    required
+                                    rows={3}
+                                    value={overrideModal.reason}
+                                    onChange={(e) =>
+                                        setOverrideModal((p) => ({
+                                            ...p,
+                                            reason: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="Explain why this student needs a custom difficulty level..."
+                                    className="w-full px-3 py-2 text-xs bg-muted/40 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                            </div>
+
+                            {overrideModal.error && (
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400">
+                                    {overrideModal.error}
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setOverrideModal((p) => ({ ...p, isOpen: false, error: null }))
+                                    }
+                                    className="px-4 py-2 text-xs font-medium rounded-xl border border-border text-foreground hover:bg-muted transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={
+                                        overrideModal.isSubmitting ||
+                                        !overrideModal.reason.trim()
+                                    }
+                                    className="px-4 py-2 text-xs font-medium rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                                >
+                                    {overrideModal.isSubmitting && (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                    )}
+                                    Save Override
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Record Guardian Consent */}
+            {consentModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+                    <div className="bg-card border border-border rounded-2xl p-6 shadow-xl w-full max-w-md animate-in fade-in zoom-in-95">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                                <h3 className="font-semibold text-foreground text-base">
+                                    Record Guardian Consent
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() =>
+                                    setConsentModal((p) => ({ ...p, isOpen: false, error: null }))
+                                }
+                                className="text-muted-foreground hover:text-foreground"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground mb-4">
+                            Record verified parental/guardian permission for FERPA/COPPA compliance and personalized AI tracking for <strong className="text-foreground">{student.name}</strong>.
+                        </p>
+
+                        <form onSubmit={handleRecordConsent} className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-medium text-foreground mb-1">
+                                    Guardian Full Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={consentModal.guardianName}
+                                    onChange={(e) =>
+                                        setConsentModal((p) => ({
+                                            ...p,
+                                            guardianName: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="e.g. Jane Doe"
+                                    className="w-full px-3 py-2 text-xs bg-muted/40 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-foreground mb-1">
+                                        Relationship <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={consentModal.guardianRelation}
+                                        onChange={(e) =>
+                                            setConsentModal((p) => ({
+                                                ...p,
+                                                guardianRelation: e.target.value as any,
+                                            }))
+                                        }
+                                        className="w-full px-3 py-2 text-xs bg-muted/40 border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    >
+                                        <option value="legal guardian">Legal Guardian</option>
+                                        <option value="mother">Mother</option>
+                                        <option value="father">Father</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-foreground mb-1">
+                                        Form Version <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={consentModal.formVersion}
+                                        onChange={(e) =>
+                                            setConsentModal((p) => ({
+                                                ...p,
+                                                formVersion: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full px-3 py-2 text-xs bg-muted/40 border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-foreground mb-1">
+                                    Signed Date <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    required
+                                    value={consentModal.signedAt}
+                                    onChange={(e) =>
+                                        setConsentModal((p) => ({
+                                            ...p,
+                                            signedAt: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full px-3 py-2 text-xs bg-muted/40 border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-foreground mb-1">
+                                    Verification Notes (Optional)
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    value={consentModal.notes}
+                                    onChange={(e) =>
+                                        setConsentModal((p) => ({
+                                            ...p,
+                                            notes: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="e.g. Physical signed slip received at front office."
+                                    className="w-full px-3 py-2 text-xs bg-muted/40 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                            </div>
+
+                            {consentModal.error && (
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400">
+                                    {consentModal.error}
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setConsentModal((p) => ({ ...p, isOpen: false, error: null }))
+                                    }
+                                    className="px-4 py-2 text-xs font-medium rounded-xl border border-border text-foreground hover:bg-muted transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={
+                                        consentModal.isSubmitting ||
+                                        !consentModal.guardianName.trim()
+                                    }
+                                    className="px-4 py-2 text-xs font-medium rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                                >
+                                    {consentModal.isSubmitting && (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                    )}
+                                    Record Consent
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

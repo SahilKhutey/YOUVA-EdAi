@@ -6,6 +6,16 @@ import { useRouter, useParams } from "next/navigation";
 import { ThinkingIndicator } from "@/app/components/ThinkingIndicator";
 import { VoiceTutor } from "@/app/components/workspace/VoiceTutor";
 import { aiMentorEnabled, practiceLoadMessage, practiceSubmitMessage } from "@/lib/practice-errors.mjs";
+import {
+  Award,
+  Zap,
+  RotateCcw,
+  BookOpen,
+  LayoutDashboard,
+  CheckCircle2,
+  XCircle,
+  ArrowLeft,
+} from "lucide-react";
 
 interface Question {
   id: string;
@@ -20,6 +30,15 @@ interface Result {
   explanation: string;
 }
 
+interface QuizSubmissionResult {
+  score: number;
+  correctCount?: number;
+  total?: number;
+  unanswered?: number;
+  xpEarned?: number;
+  results: Result[];
+}
+
 export default function PracticePage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -30,10 +49,7 @@ export default function PracticePage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
-  const [results, setResults] = useState<{
-    score: number;
-    results: Result[];
-  } | null>(null);
+  const [results, setResults] = useState<QuizSubmissionResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -57,6 +73,8 @@ export default function PracticePage() {
     try {
       setLoading(true);
       setLoadError(null);
+      setResults(null);
+      setAnswers({});
       const response = await api.post("/practice/generate", { topicId });
       setSessionId(response.data.sessionId);
       setQuestions(response.data.questions);
@@ -132,53 +150,115 @@ export default function PracticePage() {
   }
 
   if (results) {
+    const correctCount =
+      results.correctCount ?? results.results.filter((r) => r.isCorrect).length;
+    const totalCount = results.total ?? results.results.length;
+
     return (
       <div className={`grid grid-cols-1 ${gridCols} min-h-screen bg-muted/20 gap-4 p-4`}>
         <div className="flex flex-col overflow-y-auto w-full max-w-3xl mx-auto py-8 px-4">
-          <div className="bg-card shadow-sm border border-border overflow-hidden sm:rounded-lg mb-6">
-            <div className="px-4 py-5 sm:px-6 text-center">
-              <h2 className="text-3xl font-bold text-foreground">
-                Quiz Complete!
-              </h2>
-              <p className="mt-2 text-xl text-primary">
-                Score: {results.score.toFixed(0)}%
-              </p>
+          <div className="bg-card shadow-sm border border-border overflow-hidden rounded-2xl mb-6 p-6 sm:p-8 text-center animate-in fade-in zoom-in-95">
+            <div className="inline-flex p-3 rounded-2xl bg-amber-500/10 text-amber-500 mb-3">
+              <Award className="h-10 w-10" />
+            </div>
+            <h2 className="text-3xl font-bold text-foreground">
+              Quiz Completed!
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Here is how you performed in this adaptive session
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 my-6 max-w-md mx-auto">
+              <div className="bg-muted/40 border border-border rounded-xl p-3">
+                <span className="text-xs text-muted-foreground font-medium">Final Score</span>
+                <p className="text-2xl font-bold text-primary mt-0.5">
+                  {results.score.toFixed(0)}%
+                </p>
+              </div>
+              <div className="bg-muted/40 border border-border rounded-xl p-3">
+                <span className="text-xs text-muted-foreground font-medium">Accuracy</span>
+                <p className="text-2xl font-bold text-foreground mt-0.5">
+                  {correctCount} / {totalCount}
+                </p>
+              </div>
+              <div className="bg-muted/40 border border-border rounded-xl p-3 col-span-2 sm:col-span-1 flex flex-col items-center justify-center">
+                <span className="text-xs text-muted-foreground font-medium">XP Earned</span>
+                <p className="text-2xl font-bold text-amber-500 flex items-center gap-1 mt-0.5">
+                  <Zap className="h-5 w-5 fill-amber-500" />
+                  +{results.xpEarned ?? 10}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                onClick={generateQuiz}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Practice Again
+              </button>
+              <button
+                onClick={() => router.push("/dashboard/subjects")}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-card text-foreground hover:bg-muted transition-all"
+              >
+                <BookOpen className="h-4 w-4" />
+                Browse Subjects
+              </button>
               <button
                 onClick={() => router.push("/dashboard")}
-                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-primary-foreground bg-primary hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
               >
-                Back to Dashboard
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
               </button>
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
+              Question Review
+            </h3>
             {questions.map((q, index) => {
               const result = results.results.find((r) => r.questionId === q.id);
               const userAnswer = answers[q.id];
+              const isCorrect = result?.isCorrect;
               return (
                 <div
                   key={q.id}
-                  className={`bg-card shadow-sm sm:rounded-lg p-6 border-l-4 ${result?.isCorrect ? "border-secondary" : "border-destructive"}`}
+                  className={`bg-card shadow-sm rounded-2xl p-6 border transition-all ${
+                    isCorrect
+                      ? "border-emerald-500/30 bg-emerald-500/[0.02]"
+                      : "border-destructive/30 bg-destructive/[0.02]"
+                  }`}
                 >
-                  <h3 className="text-lg font-medium text-foreground mb-4">
-                    {index + 1}. {q.content}
-                  </h3>
-                  <p
-                    className={`text-sm mb-2 font-medium ${result?.isCorrect ? "text-secondary" : "text-destructive"}`}
-                  >
-                    Your Answer: {userAnswer} {result?.isCorrect ? "✓" : "✗"}
-                  </p>
-                  {!result?.isCorrect && (
-                    <p className="text-sm text-secondary font-medium mb-2">
-                      Correct Answer: {result?.correctAnswer}
-                    </p>
-                  )}
-                  <div className="mt-2 bg-muted p-3 rounded text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">
-                      Explanation:
-                    </span>{" "}
-                    {result?.explanation}
+                  <div className="flex items-start gap-3">
+                    {isCorrect ? (
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base font-medium text-foreground mb-3">
+                        {index + 1}. {q.content}
+                      </h4>
+                      <p
+                        className={`text-sm mb-1.5 font-medium ${
+                          isCorrect ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"
+                        }`}
+                      >
+                        Your Answer: {userAnswer}
+                      </p>
+                      {!isCorrect && (
+                        <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-2">
+                          Correct Answer: {result?.correctAnswer}
+                        </p>
+                      )}
+                      <div className="mt-3 bg-muted/50 p-3.5 rounded-xl text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                        <strong className="text-foreground">Explanation:</strong>{" "}
+                        {result?.explanation}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );

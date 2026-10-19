@@ -24,14 +24,14 @@ export default function MainLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navbar – fixed 72px */}
-      <div className="h-[72px] fixed top-0 w-full z-50">
+      {/* Navbar – fixed 64px */}
+      <div className="h-[64px] fixed top-0 w-full z-50">
         <Navbar />
       </div>
 
       {/* Mobile toolbar: hamburger (only shown when sidebar enabled, on small screens) */}
       {showSidebar && (
-        <div className="md:hidden fixed top-0 left-0 z-[51] h-[72px] flex items-center pl-4">
+        <div className="md:hidden fixed top-0 left-0 z-[51] h-[64px] flex items-center pl-4">
           <button
             onClick={() => setDrawerOpen(true)}
             className="p-2 rounded-xl bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -48,14 +48,14 @@ export default function MainLayout({
       )}
 
       {/* Content area */}
-      <div className="pt-[72px] min-h-screen">
+      <div className="pt-[64px] min-h-screen">
         {/* Desktop sidebar – already self-hides on mobile via hidden md:flex */}
         {showSidebar && <Sidebar />}
 
         {/* Page content - Floating Material 3 Container */}
         <main
           className={cn(
-            "flex-1 transition-all duration-300 min-h-[calc(100vh-72px)] p-6",
+            "flex-1 transition-all duration-300 min-h-[calc(100vh-64px)] p-6",
             showSidebar ? "md:ml-[240px]" : "",
             className,
           )}

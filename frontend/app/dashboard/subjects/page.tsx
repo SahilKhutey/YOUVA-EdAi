@@ -1,13 +1,17 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
+import MainLayout from "@/app/components/MainLayout";
+import { BookOpen, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 
 interface Subject {
   id: string;
   name: string;
   description: string | null;
+  topics?: { id: string }[];
 }
 
 export default function SubjectsPage() {
@@ -43,73 +47,71 @@ export default function SubjectsPage() {
     }
   };
 
-  if (authLoading || (loading && !subjects.length)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/20">
-        <div className="text-xl text-muted-foreground">Loading subjects...</div>
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
   return (
-    <div className="min-h-screen bg-muted/20 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="md:flex md:items-center md:justify-between">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-2xl font-bold leading-7 text-foreground sm:truncate sm:text-3xl sm:tracking-tight">
-              Subjects
-            </h2>
+    <MainLayout>
+      <div className="p-6 sm:p-8 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+              Curriculum Subjects
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Explore mastery tracks, adaptive quizzes, and curriculum lessons.
+            </p>
           </div>
-          {/* Potential 'Add Subject' button for admins here */}
         </div>
 
         {error && (
-          <div className="mt-4 rounded-md bg-destructive/10 p-4 border border-destructive/20">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-destructive">Error</h3>
-                <div className="mt-2 text-sm text-destructive/80">
-                  <p>{error}</p>
-                </div>
-              </div>
+          <div className="mb-6 rounded-2xl bg-destructive/10 p-4 border border-destructive/20 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="text-sm text-destructive">
+              <p className="font-semibold">Unable to load subjects</p>
+              <p className="mt-0.5 text-xs opacity-90">{error}</p>
             </div>
           </div>
         )}
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {subjects.map((subject) => (
-            <div
-              key={subject.id}
-              onClick={() => router.push(`/dashboard/subjects/${subject.id}`)}
-              className="overflow-hidden rounded-lg bg-card shadow-sm border border-border hover:shadow-md cursor-pointer transition-shadow duration-200"
-            >
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium leading-6 text-foreground">
-                  {subject.name}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {subject.description || "No description available."}
-                </p>
-              </div>
-              <div className="bg-muted/30 px-4 py-4 sm:px-6 border-t border-border">
-                <div className="text-sm">
-                  <span className="font-medium text-primary hover:text-primary/80 transition-colors">
-                    View Topics <span aria-hidden="true">&rarr;</span>
-                  </span>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm">Loading curriculum subjects...</p>
+          </div>
+        ) : subjects.length === 0 && !error ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card/50 p-12 text-center">
+            <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-foreground">No subjects found</h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+              Curriculum content will appear here once configured by administrators or teachers.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {subjects.map((subject) => (
+              <div
+                key={subject.id}
+                onClick={() => router.push(`/dashboard/subjects/${subject.id}`)}
+                className="group flex flex-col justify-between overflow-hidden rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/40 cursor-pointer transition-all duration-200"
+              >
+                <div className="p-6">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                    <BookOpen className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {subject.name}
+                  </h3>
+                  <p className="mt-2 text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                    {subject.description || "Comprehensive subject study guide and adaptive practice modules."}
+                  </p>
+                </div>
+                <div className="px-6 py-3.5 bg-muted/30 border-t border-border flex items-center justify-between text-xs font-medium text-primary">
+                  <span>Explore Topics</span>
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {!loading && subjects.length === 0 && !error && (
-          <div className="mt-8 text-center text-muted-foreground">
-            No subjects found.
+            ))}
           </div>
         )}
       </div>
-    </div>
+    </MainLayout>
   );
 }
