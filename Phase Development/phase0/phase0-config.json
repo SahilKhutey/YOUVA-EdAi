@@ -1,0 +1,30 @@
+{
+  "phase": "phase_0",
+  "name": "Scope Lock & Compliance Foundation",
+
+  "mandatoryDecisions": [
+    "launchTier",
+    "jurisdiction",
+    "launchModel",
+    "mvpSubject"
+  ],
+
+  "mandatoryArtifacts": [
+    "scope-lock",
+    "compliance-checklist",
+    "signoffs"
+  ],
+
+  "requiredApprovals": {
+    "founder": true,
+    "pilotPartnerIfB2B": true,
+    "legalOrComplianceAdvisor": true
+  },
+
+  "phase1BlockedUntil": [
+    "scope_locked",
+    "compliance_reviewed",
+    "stakeholder_signoffs_complete",
+    "content_plan_budgeted"
+  ]
+}

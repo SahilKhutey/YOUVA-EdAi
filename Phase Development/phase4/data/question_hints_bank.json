@@ -1,0 +1,122 @@
+[
+  {
+    "questionId": "Q-G8-ALG-001",
+    "conceptId": "two_step_linear_equations",
+    "hints": [
+      {
+        "tier": 1,
+        "title": "Conceptual Cue",
+        "content": "To solve for x, you must isolate the variable term by undoing operations in reverse order of operations.",
+        "penaltySlipFactor": 0.05
+      },
+      {
+        "tier": 2,
+        "title": "Strategic Step",
+        "content": "First add 3 to both sides of the equation to eliminate the negative constant on the left.",
+        "penaltySlipFactor": 0.15
+      },
+      {
+        "tier": 3,
+        "title": "Concrete Execution",
+        "content": "2x - 3 + 3 = 7 + 3 results in 2x = 10. Now divide both sides by 2 to find x = 5.",
+        "penaltySlipFactor": 0.30
+      }
+    ]
+  },
+  {
+    "questionId": "Q-G8-ALG-002",
+    "conceptId": "one_step_linear_equations",
+    "hints": [
+      {
+        "tier": 1,
+        "title": "Conceptual Cue",
+        "content": "Remember that an equation is like a balance beam; whatever you subtract from one side, you must subtract from the other.",
+        "penaltySlipFactor": 0.05
+      },
+      {
+        "tier": 2,
+        "title": "Strategic Step",
+        "content": "Undo the addition of 3 by subtracting 3 from both sides of the equation.",
+        "penaltySlipFactor": 0.15
+      },
+      {
+        "tier": 3,
+        "title": "Concrete Execution",
+        "content": "y + 3 - 3 = 10 - 3 simplifies directly to y = 7.",
+        "penaltySlipFactor": 0.30
+      }
+    ]
+  },
+  {
+    "questionId": "Q-G8-ALG-003",
+    "conceptId": "one_step_linear_equations",
+    "hints": [
+      {
+        "tier": 1,
+        "title": "Conceptual Cue",
+        "content": "The variable can be on either side of the equals sign; isolate z by removing the constant next to it.",
+        "penaltySlipFactor": 0.05
+      },
+      {
+        "tier": 2,
+        "title": "Strategic Step",
+        "content": "Subtract 2 from both sides of the equation to leave z alone on the right.",
+        "penaltySlipFactor": 0.15
+      },
+      {
+        "tier": 3,
+        "title": "Concrete Execution",
+        "content": "6 - 2 = z + 2 - 2 gives 4 = z, so z = 4.",
+        "penaltySlipFactor": 0.30
+      }
+    ]
+  },
+  {
+    "questionId": "Q-G8-ALG-004",
+    "conceptId": "linear_equations_with_fractions",
+    "hints": [
+      {
+        "tier": 1,
+        "title": "Conceptual Cue",
+        "content": "Fractions with common denominators can be combined directly by subtracting like fractional terms.",
+        "penaltySlipFactor": 0.05
+      },
+      {
+        "tier": 2,
+        "title": "Strategic Step",
+        "content": "Subtract 3/7 from both sides: x = 17/7 - 3/7.",
+        "penaltySlipFactor": 0.15
+      },
+      {
+        "tier": 3,
+        "title": "Concrete Execution",
+        "content": "Calculate (17 - 3)/7 = 14/7. Divide 14 by 7 to obtain x = 2.",
+        "penaltySlipFactor": 0.30
+      }
+    ]
+  },
+  {
+    "questionId": "Q-G8-ALG-005",
+    "conceptId": "variables_on_both_sides",
+    "hints": [
+      {
+        "tier": 1,
+        "title": "Conceptual Cue",
+        "content": "When variables appear on both sides, gather all variable terms on one side and constant terms on the other.",
+        "penaltySlipFactor": 0.05
+      },
+      {
+        "tier": 2,
+        "title": "Strategic Step",
+        "content": "Subtract the smaller variable term from both sides to keep the variable coefficient positive.",
+        "penaltySlipFactor": 0.15
+      },
+      {
+        "tier": 3,
+        "title": "Concrete Execution",
+        "content": "Transpose variable and constant terms to get the form ax = b, then divide by coefficient a.",
+        "penaltySlipFactor": 0.30
+      }
+    ]
+  }
+]

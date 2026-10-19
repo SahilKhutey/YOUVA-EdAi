@@ -1,0 +1,233 @@
+From 8b663622d89054e93cdfebb06d8f363e5b10ccff Mon Sep 17 00:00:00 2001
+From: phase1-fixes <phase1@example.invalid>
+Date: Mon, 12 Oct 2026 04:17:03 +0000
+Subject: [PATCH 4/5] feat(content): item-bank format, validator, importer with
+ review gate, and unreviewed SAMPLE items
+
+---
+ backend/.env.example                          |  1 +
+ .../item-bank/one-step-equations.SAMPLE.json  | 20 +++++++
+ backend/package.json                          |  5 +-
+ backend/prisma/import-item-bank.ts            | 56 +++++++++++++++++++
+ backend/src/practice/item-bank.spec.ts        | 30 ++++++++++
+ backend/src/practice/item-bank.ts             | 51 +++++++++++++++++
+ 6 files changed, 161 insertions(+), 2 deletions(-)
+ create mode 100644 backend/content/item-bank/one-step-equations.SAMPLE.json
+ create mode 100644 backend/prisma/import-item-bank.ts
+ create mode 100644 backend/src/practice/item-bank.spec.ts
+ create mode 100644 backend/src/practice/item-bank.ts
+
+diff --git a/backend/.env.example b/backend/.env.example
+index d117cd4..b99d447 100644
+--- a/backend/.env.example
++++ b/backend/.env.example
+@@ -3,3 +3,4 @@ JWT_SECRET="generate-a-strong-random-secret"
+ GEMINI_API_KEY="your-google-gemini-api-key"
+ FRONTEND_URL="http://localhost:3000" # URL of the deployed frontend
+ PORT=3001
++QUESTION_SOURCE="BANK" # BANK = teacher-reviewed items only (default). AI = generate at runtime (not for pilots)
+diff --git a/backend/content/item-bank/one-step-equations.SAMPLE.json b/backend/content/item-bank/one-step-equations.SAMPLE.json
+new file mode 100644
+index 0000000..b781eb0
+--- /dev/null
++++ b/backend/content/item-bank/one-step-equations.SAMPLE.json
+@@ -0,0 +1,20 @@
++{
++  "_note": "DRAFT SAMPLE written for format and testing only. NOT reviewed by a teacher. Replace with the pilot teacher's own items before any student sees them.",
++  "subject": "Mathematics",
++  "topic": "One-Step Equations",
++  "topicDescription": "Solve equations of the form x + a = b, x - a = b, ax = b and x / a = b.",
++  "items": [
++    { "content": "Solve: x + 5 = 12", "options": ["7", "17", "-7", "5"], "correctAnswer": "7", "difficulty": 0.2, "explanation": "Subtract 5 from both sides: x = 12 - 5 = 7.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Which step undoes 'x + 9 = 20'?", "options": ["Add 9 to both sides", "Subtract 9 from both sides", "Multiply both sides by 9", "Divide both sides by 9"], "correctAnswer": "Subtract 9 from both sides", "difficulty": 0.2, "explanation": "Addition is undone by subtraction, applied to both sides to keep the equation balanced.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: x - 4 = 9", "options": ["5", "13", "-5", "36"], "correctAnswer": "13", "difficulty": 0.2, "explanation": "Add 4 to both sides: x = 9 + 4 = 13.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: 3x = 18", "options": ["15", "6", "21", "54"], "correctAnswer": "6", "difficulty": 0.3, "explanation": "Divide both sides by 3: x = 18 / 3 = 6.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: x / 4 = 5", "options": ["20", "9", "1.25", "1"], "correctAnswer": "20", "difficulty": 0.3, "explanation": "Multiply both sides by 4: x = 5 x 4 = 20.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: x + 12 = 7", "options": ["19", "-5", "5", "-19"], "correctAnswer": "-5", "difficulty": 0.5, "explanation": "Subtract 12 from both sides: x = 7 - 12 = -5.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: x - 8 = -3", "options": ["-11", "-5", "5", "11"], "correctAnswer": "5", "difficulty": 0.5, "explanation": "Add 8 to both sides: x = -3 + 8 = 5.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: -2x = 14", "options": ["7", "-7", "12", "-12"], "correctAnswer": "-7", "difficulty": 0.6, "explanation": "Divide both sides by -2: x = 14 / -2 = -7.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: 5x = -35", "options": ["7", "-7", "-30", "-40"], "correctAnswer": "-7", "difficulty": 0.6, "explanation": "Divide both sides by 5: x = -35 / 5 = -7.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: 0.5x = 9", "options": ["4.5", "18", "8.5", "9.5"], "correctAnswer": "18", "difficulty": 0.7, "explanation": "Divide both sides by 0.5 (or multiply by 2): x = 18.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: x / -3 = 6", "options": ["-2", "2", "18", "-18"], "correctAnswer": "-18", "difficulty": 0.7, "explanation": "Multiply both sides by -3: x = 6 x -3 = -18.", "reviewed": false, "reviewedBy": "" },
++    { "content": "Solve: x + 3/4 = 2", "options": ["5/4", "2 3/4", "1/4", "3/2"], "correctAnswer": "5/4", "difficulty": 0.8, "explanation": "Subtract 3/4 from both sides: x = 2 - 3/4 = 8/4 - 3/4 = 5/4.", "reviewed": false, "reviewedBy": "" }
++  ]
++}
+diff --git a/backend/package.json b/backend/package.json
+index 813a748..0fb5fa4 100644
+--- a/backend/package.json
++++ b/backend/package.json
+@@ -16,7 +16,8 @@
+     "test:watch": "jest --watch",
+     "test:cov": "jest --coverage",
+     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+-    "test:e2e": "jest --config ./test/jest-e2e.json"
++    "test:e2e": "jest --config ./test/jest-e2e.json",
++    "import:items": "ts-node prisma/import-item-bank.ts"
+   },
+   "prisma": {
+     "seed": "ts-node prisma/seed.ts"
+@@ -94,4 +95,4 @@
+     "coverageDirectory": "../coverage",
+     "testEnvironment": "node"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/backend/prisma/import-item-bank.ts b/backend/prisma/import-item-bank.ts
+new file mode 100644
+index 0000000..0a84516
+--- /dev/null
++++ b/backend/prisma/import-item-bank.ts
+@@ -0,0 +1,56 @@
++/**
++ * Usage: npx ts-node prisma/import-item-bank.ts content/item-bank/<file>.json [--allow-unreviewed]
++ * Imports teacher-reviewed items into the Question table with source = "BANK".
++ * Refuses unreviewed items unless --allow-unreviewed is passed (use only on a dev database).
++ */
++import { PrismaClient } from '@prisma/client';
++import * as fs from 'fs';
++import { validateBankFile } from '../src/practice/item-bank';
++
++async function main() {
++  const [path, ...flags] = process.argv.slice(2);
++  if (!path) throw new Error('Provide a path to an item-bank JSON file.');
++  const allowUnreviewed = flags.includes('--allow-unreviewed');
++  const file = JSON.parse(fs.readFileSync(path, 'utf8'));
++  const errors = validateBankFile(file, allowUnreviewed);
++  if (errors.length) {
++    console.error('Item bank rejected:\n - ' + errors.join('\n - '));
++    process.exit(1);
++  }
++  const prisma = new PrismaClient();
++  try {
++    const subject = await prisma.subject.upsert({
++      where: { name: file.subject },
++      update: {},
++      create: { name: file.subject, description: file.subjectDescription ?? null },
++    });
++    let topic = await prisma.topic.findFirst({ where: { subjectId: subject.id, title: file.topic } });
++    if (!topic) {
++      topic = await prisma.topic.create({
++        data: { title: file.topic, description: file.topicDescription ?? null, subjectId: subject.id },
++      });
++    }
++    let created = 0;
++    for (const it of file.items) {
++      const exists = await prisma.question.findFirst({ where: { topicId: topic.id, source: 'BANK', content: it.content } });
++      if (exists) continue;
++      await prisma.question.create({
++        data: {
++          topicId: topic.id,
++          content: it.content,
++          type: 'MCQ',
++          difficulty: it.difficulty,
++          options: JSON.stringify(it.options),
++          correctAnswer: it.correctAnswer,
++          explanation: it.explanation,
++          source: 'BANK',
++        },
++      });
++      created++;
++    }
++    console.log(`Imported ${created} new item(s) into "${file.subject} / ${file.topic}" (${file.items.length - created} already present).`);
++  } finally {
++    await prisma.$disconnect();
++  }
++}
++main().catch((e) => { console.error(e); process.exit(1); });
+diff --git a/backend/src/practice/item-bank.spec.ts b/backend/src/practice/item-bank.spec.ts
+new file mode 100644
+index 0000000..8623bb2
+--- /dev/null
++++ b/backend/src/practice/item-bank.spec.ts
+@@ -0,0 +1,30 @@
++import * as fs from 'fs';
++import * as path from 'path';
++import { validateBankFile, validateBankItem } from './item-bank';
++
++const good = { content: 'Solve: x + 5 = 12', options: ['7', '17', '-7', '5'], correctAnswer: '7', difficulty: 0.2, explanation: 'Subtract 5.', reviewed: true, reviewedBy: 'Ms. Rao' };
++
++describe('item bank validation', () => {
++  it('accepts a complete, reviewed item', () => {
++    expect(validateBankItem(good, 0)).toEqual([]);
++  });
++  it('rejects unreviewed items unless explicitly allowed', () => {
++    const draft = { ...good, reviewed: false, reviewedBy: '' };
++    expect(validateBankItem(draft, 0).length).toBeGreaterThan(0);
++    expect(validateBankItem(draft, 0, true)).toEqual([]);
++  });
++  it('catches a correct answer that is not among the options', () => {
++    expect(validateBankItem({ ...good, correctAnswer: '8' }, 0).join()).toMatch(/correctAnswer/);
++  });
++  it('catches duplicate options, wrong option count, bad difficulty, and a missing explanation', () => {
++    expect(validateBankItem({ ...good, options: ['7', '7', '1', '2'] }, 0).join()).toMatch(/unique/);
++    expect(validateBankItem({ ...good, options: ['7', '1'] }, 0).join()).toMatch(/4 options/);
++    expect(validateBankItem({ ...good, difficulty: 2 }, 0).join()).toMatch(/difficulty/);
++    expect(validateBankItem({ ...good, explanation: '' }, 0).join()).toMatch(/explanation/);
++  });
++  it('the shipped SAMPLE file is structurally valid but is blocked by the review gate', () => {
++    const file = JSON.parse(fs.readFileSync(path.join(__dirname, '../../content/item-bank/one-step-equations.SAMPLE.json'), 'utf8'));
++    expect(validateBankFile(file, true)).toEqual([]);
++    expect(validateBankFile(file, false).length).toBeGreaterThan(0);
++  });
++});
+diff --git a/backend/src/practice/item-bank.ts b/backend/src/practice/item-bank.ts
+new file mode 100644
+index 0000000..03fcd57
+--- /dev/null
++++ b/backend/src/practice/item-bank.ts
+@@ -0,0 +1,51 @@
++/** Validation rules for teacher-reviewed question items (pure functions, no database). */
++export interface BankItem {
++  content: string;
++  options: string[];
++  correctAnswer: string;
++  difficulty: number; // 0.1 (easiest) .. 1.0 (hardest)
++  explanation: string;
++  reviewed?: boolean;
++  reviewedBy?: string;
++}
++
++export function validateBankItem(item: any, index: number, allowUnreviewed = false): string[] {
++  const errors: string[] = [];
++  const at = `item ${index + 1}`;
++  if (!item || typeof item !== 'object') return [`${at}: not an object`];
++  if (typeof item.content !== 'string' || !item.content.trim()) errors.push(`${at}: content is required`);
++  if (!Array.isArray(item.options) || item.options.length !== 4) {
++    errors.push(`${at}: exactly 4 options are required`);
++  } else {
++    const trimmed = item.options.map((o: any) => (typeof o === 'string' ? o.trim() : ''));
++    if (trimmed.some((o: string) => !o)) errors.push(`${at}: options must be non-empty strings`);
++    if (new Set(trimmed).size !== trimmed.length) errors.push(`${at}: options must be unique`);
++    if (!trimmed.includes(typeof item.correctAnswer === 'string' ? item.correctAnswer.trim() : '')) {
++      errors.push(`${at}: correctAnswer must exactly match one of the options`);
++    }
++  }
++  if (typeof item.difficulty !== 'number' || item.difficulty < 0.1 || item.difficulty > 1.0) {
++    errors.push(`${at}: difficulty must be a number between 0.1 and 1.0`);
++  }
++  if (typeof item.explanation !== 'string' || !item.explanation.trim()) {
++    errors.push(`${at}: explanation is required (students see it after answering)`);
++  }
++  if (!allowUnreviewed) {
++    if (item.reviewed !== true) errors.push(`${at}: not marked reviewed:true`);
++    if (typeof item.reviewedBy !== 'string' || !item.reviewedBy.trim()) errors.push(`${at}: reviewedBy (teacher name) is required`);
++  }
++  return errors;
++}
++
++export function validateBankFile(file: any, allowUnreviewed = false): string[] {
++  const errors: string[] = [];
++  for (const key of ['subject', 'topic']) {
++    if (typeof file?.[key] !== 'string' || !file[key].trim()) errors.push(`file: "${key}" is required`);
++  }
++  if (!Array.isArray(file?.items) || file.items.length === 0) {
++    errors.push('file: "items" must be a non-empty array');
++    return errors;
++  }
++  file.items.forEach((it: any, i: number) => errors.push(...validateBankItem(it, i, allowUnreviewed)));
++  return errors;
++}
+-- 
+2.43.0
+

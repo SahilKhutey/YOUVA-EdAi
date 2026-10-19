@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VerifiableParentalConsentRecord",
+  "type": "object",
+  "required": [
+    "consentId",
+    "parentId",
+    "studentId",
+    "consentType",
+    "status",
+    "version",
+    "verificationMethod"
+  ],
+  "properties": {
+    "consentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "parentId": {
+      "type": "string"
+    },
+    "studentId": {
+      "type": "string"
+    },
+    "consentType": {
+      "type": "string",
+      "enum": [
+        "LEARNING_SERVICE",
+        "AI_ASSISTANCE",
+        "PERSONALIZATION",
+        "PARENT_PROGRESS_VISIBILITY",
+        "COMMUNICATION",
+        "OPTIONAL_ANALYTICS"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING", "VERIFIED", "REVOKED", "PURGED"]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "verificationMethod": {
+      "type": "string",
+      "enum": ["OTP_SMS", "OTP_EMAIL", "DIGILOCKER_ID", "GOVERNMENT_ID"]
+    },
+    "verificationTimestamp": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "evidenceToken": {
+      "type": ["string", "null"]
+    },
+    "revokedAt": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "purgeScheduledAt": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "purgedAt": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

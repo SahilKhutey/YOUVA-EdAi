@@ -1,0 +1,38 @@
+From ffdb456b20e41f88426fdcb19f32637ff31c7039 Mon Sep 17 00:00:00 2001
+From: phase5-fixes <phase5@example.invalid>
+Date: Thu, 15 Oct 2026 03:20:34 +0000
+Subject: [PATCH 4/4] docs: update truth baseline for Phase 5 (142 tests)
+
+---
+ docs/TRUTH_BASELINE.md | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/docs/TRUTH_BASELINE.md b/docs/TRUTH_BASELINE.md
+index 88095a6..bd0098d 100644
+--- a/docs/TRUTH_BASELINE.md
++++ b/docs/TRUTH_BASELINE.md
+@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ |---|---|
+ | Files tracked | 381 (was 1,425 on main) |
+ | Backend TypeScript errors | 0 (was 29 at base) |
+-| Unit test suites | 54 passed of 54 (excluding prisma.service.spec, which needs a DB engine) |
+-| Unit tests | 135 passed, 0 failed |
++| Unit test suites | 56 passed of 56 (excluding prisma.service.spec, which needs a DB engine) |
++| Unit tests | 142 passed, 0 failed |
+ | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
+ | Schema models / migrations | 53 / 4 |
+ 
+@@ -40,3 +40,10 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ - `npm run pilot:report` builds the numbers from the database (typechecked, NOT run against a real database). It cannot describe what happened in the room.
+ - `durationSeconds` is now recorded on submit. Parent data-access export added (2 tests).
+ - NOT verified: the report script against a real Postgres; any real pilot data exists yet.
++
++## Phase 5 additions (measured)
++- Whole-application boot test (dependency graph with a stubbed database): fails when a provider is missing (checked by removing one), passes when restored.
++- Claims check (6 tests) runs over README, docs, MVP_SCOPE and AGENTS; it passes on the current repo and caught a wrongly worded sentence in the new README while it was being written.
++- Frontend: `tsc --noEmit` reports 0 errors. A production build could not be completed in the sandbox (Google Fonts download blocked); the CI workflow will run it.
++- Route usage (static grep of `api.*` calls): the existing UI calls forum, scheduling, goals, announcements, credentials, AI mentor and more; it does not call the teacher override, consent, or learning-loop endpoints. Notifications and feedback use `fetch` and are not counted by that grep.
++- NOT verified: the CI workflow has not run on GitHub; real Postgres; real pilot data.
+-- 
+2.43.0
+

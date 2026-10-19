@@ -1,0 +1,232 @@
+{
+  "pilotId": "PILOT-DPS-G10-2026-02",
+  "tier": "HIGH_SCHOOL",
+  "grade": "Grade 10",
+  "institution": {
+    "name": "Delhi Public School",
+    "campus": "Sector XII, R.K. Puram",
+    "city": "New Delhi",
+    "cbseAffiliationNumber": "CBSE-AFF-2730017"
+  },
+  "startDate": "2026-08-25",
+  "endDate": "2026-09-08",
+  "teachers": [
+    {
+      "teacherId": "TCH-DPS-101",
+      "name": "Dr. Anita Deshmukh",
+      "role": "Senior Mathematics Faculty",
+      "emailDomain": "dpsrkp.net",
+      "overrideCertified": true
+    },
+    {
+      "teacherId": "TCH-DPS-102",
+      "name": "Mr. Rajesh Nair",
+      "role": "Head of Mathematics Department",
+      "emailDomain": "dpsrkp.net",
+      "overrideCertified": true
+    }
+  ],
+  "cohortSize": 25,
+  "students": [
+    {
+      "studentToken": "anon_a1b2c3d4e5f6",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:15:00Z",
+      "consentHmacSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "studentToken": "anon_b2c3d4e5f6a1",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:16:00Z",
+      "consentHmacSha256": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb"
+    },
+    {
+      "studentToken": "anon_c3d4e5f6a1b2",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:17:00Z",
+      "consentHmacSha256": "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+    },
+    {
+      "studentToken": "anon_d4e5f6a1b2c3",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:18:00Z",
+      "consentHmacSha256": "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a"
+    },
+    {
+      "studentToken": "anon_e5f6a1b2c3d4",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:19:00Z",
+      "consentHmacSha256": "ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d"
+    },
+    {
+      "studentToken": "anon_f6a1b2c3d4e5",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:20:00Z",
+      "consentHmacSha256": "e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919683"
+    },
+    {
+      "studentToken": "anon_1a2b3c4d5e6f",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:21:00Z",
+      "consentHmacSha256": "7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451"
+    },
+    {
+      "studentToken": "anon_2b3c4d5e6f1a",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:22:00Z",
+      "consentHmacSha256": "2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3"
+    },
+    {
+      "studentToken": "anon_3c4d5e6f1a2b",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:23:00Z",
+      "consentHmacSha256": "19581e27de7ced00ff1ce50b2047e7a567c76b1cbaebabe5ef03f7c3017bb5b7"
+    },
+    {
+      "studentToken": "anon_4d5e6f1a2b3c",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:24:00Z",
+      "consentHmacSha256": "4a44dc15364204a80fe80e9039455cc1608281820fe2b24f1e5233ade6af1dd5"
+    },
+    {
+      "studentToken": "anon_5e6f1a2b3c4d",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:25:00Z",
+      "consentHmacSha256": "ad3478d69996a2ec8420f611e8202382fb52e5d80a02ce8018a7d405a3055725"
+    },
+    {
+      "studentToken": "anon_6f1a2b3c4d5e",
+      "section": "10-A",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:26:00Z",
+      "consentHmacSha256": "c0535e4be2b79ffd93291305436bf889314e4a3faec05ecffcbb7ff310919046"
+    },
+    {
+      "studentToken": "anon_7a8b9c0d1e2f",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:27:00Z",
+      "consentHmacSha256": "5f4dcc3b5aa765d61d8327deb882cf992b96efe7a0dd986d34e8f7a637537b0b"
+    },
+    {
+      "studentToken": "anon_8b9c0d1e2f7a",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:28:00Z",
+      "consentHmacSha256": "b03ddf3ca2e714a6548e7495e2a03f5e824eaac9837cd7f932c6325f79577123"
+    },
+    {
+      "studentToken": "anon_9c0d1e2f7a8b",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:29:00Z",
+      "consentHmacSha256": "7815696ecbf1c96e6894b779456d330e386371125601132ac14f5d9444e26150"
+    },
+    {
+      "studentToken": "anon_0d1e2f7a8b9c",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:30:00Z",
+      "consentHmacSha256": "5a105e8b9d40e1329780d62ea2265d8a12acaea1345d315f60dc8a59489679ab"
+    },
+    {
+      "studentToken": "anon_1e2f7a8b9c0d",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:31:00Z",
+      "consentHmacSha256": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"
+    },
+    {
+      "studentToken": "anon_2f7a8b9c0d1e",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:32:00Z",
+      "consentHmacSha256": "0ffe1abd1a08215353c233d6e009613e95eec4253832a761af28ff37ac5a150c"
+    },
+    {
+      "studentToken": "anon_3a4b5c6d7e8f",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:33:00Z",
+      "consentHmacSha256": "a3b04c2ae2b1e2c694a50098ba43e498c538abcf021b3a62886f4cfab3ff9d7d"
+    },
+    {
+      "studentToken": "anon_4b5c6d7e8f3a",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:34:00Z",
+      "consentHmacSha256": "9b128532454cc5b682338b1f5997230489aa6b0df44d673f550ee979eb11c6d8"
+    },
+    {
+      "studentToken": "anon_5c6d7e8f3a4b",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:35:00Z",
+      "consentHmacSha256": "ec2c2a0752538e154ab17a421bcab95a975765799986b2feea0667e2a4bebe78"
+    },
+    {
+      "studentToken": "anon_6d7e8f3a4b5c",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:36:00Z",
+      "consentHmacSha256": "099a382b1049339f4d1e2a9b343ee06bf9a0988e0ff53860bb4a2d39aa4aa625"
+    },
+    {
+      "studentToken": "anon_7e8f3a4b5c6d",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:37:00Z",
+      "consentHmacSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "studentToken": "anon_8f3a4b5c6d7e",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:38:00Z",
+      "consentHmacSha256": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed17ab80d76c974c0c3b9b4f26"
+    },
+    {
+      "studentToken": "anon_9a0b1c2d3e4f",
+      "section": "10-B",
+      "grade": "Grade 10",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-08-24T09:39:00Z",
+      "consentHmacSha256": "81dc9bdb52d04dc20036dbd8313ed0557c66dc8ac89f8d16858e928236bb5f44"
+    }
+  ]
+}

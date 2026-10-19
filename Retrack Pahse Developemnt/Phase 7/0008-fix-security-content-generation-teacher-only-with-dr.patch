@@ -1,0 +1,366 @@
+From 2b042633f38d8bf2f2e295b875395df2a48a1108 Mon Sep 17 00:00:00 2001
+From: phase7-fixes <phase7@example.invalid>
+Date: Sat, 17 Oct 2026 09:17:54 +0000
+Subject: [PATCH 8/9] fix(security): content generation teacher-only with draft
+ ownership; project assign/evaluate scoped and AI-gated; audit trail scoped
+ for teachers (+5 tests)
+
+---
+ .../assessment-intelligence.controller.ts     | 21 +++++++--
+ .../assessment-intelligence.module.ts         |  3 +-
+ .../assessment-intelligence.service.ts        | 11 ++++-
+ .../src/content-gen/content-gen.controller.ts | 10 +++-
+ backend/src/content-gen/ownership.spec.ts     | 46 +++++++++++++++++++
+ .../prompt-orchestrator.service.ts            |  6 ++-
+ .../learning-loop.controller.spec.ts          | 14 ++++++
+ .../learning-loop/learning-loop.controller.ts |  6 +++
+ .../src/learning-loop/learning-loop.module.ts |  3 +-
+ backend/src/security/route-coverage.spec.ts   | 14 ++++++
+ 10 files changed, 123 insertions(+), 11 deletions(-)
+ create mode 100644 backend/src/content-gen/ownership.spec.ts
+
+diff --git a/backend/src/assessment-intelligence/assessment-intelligence.controller.ts b/backend/src/assessment-intelligence/assessment-intelligence.controller.ts
+index c55971c..2313b5c 100644
+--- a/backend/src/assessment-intelligence/assessment-intelligence.controller.ts
++++ b/backend/src/assessment-intelligence/assessment-intelligence.controller.ts
+@@ -1,16 +1,28 @@
+ import { Controller, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
+ import { AssessmentIntelligenceService } from './assessment-intelligence.service';
+ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
++import { RolesGuard } from '../auth/roles.guard';
++import { Roles } from '../auth/roles.decorator';
++import { Role } from '../auth/role.enum';
++import { AiFeaturesGuard } from '../common/guards/ai-features.guard';
++import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
+ 
+ @Controller('assessment-intelligence')
+-@UseGuards(JwtAuthGuard)
++@UseGuards(JwtAuthGuard, RolesGuard)
+ export class AssessmentIntelligenceController {
+-    constructor(private readonly assessmentService: AssessmentIntelligenceService) { }
++    constructor(
++        private readonly assessmentService: AssessmentIntelligenceService,
++        private readonly scope: ScopeAuthorizationService,
++    ) { }
+ 
++    /** Teachers assign projects, and only to students in their own class (admins to anyone). */
++    @Roles(Role.TEACHER, Role.ADMIN)
+     @Post('assign')
+     async assignProject(
++        @Req() req: any,
+         @Body() body: { userId: string; topicId: string; prompt: string; gradingRubric: string }
+     ) {
++        if (req.user.role !== Role.ADMIN) await this.scope.assertTeacherStudentScope(req.user.id, body.userId);
+         return this.assessmentService.assignProject(
+             body.userId,
+             body.topicId,
+@@ -19,11 +31,14 @@ export class AssessmentIntelligenceController {
+         );
+     }
+ 
++    /** Sends the submission to the AI, so it is off unless ENABLE_AI_FEATURES=true; the project's student, their teacher, or an admin only. */
++    @UseGuards(AiFeaturesGuard)
+     @Post('evaluate/:id')
+     async evaluateSubmission(
++        @Req() req: any,
+         @Param('id') projectId: string,
+         @Body('submissionContent') submissionContent: string
+     ) {
+-        return this.assessmentService.evaluateSubmission(projectId, submissionContent);
++        return this.assessmentService.evaluateSubmission(projectId, submissionContent, { id: req.user.id, role: req.user.role });
+     }
+ }
+diff --git a/backend/src/assessment-intelligence/assessment-intelligence.module.ts b/backend/src/assessment-intelligence/assessment-intelligence.module.ts
+index dc25c74..712a0b6 100644
+--- a/backend/src/assessment-intelligence/assessment-intelligence.module.ts
++++ b/backend/src/assessment-intelligence/assessment-intelligence.module.ts
+@@ -4,9 +4,10 @@ import { AssessmentIntelligenceController } from './assessment-intelligence.cont
+ import { PrismaModule } from '../prisma/prisma.module';
+ import { AiModule } from '../ai/ai.module';
+ import { CredentialMeshModule } from '../credential-mesh/credential-mesh.module';
++import { AuthModule } from '../auth/auth.module';
+ 
+ @Module({
+-    imports: [PrismaModule, AiModule, CredentialMeshModule],
++    imports: [PrismaModule, AiModule, CredentialMeshModule, AuthModule],
+     controllers: [AssessmentIntelligenceController],
+     providers: [AssessmentIntelligenceService],
+     exports: [AssessmentIntelligenceService],
+diff --git a/backend/src/assessment-intelligence/assessment-intelligence.service.ts b/backend/src/assessment-intelligence/assessment-intelligence.service.ts
+index 0e45520..74ec695 100644
+--- a/backend/src/assessment-intelligence/assessment-intelligence.service.ts
++++ b/backend/src/assessment-intelligence/assessment-intelligence.service.ts
+@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
+ import { PrismaService } from '../prisma/prisma.service';
+ import { AiService } from '../ai/ai.service';
+ import { CredentialMeshService } from '../credential-mesh/credential-mesh.service';
++import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
+ 
+ /**
+  * Handles continuous, embedded, and project-based AI assessments.
+@@ -11,7 +12,8 @@ export class AssessmentIntelligenceService {
+     constructor(
+         private prisma: PrismaService,
+         private aiService: AiService,
+-        private credentialMesh: CredentialMeshService
++        private credentialMesh: CredentialMeshService,
++        private scope: ScopeAuthorizationService,
+     ) { }
+ 
+     /**
+@@ -32,13 +34,18 @@ export class AssessmentIntelligenceService {
+      * The AI evaluates a submitted project, scoring logic and originality.
+      * If the student passes spectacularly, a Skill Credential is minted.
+      */
+-    async evaluateSubmission(projectId: string, submissionContent: string) {
++    async evaluateSubmission(projectId: string, submissionContent: string, actor: { id: string; role: string }) {
+         const project = await this.prisma.assessmentProject.findUnique({
+             where: { id: projectId },
+             include: { topic: true }
+         });
+ 
+         if (!project) throw new NotFoundException('Project not found');
++        // The student it was assigned to, a teacher of that student, or an admin.
++        if (project.userId !== actor.id && actor.role !== 'ADMIN') {
++            if (actor.role !== 'TEACHER') throw new NotFoundException('Project not found');
++            await this.scope.assertTeacherStudentScope(actor.id, project.userId);
++        }
+ 
+         // AI grading prompt evaluating Logic Trees and Originality against the Rubric
+         const evalPrompt = "You are an expert AI Examiner evaluating a complex project submission.\n" +
+diff --git a/backend/src/content-gen/content-gen.controller.ts b/backend/src/content-gen/content-gen.controller.ts
+index bd5371a..c514238 100644
+--- a/backend/src/content-gen/content-gen.controller.ts
++++ b/backend/src/content-gen/content-gen.controller.ts
+@@ -1,9 +1,14 @@
+ import { Controller, Post, Body, Req, UseGuards, Put, Param, Get } from '@nestjs/common';
+ import { PromptOrchestratorService } from './services/prompt-orchestrator/prompt-orchestrator.service';
+ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
++import { RolesGuard } from '../auth/roles.guard';
++import { Roles } from '../auth/roles.decorator';
++import { Role } from '../auth/role.enum';
+ 
++// Content generation is a teacher tool: students could otherwise send their own text to the AI.
+ @Controller('content-gen')
+-@UseGuards(JwtAuthGuard)
++@UseGuards(JwtAuthGuard, RolesGuard)
++@Roles(Role.TEACHER, Role.ADMIN)
+ export class ContentGenController {
+     constructor(private promptOrchestrator: PromptOrchestratorService) { }
+ 
+@@ -33,9 +38,10 @@ export class ContentGenController {
+ 
+     @Put('publish/:draftId')
+     async approveAndPublish(
++        @Req() req: any,
+         @Param('draftId') draftId: string,
+         @Body('overrides') overrides: any
+     ) {
+-        return this.promptOrchestrator.publishContent(draftId, overrides);
++        return this.promptOrchestrator.publishContent(draftId, overrides, { id: req.user.id, role: req.user.role });
+     }
+ }
+diff --git a/backend/src/content-gen/ownership.spec.ts b/backend/src/content-gen/ownership.spec.ts
+new file mode 100644
+index 0000000..b598638
+--- /dev/null
++++ b/backend/src/content-gen/ownership.spec.ts
+@@ -0,0 +1,46 @@
++import { ForbiddenException, NotFoundException } from '@nestjs/common';
++import { PromptOrchestratorService } from './services/prompt-orchestrator/prompt-orchestrator.service';
++import { AssessmentIntelligenceService } from '../assessment-intelligence/assessment-intelligence.service';
++
++describe('content publishing ownership', () => {
++  function setup() {
++    const prisma: any = { generatedContent: {
++      findUnique: jest.fn(async ({ where }: any) => (where.id === 'd1' ? { id: 'd1', teacherId: 't1' } : null)),
++      update: jest.fn(async ({ data }: any) => data),
++    } };
++    const svc = new PromptOrchestratorService(prisma, {} as any, {} as any);
++    return { prisma, svc };
++  }
++  it('lets only the author or an admin publish, and never writes for anyone else', async () => {
++    const { svc, prisma } = setup();
++    await expect(svc.publishContent('d1', { x: 1 }, { id: 't2', role: 'TEACHER' })).rejects.toBeInstanceOf(ForbiddenException);
++    await expect(svc.publishContent('d1', { x: 1 }, { id: 's1', role: 'STUDENT' })).rejects.toBeInstanceOf(ForbiddenException);
++    expect(prisma.generatedContent.update).not.toHaveBeenCalled();
++    await svc.publishContent('d1', { x: 1 }, { id: 't1', role: 'TEACHER' });
++    await svc.publishContent('d1', { x: 1 }, { id: 'a1', role: 'ADMIN' });
++    expect(prisma.generatedContent.update).toHaveBeenCalledTimes(2);
++    await expect(svc.publishContent('nope', {}, { id: 't1', role: 'TEACHER' })).rejects.toBeInstanceOf(NotFoundException);
++  });
++});
++
++describe('project evaluation ownership', () => {
++  function setup() {
++    const prisma: any = { assessmentProject: { findUnique: jest.fn(async () => ({ id: 'p1', userId: 's1', topic: { title: 'T' }, prompt: 'p', gradingRubric: 'r' })) } };
++    const ai = { generateText: jest.fn(async () => { throw new Error('stop after the access check'); }) };
++    const scope: any = { assertTeacherStudentScope: jest.fn(async (t: string) => { if (t !== 't1') throw new ForbiddenException(); }) };
++    return { svc: new AssessmentIntelligenceService(prisma, ai as any, {} as any, scope), ai, scope };
++  }
++  it('refuses a different student and an out-of-scope teacher before anything is sent to the AI', async () => {
++    const { svc, ai } = setup();
++    await expect(svc.evaluateSubmission('p1', 'text', { id: 's2', role: 'STUDENT' })).rejects.toBeInstanceOf(NotFoundException);
++    await expect(svc.evaluateSubmission('p1', 'text', { id: 't2', role: 'TEACHER' })).rejects.toBeInstanceOf(ForbiddenException);
++    expect(ai.generateText).not.toHaveBeenCalled();
++  });
++  it('lets the assigned student, their teacher and an admin reach the evaluation step', async () => {
++    for (const actor of [{ id: 's1', role: 'STUDENT' }, { id: 't1', role: 'TEACHER' }, { id: 'a1', role: 'ADMIN' }]) {
++      const { svc, ai } = setup();
++      await svc.evaluateSubmission('p1', 'text', actor).catch(() => undefined);
++      expect(ai.generateText).toHaveBeenCalled();
++    }
++  });
++});
+diff --git a/backend/src/content-gen/services/prompt-orchestrator/prompt-orchestrator.service.ts b/backend/src/content-gen/services/prompt-orchestrator/prompt-orchestrator.service.ts
+index 8e01887..2749e59 100644
+--- a/backend/src/content-gen/services/prompt-orchestrator/prompt-orchestrator.service.ts
++++ b/backend/src/content-gen/services/prompt-orchestrator/prompt-orchestrator.service.ts
+@@ -1,4 +1,4 @@
+-import { Injectable, NotFoundException } from '@nestjs/common';
++import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+ import { PrismaService } from '../../../prisma/prisma.service';
+ import { AiService } from '../../../ai/ai.service';
+ import { PedagogicalCoreService } from '../../../agei/pedagogical-core/pedagogical-core.service';
+@@ -86,10 +86,12 @@ export class PromptOrchestratorService {
+         }
+     }
+ 
+-    async publishContent(draftId: string, overrides: any) {
++    async publishContent(draftId: string, overrides: any, actor: { id: string; role: string }) {
+         // Overrides allows the teacher to save their edits from the Human Review Panel
+         const existing = await this.prisma.generatedContent.findUnique({ where: { id: draftId } });
+         if (!existing) throw new NotFoundException('Draft not found');
++        // Only the teacher who generated the draft (or an admin) may edit and publish it.
++        if (existing.teacherId !== actor.id && actor.role !== 'ADMIN') throw new ForbiddenException('You do not own this draft.');
+ 
+         return this.prisma.generatedContent.update({
+             where: { id: draftId },
+diff --git a/backend/src/learning-loop/learning-loop.controller.spec.ts b/backend/src/learning-loop/learning-loop.controller.spec.ts
+index 411ee14..d2732a0 100644
+--- a/backend/src/learning-loop/learning-loop.controller.spec.ts
++++ b/backend/src/learning-loop/learning-loop.controller.spec.ts
+@@ -1,3 +1,4 @@
++import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
+ import { Test, TestingModule } from '@nestjs/testing';
+ import { LearningLoopController } from './learning-loop.controller';
+ import { LearningLoopService } from './learning-loop.service';
+@@ -8,6 +9,8 @@ import { ForbiddenException } from '@nestjs/common';
+ import { Role } from '../auth/role.enum';
+ import { InterventionAction, ActivityType } from './domain/enums';
+ 
++let scopeAuth: any;
++
+ describe('LearningLoopController', () => {
+   let controller: LearningLoopController;
+   let learningLoopService: any;
+@@ -36,6 +39,8 @@ describe('LearningLoopController', () => {
+       getStudentAuditTrail: jest.fn().mockResolvedValue([]),
+     };
+ 
++    scopeAuth = { assertTeacherStudentScope: jest.fn().mockResolvedValue(true) };
++
+     const module: TestingModule = await Test.createTestingModule({
+       controllers: [LearningLoopController],
+       providers: [
+@@ -43,6 +48,7 @@ describe('LearningLoopController', () => {
+         { provide: TeacherInterventionService, useValue: teacherInterventionService },
+         { provide: EscalationStateMachineService, useValue: escalationStateMachine },
+         { provide: LearningLoopAuditService, useValue: auditService },
++        { provide: ScopeAuthorizationService, useValue: scopeAuth },
+       ],
+     }).compile();
+ 
+@@ -50,6 +56,14 @@ describe('LearningLoopController', () => {
+   });
+ 
+   describe('Authorization & Scoping Tests', () => {
++    it('lets a teacher read an audit trail only for a student in their scope', async () => {
++      const teacherReq = { user: { id: 'teacher-1', role: Role.TEACHER } };
++      await controller.getAuditTrail(teacherReq, 'student-1');
++      expect(scopeAuth.assertTeacherStudentScope).toHaveBeenCalledWith('teacher-1', 'student-1');
++      scopeAuth.assertTeacherStudentScope.mockRejectedValueOnce(new ForbiddenException());
++      await expect(controller.getAuditTrail(teacherReq, 'student-other')).rejects.toThrow(ForbiddenException);
++    });
++
+     it('should reject a student attempting to view another students gate status', async () => {
+       const studentReq = {
+         user: { id: 'student-1', role: Role.STUDENT },
+diff --git a/backend/src/learning-loop/learning-loop.controller.ts b/backend/src/learning-loop/learning-loop.controller.ts
+index ac23ccd..0ef73a4 100644
+--- a/backend/src/learning-loop/learning-loop.controller.ts
++++ b/backend/src/learning-loop/learning-loop.controller.ts
+@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+ import { RolesGuard } from '../auth/roles.guard';
+ import { Roles } from '../auth/roles.decorator';
+ import { Role } from '../auth/role.enum';
++import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
+ import { LearningLoopService } from './learning-loop.service';
+ import { TeacherInterventionService } from './intervention/teacher-intervention.service';
+ import { EscalationStateMachineService } from './escalation/escalation-state-machine.service';
+@@ -32,6 +33,7 @@ export class LearningLoopController {
+     private readonly teacherInterventionService: TeacherInterventionService,
+     private readonly escalationStateMachine: EscalationStateMachineService,
+     private readonly auditService: LearningLoopAuditService,
++    private readonly scopeAuth: ScopeAuthorizationService,
+   ) {}
+ 
+   /**
+@@ -131,6 +133,10 @@ export class LearningLoopController {
+     if (req.user.role === Role.STUDENT && req.user.id !== studentId) {
+       throw new ForbiddenException('Access denied: Students can only view their own audit trail.');
+     }
++    // Teachers can read the trail only for students in their own class or assignment.
++    if (req.user.role === Role.TEACHER) {
++      await this.scopeAuth.assertTeacherStudentScope(req.user.id, studentId);
++    }
+ 
+     return this.auditService.getStudentAuditTrail(studentId);
+   }
+diff --git a/backend/src/learning-loop/learning-loop.module.ts b/backend/src/learning-loop/learning-loop.module.ts
+index 52f153d..ee1b82c 100644
+--- a/backend/src/learning-loop/learning-loop.module.ts
++++ b/backend/src/learning-loop/learning-loop.module.ts
+@@ -1,4 +1,5 @@
+ import { Module } from '@nestjs/common';
++import { AuthModule } from '../auth/auth.module';
+ import { PrismaModule } from '../prisma/prisma.module';
+ import { LearningEngineModule } from '../learning-engine/learning-engine.module';
+ import { LearningLoopController } from './learning-loop.controller';
+@@ -11,7 +12,7 @@ import { TeacherInterventionService } from './intervention/teacher-intervention.
+ import { LearningLoopAuditService } from './audit/learning-loop-audit.service';
+ 
+ @Module({
+-  imports: [PrismaModule, LearningEngineModule],
++  imports: [PrismaModule, LearningEngineModule, AuthModule],
+   controllers: [LearningLoopController],
+   providers: [
+     LearningLoopService,
+diff --git a/backend/src/security/route-coverage.spec.ts b/backend/src/security/route-coverage.spec.ts
+index ddb5143..5a51471 100644
+--- a/backend/src/security/route-coverage.spec.ts
++++ b/backend/src/security/route-coverage.spec.ts
+@@ -44,6 +44,20 @@ describe('route coverage', () => {
+     expect(find('GET', '/consent/student/:studentId/export').roles).toEqual(['TEACHER', 'ADMIN']);
+   });
+ 
++  it('keeps teacher tools and publishing restricted to teachers and admins', () => {
++    const find = (m: string, p: string) => routes.find((r) => r.method === m && r.path === p);
++    const staff = ['TEACHER', 'ADMIN'];
++    for (const [m, p] of [
++      ['POST', '/classroom/session/start'], ['POST', '/classroom/lesson-plan/generate'], ['PUT', '/classroom/lesson-plan/:id/publish'],
++      ['POST', '/classroom/worksheet/generate'], ['PUT', '/classroom/worksheet/:id/publish'],
++      ['PUT', '/content-gen/publish/:draftId'], ['POST', '/content-gen/generate'], ['POST', '/assessment-intelligence/assign'],
++    ]) {
++      expect(find(m, p)?.roles).toEqual(staff);
++    }
++    // the AI-sending evaluation route also needs the AI switch
++    expect(find('POST', '/assessment-intelligence/evaluate/:id')?.guards).toContain('AiFeaturesGuard');
++  });
++
+   it('has no controller class that exists in the code but is silently not registered', () => {
+     // EdgeSyncController is imported in app.module.ts but its module is never added to `imports`, so its routes
+     // do not exist at runtime. It is listed here on purpose; remove it from this list if you register the module.
+-- 
+2.43.0
+

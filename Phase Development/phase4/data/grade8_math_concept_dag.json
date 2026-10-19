@@ -1,0 +1,93 @@
+{
+  "curriculum": "CBSE / NCERT",
+  "subject": "Mathematics",
+  "grade": "Grade 8",
+  "nodes": [
+    {
+      "id": "arithmetic_integers",
+      "title": "Integer Operations & Balancing",
+      "description": "Addition, subtraction, multiplication, and division of signed integers.",
+      "difficultyBand": "FOUNDATIONAL",
+      "standardCode": "CBSE-M8-01"
+    },
+    {
+      "id": "algebraic_expressions",
+      "title": "Algebraic Expressions & Like Terms",
+      "description": "Identifying variables, coefficients, and combining like algebraic terms.",
+      "difficultyBand": "FOUNDATIONAL",
+      "standardCode": "CBSE-M8-02"
+    },
+    {
+      "id": "one_step_linear_equations",
+      "title": "One-Step Linear Equations",
+      "description": "Solving equations of form x + a = b or ax = b using inverse operations.",
+      "difficultyBand": "INTERMEDIATE",
+      "standardCode": "CBSE-M8-03"
+    },
+    {
+      "id": "two_step_linear_equations",
+      "title": "Two-Step Linear Equations",
+      "description": "Solving equations of form ax + b = c by transposing constants then dividing.",
+      "difficultyBand": "INTERMEDIATE",
+      "standardCode": "CBSE-M8-04"
+    },
+    {
+      "id": "variables_on_both_sides",
+      "title": "Linear Equations with Variables on Both Sides",
+      "description": "Solving ax + b = cx + d by transposing variable terms to one side.",
+      "difficultyBand": "INTERMEDIATE",
+      "standardCode": "CBSE-M8-05"
+    },
+    {
+      "id": "linear_equations_with_fractions",
+      "title": "Linear Equations with Fractions / Cross-Multiplication",
+      "description": "Clearing denominators using LCM and cross-multiplying rational expressions.",
+      "difficultyBand": "ADVANCED",
+      "standardCode": "CBSE-M8-06"
+    },
+    {
+      "id": "word_problems_linear_equations",
+      "title": "Applications & Word Problems",
+      "description": "Formulating and solving linear equations from real-world word problems.",
+      "difficultyBand": "ADVANCED",
+      "standardCode": "CBSE-M8-07"
+    }
+  ],
+  "edges": [
+    {
+      "fromNode": "arithmetic_integers",
+      "toNode": "one_step_linear_equations",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "algebraic_expressions",
+      "toNode": "one_step_linear_equations",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "one_step_linear_equations",
+      "toNode": "two_step_linear_equations",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "two_step_linear_equations",
+      "toNode": "variables_on_both_sides",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "variables_on_both_sides",
+      "toNode": "linear_equations_with_fractions",
+      "relationshipType": "RECOMMENDED_PREREQUISITE"
+    },
+    {
+      "fromNode": "variables_on_both_sides",
+      "toNode": "word_problems_linear_equations",
+      "relationshipType": "STRICT_PREREQUISITE"
+    },
+    {
+      "fromNode": "linear_equations_with_fractions",
+      "toNode": "word_problems_linear_equations",
+      "relationshipType": "RECOMMENDED_PREREQUISITE"
+    }
+  ]
+}

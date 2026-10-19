@@ -1,0 +1,317 @@
+From 2e1adcae05d08d43c8b22940b9c711cc52abfdd3 Mon Sep 17 00:00:00 2001
+From: phase4-fixes <phase4@example.invalid>
+Date: Wed, 14 Oct 2026 03:07:03 +0000
+Subject: [PATCH 1/4] feat(pilot): metrics (completion, per-student change,
+ item analysis, overrides, pre-set targets) and a report script that builds
+ the numbers from the database with pseudonyms (+9 tests)
+
+---
+ backend/package.json                     |  3 +-
+ backend/prisma/pilot-report.ts           | 93 ++++++++++++++++++++++++
+ backend/src/pilot/pilot-metrics.spec.ts  | 67 +++++++++++++++++
+ backend/src/pilot/pilot-metrics.ts       | 90 +++++++++++++++++++++++
+ docs/pilot/success-measures.example.json |  7 ++
+ 5 files changed, 259 insertions(+), 1 deletion(-)
+ create mode 100644 backend/prisma/pilot-report.ts
+ create mode 100644 backend/src/pilot/pilot-metrics.spec.ts
+ create mode 100644 backend/src/pilot/pilot-metrics.ts
+ create mode 100644 docs/pilot/success-measures.example.json
+
+diff --git a/backend/package.json b/backend/package.json
+index 0fb5fa4..1b6faa1 100644
+--- a/backend/package.json
++++ b/backend/package.json
+@@ -17,7 +17,8 @@
+     "test:cov": "jest --coverage",
+     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+     "test:e2e": "jest --config ./test/jest-e2e.json",
+-    "import:items": "ts-node prisma/import-item-bank.ts"
++    "import:items": "ts-node prisma/import-item-bank.ts",
++    "pilot:report": "ts-node prisma/pilot-report.ts"
+   },
+   "prisma": {
+     "seed": "ts-node prisma/seed.ts"
+diff --git a/backend/prisma/pilot-report.ts b/backend/prisma/pilot-report.ts
+new file mode 100644
+index 0000000..dcc7c9c
+--- /dev/null
++++ b/backend/prisma/pilot-report.ts
+@@ -0,0 +1,93 @@
++/**
++ * Usage: npx ts-node prisma/pilot-report.ts --topic "One-Step Equations" [--from 2026-10-20] [--to 2026-11-10]
++ *                                          [--measures ../docs/pilot/success-measures.json] [--out ../docs/PILOT_REPORT_NUMBERS.md]
++ * Builds the NUMBERS part of the pilot report from the real database. Students appear as S1, S2, ... (no names).
++ * It cannot write what happened in the room: the sections at the end are for you to fill in by hand.
++ */
++import { PrismaClient } from '@prisma/client';
++import * as fs from 'fs';
++import { completion, evaluateMeasures, improvement, itemAnalysis, overrideSummary, perStudent, pseudonyms, Measures } from '../src/pilot/pilot-metrics';
++
++function arg(name: string): string | undefined {
++  const i = process.argv.indexOf(`--${name}`);
++  return i >= 0 ? process.argv[i + 1] : undefined;
++}
++const pct = (v: number | null) => (v === null ? 'n/a' : `${Math.round(v * 100)}%`);
++
++async function main() {
++  const topicTitle = arg('topic');
++  if (!topicTitle) throw new Error('Provide --topic "<topic title>".');
++  const from = arg('from') ? new Date(`${arg('from')}T00:00:00Z`) : undefined;
++  const to = arg('to') ? new Date(`${arg('to')}T23:59:59Z`) : undefined;
++  const range = { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) };
++  const measures: Measures = arg('measures') ? JSON.parse(fs.readFileSync(arg('measures')!, 'utf8')) : {};
++
++  const prisma = new PrismaClient();
++  try {
++    const topic = await prisma.topic.findFirst({ where: { title: topicTitle } });
++    if (!topic) throw new Error(`Topic "${topicTitle}" not found.`);
++
++    const sessionRows = await prisma.practiceSession.findMany({
++      where: { topicId: topic.id, user: { role: 'STUDENT' }, ...(from || to ? { startTime: range } : {}) },
++    });
++    const sessions = sessionRows.map((s) => ({
++      id: s.id, userId: s.userId, score: s.score, startTime: s.startTime, endTime: s.endTime,
++      durationSeconds: s.durationSeconds, servedCount: s.servedQuestionIds ? JSON.parse(s.servedQuestionIds).length : 0,
++    }));
++    const sessionIds = sessions.map((s) => s.id);
++    const userIds = [...new Set(sessions.map((s) => s.userId))];
++    const answers = await prisma.userAnswer.findMany({ where: { sessionId: { in: sessionIds } } });
++    const questions = await prisma.question.findMany({ where: { topicId: topic.id, source: 'BANK' } });
++    const overrides = await prisma.teacherIntervention.findMany({
++      where: { action: 'OVERRIDE', studentId: { in: userIds }, ...(from || to ? { createdAt: range } : {}) },
++    });
++    const consents = await prisma.consentRecord.findMany({ where: { studentId: { in: userIds } } });
++
++    const names = pseudonyms(userIds);
++    const comp = completion(sessions);
++    const students = perStudent(sessions);
++    const imp = improvement(students);
++    const items = itemAnalysis(questions, answers);
++    const ov = overrideSummary(overrides.map((o) => ({ teacherId: o.teacherId, studentId: o.studentId })));
++    const results = evaluateMeasures(measures, { students: students.length, completionRate: comp.rate, improvedShare: imp.share, overrides: ov.count });
++    const withoutConsent = userIds.filter((id) => !consents.some((c) => c.studentId === id));
++
++    const lines: string[] = [];
++    lines.push(`# Pilot numbers - ${topic.title}`);
++    lines.push(`Generated ${new Date().toISOString()} from the database. Numbers only. Students are pseudonyms.`);
++    lines.push(`Period: ${arg('from') ?? 'start'} to ${arg('to') ?? 'now'}\n`);
++    lines.push('## Totals');
++    lines.push(`- Sessions started: ${comp.started}; completed: ${comp.completed}; completion rate: ${pct(comp.rate)}`);
++    lines.push(`- Students with at least one session: ${userIds.length}; with a completed session: ${students.length}`);
++    lines.push(`- Answers recorded: ${answers.length}`);
++    lines.push(`- Improvement (students with 2+ completed sessions): ${imp.improved} of ${imp.eligible} had a higher last score than first (${pct(imp.share)})`);
++    lines.push(`- Teacher difficulty overrides: ${ov.count} (${ov.students} student(s), ${ov.teachers} teacher(s))\n`);
++    lines.push('## Per student (scores are percent)');
++    lines.push('| Student | Sessions | Average | First | Last | Change | Minutes |\n|---|---|---|---|---|---|---|');
++    for (const s of students) lines.push(`| ${names.get(s.userId)} | ${s.sessions} | ${s.avgScore.toFixed(0)} | ${s.firstScore.toFixed(0)} | ${s.lastScore.toFixed(0)} | ${s.delta >= 0 ? '+' : ''}${s.delta.toFixed(0)} | ${s.minutes.toFixed(0)} |`);
++    lines.push('\n## Questions to review with the teacher (flagged items first)');
++    lines.push('| Question | Set difficulty | Attempts | % correct | Flags |\n|---|---|---|---|---|');
++    for (const it of [...items].sort((a, b) => b.flags.length - a.flags.length)) lines.push(`| ${it.content.replace(/\|/g, '/')} | ${it.difficulty} | ${it.attempts} | ${pct(it.pctCorrect)} | ${it.flags.join(', ') || '-'} |`);
++    lines.push('\nFlags need at least 5 attempts. check_answer_key = most students chose the same non-keyed answer: re-check the key before blaming the students.\n');
++    if (results.length) {
++      lines.push('## Targets written before the pilot vs actual');
++      lines.push('| Measure | Target | Actual | Result |\n|---|---|---|---|');
++      for (const r of results) lines.push(`| ${r.name} | ${r.target} | ${r.actual} | ${r.pass === null ? 'not measurable' : r.pass ? 'met' : 'NOT met'} |`);
++      lines.push('');
++    }
++    lines.push('## Integrity checks');
++    lines.push(`- Students with sessions but no consent record at all: ${withoutConsent.length} (should be 0)`);
++    lines.push(`- Sample size: ${userIds.length} student(s). With so few, report individual stories, not percentages as proof.\n`);
++    lines.push('## Write by hand (not in the database)');
++    lines.push('- Incidents (content, data, wellbeing): none / describe');
++    lines.push('- What broke or confused students, from the session notes');
++    lines.push('- What the teacher said, in their words, including whether they would use it again');
++    lines.push('- Decision and the single next thing to build, from the evidence above');
++
++    const out = arg('out');
++    if (out) { fs.writeFileSync(out, lines.join('\n') + '\n'); console.log(`Wrote ${out}`); } else console.log(lines.join('\n'));
++  } finally {
++    await prisma.$disconnect();
++  }
++}
++main().catch((e) => { console.error(e); process.exit(1); });
+diff --git a/backend/src/pilot/pilot-metrics.spec.ts b/backend/src/pilot/pilot-metrics.spec.ts
+new file mode 100644
+index 0000000..3871050
+--- /dev/null
++++ b/backend/src/pilot/pilot-metrics.spec.ts
+@@ -0,0 +1,67 @@
++import { AnswerRow, QuestionRow, SessionRow, completion, evaluateMeasures, improvement, itemAnalysis, overrideSummary, perStudent, pseudonyms } from './pilot-metrics';
++
++const d = (day: number) => new Date(`2026-10-${String(day).padStart(2, '0')}T10:00:00Z`);
++const sess = (id: string, userId: string, day: number, score: number | null, secs = 300): SessionRow => ({ id, userId, score, startTime: d(day), endTime: score === null ? null : d(day), durationSeconds: secs, servedCount: 5 });
++
++describe('pilot metrics', () => {
++  it('pseudonyms are stable, sorted by id, and contain no ids', () => {
++    const m = pseudonyms(['zed', 'abe', 'abe', 'mid']);
++    expect([...m.entries()]).toEqual([['abe', 'S1'], ['mid', 'S2'], ['zed', 'S3']]);
++  });
++
++  it('completion rate counts started vs finished-and-scored sessions', () => {
++    expect(completion([sess('1', 'a', 1, 80), sess('2', 'a', 2, null), sess('3', 'b', 1, 40)])).toEqual({ started: 3, completed: 2, rate: 2 / 3 });
++    expect(completion([]).rate).toBeNull();
++  });
++
++  it('per-student summary orders sessions by time and reports first, last, delta, minutes', () => {
++    const rows = [sess('2', 'a', 5, 80, 600), sess('1', 'a', 1, 40, 300), sess('3', 'b', 2, 60, 120), sess('4', 'a', 9, null)];
++    const [a, b] = perStudent(rows);
++    expect(a).toMatchObject({ userId: 'a', sessions: 2, avgScore: 60, firstScore: 40, lastScore: 80, delta: 40, minutes: 15 });
++    expect(b).toMatchObject({ userId: 'b', sessions: 1, delta: 0 });
++  });
++
++  it('improvement only counts students with 2+ completed sessions', () => {
++    const students = perStudent([sess('1', 'a', 1, 40), sess('2', 'a', 2, 80), sess('3', 'b', 1, 90), sess('4', 'c', 1, 50), sess('5', 'c', 2, 30)]);
++    expect(improvement(students)).toEqual({ eligible: 2, improved: 1, share: 0.5 });
++    expect(improvement(perStudent([sess('1', 'z', 1, 50)])).share).toBeNull();
++  });
++
++  describe('item analysis', () => {
++    const q = (id: string, correctAnswer = 'A'): QuestionRow => ({ id, content: `Q ${id}`, difficulty: 0.5, correctAnswer });
++    const ans = (questionId: string, answer: string, isCorrect: boolean, n: number): AnswerRow[] => Array.from({ length: n }, () => ({ sessionId: 's', questionId, answer, isCorrect }));
++
++    it('flags a probable wrong answer key when most students agree on a different answer', () => {
++      const [s] = itemAnalysis([q('q1')], [...ans('q1', 'B', false, 6), ...ans('q1', 'A', true, 1)]);
++      expect(s.attempts).toBe(7);
++      expect(s.flags).toEqual(['check_answer_key']);
++      expect(s.distribution).toEqual({ B: 6, A: 1 });
++    });
++    it('flags very hard and very easy items, but only with at least 5 attempts', () => {
++      const out = itemAnalysis([q('hard'), q('easy'), q('few')], [
++        ...ans('hard', 'C', false, 2), ...ans('hard', 'B', false, 2), ...ans('hard', 'D', false, 1),
++        ...ans('easy', 'A', true, 20),
++        ...ans('few', 'B', false, 4),
++      ]);
++      expect(out.find((o) => o.id === 'hard')!.flags).toEqual(['very_hard']);
++      expect(out.find((o) => o.id === 'easy')!.flags).toEqual(['very_easy']);
++      expect(out.find((o) => o.id === 'few')!.flags).toEqual([]);
++    });
++    it('reports null percent for items nobody answered', () => {
++      expect(itemAnalysis([q('x')], [])[0]).toMatchObject({ attempts: 0, pctCorrect: null, flags: [] });
++    });
++  });
++
++  it('summarises overrides by distinct students and teachers', () => {
++    expect(overrideSummary([{ teacherId: 't', studentId: 'a' }, { teacherId: 't', studentId: 'a' }, { teacherId: 't', studentId: 'b' }])).toEqual({ count: 3, students: 2, teachers: 1 });
++  });
++
++  it('evaluates pre-written targets, and reports "not measurable" instead of a false pass or fail', () => {
++    const r = evaluateMeasures(
++      { minStudentsWithSession: 3, minCompletionRate: 0.8, minImprovedShare: 0.5, minOverrides: 1 },
++      { students: 4, completionRate: 0.75, improvedShare: null, overrides: 1 },
++    );
++    expect(r.map((x) => x.pass)).toEqual([true, false, null, true]);
++    expect(r[1].actual).toBe('75%');
++  });
++});
+diff --git a/backend/src/pilot/pilot-metrics.ts b/backend/src/pilot/pilot-metrics.ts
+new file mode 100644
+index 0000000..e53daa5
+--- /dev/null
++++ b/backend/src/pilot/pilot-metrics.ts
+@@ -0,0 +1,90 @@
++/** Pure functions that turn raw pilot rows into honest numbers. No database access, no names. */
++export interface SessionRow { id: string; userId: string; score: number | null; startTime: Date; endTime: Date | null; durationSeconds: number | null; servedCount: number }
++export interface AnswerRow { sessionId: string; questionId: string; answer: string; isCorrect: boolean }
++export interface QuestionRow { id: string; content: string; difficulty: number; correctAnswer: string }
++export interface OverrideRow { teacherId: string; studentId: string }
++
++export function pseudonyms(userIds: string[]): Map<string, string> {
++  const map = new Map<string, string>();
++  [...new Set(userIds)].sort().forEach((id, i) => map.set(id, `S${i + 1}`));
++  return map;
++}
++
++export function completion(sessions: SessionRow[]) {
++  const started = sessions.length;
++  const completed = sessions.filter((s) => s.endTime !== null && s.score !== null).length;
++  return { started, completed, rate: started === 0 ? null : completed / started };
++}
++
++export interface StudentSummary { userId: string; sessions: number; avgScore: number; firstScore: number; lastScore: number; delta: number; minutes: number }
++
++export function perStudent(sessions: SessionRow[]): StudentSummary[] {
++  const byUser = new Map<string, SessionRow[]>();
++  for (const s of sessions) {
++    if (s.endTime === null || s.score === null) continue;
++    byUser.set(s.userId, [...(byUser.get(s.userId) ?? []), s]);
++  }
++  return [...byUser.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([userId, rows]) => {
++    rows.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
++    const scores = rows.map((r) => r.score as number);
++    return {
++      userId,
++      sessions: rows.length,
++      avgScore: scores.reduce((a, b) => a + b, 0) / scores.length,
++      firstScore: scores[0],
++      lastScore: scores[scores.length - 1],
++      delta: scores[scores.length - 1] - scores[0],
++      minutes: rows.reduce((a, r) => a + (r.durationSeconds ?? 0), 0) / 60,
++    };
++  });
++}
++
++/** Only students with 2+ completed sessions can show change. */
++export function improvement(students: StudentSummary[]) {
++  const eligible = students.filter((s) => s.sessions >= 2);
++  const improved = eligible.filter((s) => s.delta > 0).length;
++  return { eligible: eligible.length, improved, share: eligible.length === 0 ? null : improved / eligible.length };
++}
++
++export interface ItemStat {
++  id: string; content: string; difficulty: number; attempts: number; pctCorrect: number | null;
++  distribution: Record<string, number>; flags: string[];
++}
++
++/** Flags items worth a teacher's second look. Thresholds are deliberately simple and need >= 5 attempts. */
++export function itemAnalysis(questions: QuestionRow[], answers: AnswerRow[]): ItemStat[] {
++  return questions.map((q) => {
++    const mine = answers.filter((a) => a.questionId === q.id);
++    const distribution: Record<string, number> = {};
++    for (const a of mine) distribution[a.answer] = (distribution[a.answer] ?? 0) + 1;
++    const attempts = mine.length;
++    const correct = mine.filter((a) => a.isCorrect).length;
++    const pctCorrect = attempts === 0 ? null : correct / attempts;
++    const flags: string[] = [];
++    if (attempts >= 5 && pctCorrect !== null) {
++      const topAnswer = Object.entries(distribution).sort((a, b) => b[1] - a[1])[0];
++      if (topAnswer[0] !== q.correctAnswer && topAnswer[1] / attempts > 0.5 && pctCorrect < 0.25) flags.push('check_answer_key');
++      else if (pctCorrect < 0.2) flags.push('very_hard');
++      if (pctCorrect > 0.95) flags.push('very_easy');
++    }
++    return { id: q.id, content: q.content, difficulty: q.difficulty, attempts, pctCorrect, distribution, flags };
++  });
++}
++
++export function overrideSummary(rows: OverrideRow[]) {
++  return { count: rows.length, students: new Set(rows.map((r) => r.studentId)).size, teachers: new Set(rows.map((r) => r.teacherId)).size };
++}
++
++export interface Measures { minStudentsWithSession?: number; minCompletionRate?: number; minImprovedShare?: number; minOverrides?: number }
++export interface MeasureResult { name: string; target: string; actual: string; pass: boolean | null }
++
++/** Compares real numbers with targets that were written down before the pilot. null = not measurable yet. */
++export function evaluateMeasures(m: Measures, s: { students: number; completionRate: number | null; improvedShare: number | null; overrides: number }): MeasureResult[] {
++  const out: MeasureResult[] = [];
++  const pct = (v: number | null) => (v === null ? 'n/a' : `${Math.round(v * 100)}%`);
++  if (m.minStudentsWithSession !== undefined) out.push({ name: 'Students with a completed session', target: `>= ${m.minStudentsWithSession}`, actual: String(s.students), pass: s.students >= m.minStudentsWithSession });
++  if (m.minCompletionRate !== undefined) out.push({ name: 'Quiz completion rate', target: `>= ${pct(m.minCompletionRate)}`, actual: pct(s.completionRate), pass: s.completionRate === null ? null : s.completionRate >= m.minCompletionRate });
++  if (m.minImprovedShare !== undefined) out.push({ name: 'Students whose last score beat their first', target: `>= ${pct(m.minImprovedShare)}`, actual: pct(s.improvedShare), pass: s.improvedShare === null ? null : s.improvedShare >= m.minImprovedShare });
++  if (m.minOverrides !== undefined) out.push({ name: 'Teacher difficulty overrides used', target: `>= ${m.minOverrides}`, actual: String(s.overrides), pass: s.overrides >= m.minOverrides });
++  return out;
++}
+diff --git a/docs/pilot/success-measures.example.json b/docs/pilot/success-measures.example.json
+new file mode 100644
+index 0000000..6bcb1c7
+--- /dev/null
++++ b/docs/pilot/success-measures.example.json
+@@ -0,0 +1,7 @@
++{
++  "_note": "Copy to success-measures.json, set your OWN targets, and commit it BEFORE the first session so the date proves they were not chosen after seeing results.",
++  "minStudentsWithSession": 3,
++  "minCompletionRate": 0.8,
++  "minImprovedShare": 0.5,
++  "minOverrides": 1
++}
+-- 
+2.43.0
+

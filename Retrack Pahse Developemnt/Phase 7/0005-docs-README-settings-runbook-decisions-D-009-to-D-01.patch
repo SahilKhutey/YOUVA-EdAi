@@ -1,0 +1,131 @@
+From c979d057548c9f3220f856225a23258465815425 Mon Sep 17 00:00:00 2001
+From: phase7-fixes <phase7@example.invalid>
+Date: Fri, 16 Oct 2026 08:04:44 +0000
+Subject: [PATCH 5/5] docs: README settings, runbook, decisions D-009 to D-013
+ (incl. correction on edge sync), baseline for Phase 7
+
+---
+ README.md                   |  9 +++++++--
+ backend/.env.example        |  5 +++++
+ docs/DECISIONS.md           | 22 ++++++++++++++++++++++
+ docs/TRUTH_BASELINE.md      | 10 ++++++++--
+ docs/pilot/PILOT_RUNBOOK.md |  4 +++-
+ 5 files changed, 45 insertions(+), 5 deletions(-)
+
+diff --git a/README.md b/README.md
+index 0af8ed6..c5a792b 100644
+--- a/README.md
++++ b/README.md
+@@ -6,12 +6,12 @@ An early-stage prototype of an adaptive practice tool for school students, built
+ - A student logs in, picks a topic, and takes a short multiple-choice quiz drawn from a **teacher-reviewed question bank**. After each answer the system updates a simple mastery estimate and a target difficulty, and the next quiz favours unseen questions near that difficulty.
+ - A teacher can see student results and can set a student's target difficulty for a topic, with a recorded reason.
+ - A student cannot start a quiz without an active parent/guardian consent record. A guardian can withdraw consent, and an admin can erase the student's practice data.
+-- Pilot report numbers can be generated from the database.
++- Pilot report numbers can be generated from the database. Logins are rate limited (20 per minute per address).
+ 
+ Run the checks yourself: `cd backend && npx tsc --noEmit && npx jest --testPathIgnorePatterns=e2e`.
+ 
+ ## What it does not do
+-No distress or content detection (a supervising adult is required), no login brute-force protection or rate limiting, no teacher override screen (it is an API call), no consent screen (entered through the API), and no measured learning outcomes. The mastery update is a simple rule, not a full Bayesian model. Several other modules exist in the code (forum, scheduling, credentials, AI mentor, and more) that are **not part of the pilot** and have not been reviewed for it.
++No distress or content detection (a supervising adult is required), no account lockout after repeated failed logins (only a per-address rate limit), no teacher override screen (it is an API call), no consent screen (entered through the API), and no measured learning outcomes. The mastery update is a simple rule, not a full Bayesian model. Several other modules exist in the code (forum, scheduling, credentials, AI mentor, and more) that are **not part of the pilot** and have not been reviewed for it.
+ 
+ ## Stack
+ Backend: NestJS 11, Prisma 5 with PostgreSQL. Frontend: Next.js 16, React 19, Tailwind 4. Quiz questions never come from an AI unless `QUESTION_SOURCE=AI`. The AI mentor and learning-chat endpoints, where a student's typed or spoken text reaches Google Gemini, are **switched off by default** (`ENABLE_AI_FEATURES`). Other modules (content generation, revision, assessment) can also call Gemini and are outside the pilot.
+@@ -41,6 +41,11 @@ NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
+ | `ENABLE_AI_FEATURES` | Default off. `true` lets student free text and voice reach the AI mentor. Keep off for pilots |
+ | `NEXT_PUBLIC_ENABLE_AI_MENTOR` | Frontend. Default off. `true` shows the AI mentor sidebar on practice and learn pages |
+ | `GEMINI_API_KEY` | Only needed for AI features or `QUESTION_SOURCE=AI` |
++| `ALLOW_PUBLIC_REGISTRATION` | Default `true` (creates student accounts only). `false` closes public sign-up; create accounts with `npm run create:user` |
++| `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (for example your frontend's URL). Default: `http://localhost:3000` only |
++| `TRUST_PROXY_HOPS` | Number of reverse proxies in front of the server (0 to 3). Set `1` on Render or behind nginx, or rate limiting will treat everyone as one user |
++| `ENABLE_SWAGGER` | API docs are served at `/api` outside production; set `true` to serve them in production |
++| `STRIPE_WEBHOOK_SECRET` | Billing webhook is disabled unless this is set |
+ 
+ ## Add questions
+ Write items in the format of `backend/content/item-bank/one-step-equations.SAMPLE.json` (the sample is an unreviewed draft), then `npm run import:items -- <file>`. The importer refuses items that are not marked reviewed by a named person.
+diff --git a/backend/.env.example b/backend/.env.example
+index 08ba6c6..c1a5443 100644
+--- a/backend/.env.example
++++ b/backend/.env.example
+@@ -5,3 +5,8 @@ FRONTEND_URL="http://localhost:3000" # URL of the deployed frontend
+ PORT=3001
+ QUESTION_SOURCE="BANK" # BANK = teacher-reviewed items only (default). AI = generate at runtime (not for pilots)
+ ENABLE_AI_FEATURES="false" # true lets student free text / voice reach the AI mentor. Keep false for pilots
++ALLOW_PUBLIC_REGISTRATION="true" # false closes public sign-up; create accounts with: npm run create:user
++CORS_ORIGINS="http://localhost:3000" # comma-separated frontend origins allowed to call this API
++TRUST_PROXY_HOPS="0" # set 1 behind a reverse proxy (Render, nginx) so rate limiting sees real client addresses
++# ENABLE_SWAGGER="true" # API docs are off in production unless set
++# STRIPE_WEBHOOK_SECRET="" # billing webhook is disabled unless set
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+index 521c408..1e3ec2a 100644
+--- a/docs/DECISIONS.md
++++ b/docs/DECISIONS.md
+@@ -38,3 +38,25 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
+ - Context: `POST /ai/generate` forwarded any prompt to a paid AI API with no login; `POST /edge-sync/flush` let anyone write learning and cognitive-state rows for any user id; `GET /edge-sync/curriculum/:topicId` returned every question with its correct answer.
+ - Decision: login required on both controllers; sync accepts only the caller's own user id; the answer-bearing curriculum pack is teacher/admin only.
+ - Evidence: `backend/src/edge-sync/edge-sync.spec.ts`, `backend/src/common/guards/ai-features.guard.spec.ts`. Still open: no rate limiting or login brute-force protection anywhere.
++
++## D-009: Public sign-up creates students only, and can be closed
++- Context: `POST /auth/register` wrote the request body straight into the user table, so an anonymous caller could register as ADMIN or TEACHER (and set any other user field), and the response returned the password hash.
++- Decision: a validated request type accepts only email, password (8 to 72 characters), name and grade level; the role is always STUDENT; the hash is never returned; `ALLOW_PUBLIC_REGISTRATION=false` closes sign-up. Staff accounts are created with `npm run create:user`.
++- Evidence: `backend/src/auth/auth.http.spec.ts` (real controller, service and validation; a mutation that re-allowed the role made the test fail).
++
++## D-010: The billing webhook is disabled without a signing secret
++- Context: with no `STRIPE_WEBHOOK_SECRET` the handler used a dummy secret and, when the signature check failed, trusted the unsigned JSON, so anyone could mark any user as premium.
++- Decision: no secret means the webhook returns 503; an invalid signature returns 400 and grants nothing.
++- Evidence: `backend/src/subscription/webhook.security.spec.ts`.
++
++## D-011: Rate limiting, and deployment settings read from the environment
++- Decision: a global limit of 120 requests per minute per address, 20 for login and 10 for sign-up (`@nestjs/throttler`). `TRUST_PROXY_HOPS` makes the limiter see real client addresses behind a proxy; `CORS_ORIGINS` replaces the hardcoded localhost origin (a deployed frontend would otherwise be blocked by the browser); API docs are off in production unless `ENABLE_SWAGGER=true`.
++- Evidence: `backend/src/auth/auth.http.spec.ts` (the 21st login and 11th sign-up in a minute return 429), `backend/src/security/http-config.spec.ts`.
++- Limits: the limit is per address, not per account, so many students behind one school address share it; there is no account lockout.
++
++## D-012: Content search and engagement require login and use the logged-in user
++- Context: `/content/search` and `/content/engage` were open and trusted a `userId` sent by the caller.
++- Evidence: `backend/src/content-intelligence/content-auth.spec.ts`.
++
++## D-013: Correction to D-008 about edge sync
++- `EdgeSyncModule` is imported in `app.module.ts` but never listed in the module's `imports`, so in this branch its routes do not exist at runtime. D-008 described them as open to the internet; that was true of the code, not of the running application here. The login and own-data checks stay as protection in case the module is registered later. A test now lists any controller that exists but is not registered.
+diff --git a/docs/TRUTH_BASELINE.md b/docs/TRUTH_BASELINE.md
+index 848506e..912b9e8 100644
+--- a/docs/TRUTH_BASELINE.md
++++ b/docs/TRUTH_BASELINE.md
+@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ |---|---|
+ | Files tracked | 381 (was 1,425 on main) |
+ | Backend TypeScript errors | 0 (was 29 at base) |
+-| Unit test suites | 58 passed of 58 (excluding prisma.service.spec, which needs a DB engine) |
+-| Unit tests | 149 passed, 0 failed |
++| Unit test suites | 63 passed of 63 (excluding prisma.service.spec, which needs a DB engine) |
++| Unit tests | 167 passed, 0 failed |
+ | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
+ | Schema models / migrations | 53 / 4 |
+ 
+@@ -52,3 +52,9 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ - Found by reading the code: the practice page embedded a voice/text AI sidebar; `/ai/generate` required no login; `/edge-sync/*` required no login, accepted writes for any user id, and returned the correct answers for a whole topic. All fixed with tests (7 tests).
+ - Frontend: practice page now shows plain-language errors (consent missing, no questions, already submitted, no connection) instead of a blank page; 4 Node tests for the message helper and AI switch (`npm test` in `frontend/`); `tsc` 0 errors.
+ - Still open: migrations vs PostgreSQL schema (Prisma's schema engine could not be downloaded in the sandbox, so no baseline was generated); no rate limiting or login brute-force protection; production frontend build not completed in the sandbox.
++
++## Phase 7 additions (measured)
++- A route inventory built from the real decorator metadata (`npm run` script `scripts/route-audit.ts`; output in `docs/ROUTE_AUDIT.generated.md`): 132 routes at the time of writing, 5 without login, all reviewed. A test fails if a new route is added without login unless it is added to a short reviewed list.
++- Found and fixed (with tests, 18 new): anonymous registration as ADMIN or TEACHER and mass assignment of any user field; password hash returned on registration; forged billing webhooks accepted when no secret was set; content search/engage open and trusting a caller-supplied user id; no rate limiting; CORS hardcoded to localhost; API docs public in production.
++- Correction: the edge-sync routes described as open in Phase 6 were not registered in this branch (see D-013).
++- Still open: migrations vs PostgreSQL schema; no account lockout; per-address rate limit shared by students on one school address; handlers' ownership checks (whether a student can read another student's data by id) were not reviewed route by route; global validation does not strip unknown fields; no security headers middleware; frontend production build and CI not run here.
+diff --git a/docs/pilot/PILOT_RUNBOOK.md b/docs/pilot/PILOT_RUNBOOK.md
+index dd9eb66..f02e9c9 100644
+--- a/docs/pilot/PILOT_RUNBOOK.md
++++ b/docs/pilot/PILOT_RUNBOOK.md
+@@ -2,7 +2,9 @@
+ ## Week before
+ - [ ] Teacher and 3-8 students confirmed; topic agreed in writing
+ - [ ] Teacher's items imported (`npm run import:items`), reviewed and signed off by the teacher
+-- [ ] Student and teacher accounts created; teacher assigned to students
++- [ ] Student and teacher accounts created with `npm run create:user` (individual passwords of 12+ characters); `ALLOW_PUBLIC_REGISTRATION=false` so nobody else can sign up
++- [ ] Teacher assigned to students (class and enrolment)
++- [ ] `CORS_ORIGINS` set to the frontend's address and `TRUST_PROXY_HOPS` set to match the hosting; a login from the real frontend works
+ - [ ] Every consent form signed, filed, and entered in the system (`POST /consent`)
+ - [ ] `JWT_SECRET` set, `QUESTION_SOURCE=BANK`, `REQUIRE_CONSENT` not set to false
+ - [ ] Dry run: you as a student end to end, then a friendly adult
+-- 
+2.43.0
+

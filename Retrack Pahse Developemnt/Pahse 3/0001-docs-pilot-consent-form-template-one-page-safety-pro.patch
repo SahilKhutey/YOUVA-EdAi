@@ -1,0 +1,152 @@
+From bc19425b27959b27228dcb47ede7441092d90159 Mon Sep 17 00:00:00 2001
+From: t <t@t>
+Date: Wed, 14 Oct 2026 03:02:39 +0000
+Subject: [PATCH 1/3] docs(pilot): consent form template, one-page safety
+ protocol, data handling, and pilot runbook
+
+---
+ docs/pilot/CONSENT_FORM.md    | 26 ++++++++++++++++++++++++++
+ docs/pilot/DATA_HANDLING.md   | 32 ++++++++++++++++++++++++++++++++
+ docs/pilot/PILOT_RUNBOOK.md   | 25 +++++++++++++++++++++++++
+ docs/pilot/SAFETY_PROTOCOL.md | 25 +++++++++++++++++++++++++
+ 4 files changed, 108 insertions(+)
+ create mode 100644 docs/pilot/CONSENT_FORM.md
+ create mode 100644 docs/pilot/DATA_HANDLING.md
+ create mode 100644 docs/pilot/PILOT_RUNBOOK.md
+ create mode 100644 docs/pilot/SAFETY_PROTOCOL.md
+
+diff --git a/docs/pilot/CONSENT_FORM.md b/docs/pilot/CONSENT_FORM.md
+new file mode 100644
+index 0000000..5b34e1b
+--- /dev/null
++++ b/docs/pilot/CONSENT_FORM.md
+@@ -0,0 +1,26 @@
++# Parent / Guardian Consent - Early Test of an AI-Assisted Math Practice Tool
++Form version: **pilot-v1**   (record this exact string when you enter the consent in the system)
++
++**What this is.** A very early, unfinished test of a web tool that gives students practice questions on one math topic: **[TOPIC]**. We are testing whether the idea works before building it further. It is not a finished product.
++
++**What your child will do.** A few short supervised practice sessions (about [X] minutes each). The questions come from a set reviewed by **[TEACHER NAME]**. The tool adjusts which question comes next based on how your child is doing. No one outside the adults named below sees your child's work.
++
++**What information is kept.** Your child's name and a login email (or school-issued ID); their answers, scores and progress on this topic; practice streak/points; and any note the teacher records when changing the difficulty. We do not collect photos, voice, location, contacts, or anything else. We do not use this information for advertising, and we do not track your child for any purpose other than the learning shown above. We do not share it with anyone else.
++
++**Who can see it.** [YOUR NAME] and [TEACHER NAME] only.
++
++**Supervision.** A named adult is present during every session. Sessions only happen in that adult's presence.
++
++**Your rights.** You can ask to see your child's information, correct it, withdraw consent, or have it deleted at any time by contacting [NAME, PHONE/EMAIL]. If you withdraw, we stop immediately and delete your child's practice data and anonymise their account. We keep only a record that consent was given and withdrawn. Participation is voluntary; saying no, or stopping later, has no consequence for your child at school.
++
++**How long we keep it.** Until the end of the test ([END DATE]) and then it is deleted, unless you ask us to delete it sooner.
++
++I am the parent/legal guardian of the student named below and I agree to my child taking part.
++
++Student name: ______________________   Class: ______
++Parent/guardian name: ______________________   Relationship: mother / father / legal guardian
++Signature: ______________________   Date: ______________
++Contact (phone/email): ______________________
++
++---
++*Plain-language template, not legal advice. Have a lawyer or a qualified advisor review it for your situation before use, and fill in every [BRACKET].*
+diff --git a/docs/pilot/DATA_HANDLING.md b/docs/pilot/DATA_HANDLING.md
+new file mode 100644
+index 0000000..9ac4210
+--- /dev/null
++++ b/docs/pilot/DATA_HANDLING.md
+@@ -0,0 +1,32 @@
++# Pilot Data Handling
++*Not legal advice. Confirm with a lawyer who knows Indian data-protection law before the pilot.*
++
++## What the system stores for a pilot student
++Account (name, email, hashed password); practice sessions and answers; per-topic mastery and target difficulty; points/streak/badges; notifications; teacher override notes; the consent record. Everything is in the Postgres database. In bank mode no student data is sent to an AI provider.
++
++## What the frontend loads from third parties
++No analytics or tracking scripts were found in the frontend code. It embeds YouTube videos (use `youtube-nocookie.com` or remove embeds for the pilot) and sample audio from soundhelix.com. The login token is kept in the browser's localStorage.
++
++## Legal context to check with counsel (as of my research; verify the current position)
++- India's DPDP Act 2023 requires verifiable parental consent before processing a child's (under 18) personal data and prohibits tracking, behavioural monitoring and targeted advertising aimed at children, subject to exemptions.
++- The DPDP Rules were notified in Nov 2025 with commencement phased over about 18 months. Check which obligations are in force on your pilot date.
++- Exemptions for educational institutions are narrow (educational activities and safety). Do not assume a separate software provider is covered; get advice.
++- Practical position for the pilot regardless: written parental consent, minimum data, no tracking beyond the learning shown, deletion on request.
++
++## Access
++Only the founder (admin) and the pilot teacher can see student data. Use individual accounts; no shared admin logins. Keep the signed forms in a locked place; the system holds only the record.
++
++## Recording consent
++Teacher/admin calls `POST /consent` with the student id, guardian name and relationship, `formVersion` (e.g. `pilot-v1`), and the signing date. A student with no active record gets a 403 on `/practice/generate`.
++
++## Withdrawal and erasure (same day as the request)
++1. Teacher or admin: `POST /consent/student/:studentId/revoke` (the student is blocked immediately).
++2. Admin: `POST /consent/student/:studentId/erase` with body `{"confirm":"ERASE"}`. This deletes answers, sessions, mastery, points, badges, notifications, goals and teacher notes for that student, anonymises the account, and keeps only the consent/withdrawal record.
++3. If the response is **409** with a list of tables, the student has data in a feature outside the MVP. Nothing was deleted. Handle those tables manually, then retry.
++4. Confirm with the parent in writing.
++
++## Retention
++Delete all pilot data at the end of the pilot ([END DATE]) unless parents agree otherwise. Keep consent/withdrawal records for [PERIOD, ask counsel].
++
++## Backups
++If backups exist, erased data persists there until the backup rotates out. State the backup retention period to parents, or turn backups off for the pilot database.
+diff --git a/docs/pilot/PILOT_RUNBOOK.md b/docs/pilot/PILOT_RUNBOOK.md
+new file mode 100644
+index 0000000..dd9eb66
+--- /dev/null
++++ b/docs/pilot/PILOT_RUNBOOK.md
+@@ -0,0 +1,25 @@
++# Pilot Runbook
++## Week before
++- [ ] Teacher and 3-8 students confirmed; topic agreed in writing
++- [ ] Teacher's items imported (`npm run import:items`), reviewed and signed off by the teacher
++- [ ] Student and teacher accounts created; teacher assigned to students
++- [ ] Every consent form signed, filed, and entered in the system (`POST /consent`)
++- [ ] `JWT_SECRET` set, `QUESTION_SOURCE=BANK`, `REQUIRE_CONSENT` not set to false
++- [ ] Dry run: you as a student end to end, then a friendly adult
++- [ ] Safety protocol read by the supervising adult
++
++## Each session
++1. Check consent shows active for each student present.
++2. Student logs in with their own account; supervising adult stays in the room.
++3. Student takes a quiz; read the explanations together at the end.
++4. Afterwards, within the hour, write the session note (below).
++5. Teacher adjusts difficulty if needed (`POST /teacher/students/:id/topics/:topicId/difficulty`, with a reason).
++
++## Session note (copy per session)
++Date / student / minutes / quiz score / what they got stuck on / any wrong or confusing question (text) / what the teacher did / anything that broke / how the student seemed (bored, engaged, frustrated).
++
++## Pilot success measures (write these BEFORE the first session)
++Example: 80% of students finish the first quiz; average score improves between sessions 1 and 3; teacher uses the override at least once and says it was useful; zero content or data incidents; teacher says they would use it again.
++
++## After
++Write `docs/PILOT_REPORT_REAL.md` from the real database and real notes only: counts from queries, teacher's words, what broke. If it was small and messy, say so.
+diff --git a/docs/pilot/SAFETY_PROTOCOL.md b/docs/pilot/SAFETY_PROTOCOL.md
+new file mode 100644
+index 0000000..ab4f5e8
+--- /dev/null
++++ b/docs/pilot/SAFETY_PROTOCOL.md
+@@ -0,0 +1,25 @@
++# Pilot Safety Protocol (one page)
++**Principle:** no student uses the tool unless a consent record exists AND a named adult is present.
++
++## Before any session
++1. Consent form signed and the consent is entered in the system (a student without an active record cannot start a quiz).
++2. Supervising adult named for this session: ______________. A backup contact is reachable: ______________.
++3. Only reviewed questions are in use (`QUESTION_SOURCE=BANK`). The AI question mode is OFF for the pilot.
++4. The supervising adult has read this page.
++
++## During a session
++- The supervising adult is in the room (or on the call with camera on) the whole time.
++- Students use their own account only; no shared logins.
++- If a question looks wrong, confusing, or inappropriate: stop that student, note the question text, tell [OWNER] the same day. Remove the item from the bank before the next session.
++- If a student is upset, stuck for a long time, or wants to stop: stop. No pressure to continue.
++
++## Concerns about a child's wellbeing
++This tool does not detect or handle wellbeing concerns. If a student says something that worries you, follow the school's own child-protection procedure and contact the designated safeguarding person at the school. Do not rely on the tool for this.
++
++## If something goes wrong
++- **Wrong or inappropriate content:** stop sessions, remove the item, write down what happened.
++- **Data problem (wrong person's data shown, a leaked password, a lost device with a login):** stop sessions, change `JWT_SECRET` and affected passwords, tell the affected parent/guardian and the school promptly, and write down what happened and when.
++- **Parent asks to withdraw:** use the withdrawal steps in DATA_HANDLING.md the same day.
++
++## Not in place yet (so supervision is the safeguard)
++Automated detection of distress, bullying or inappropriate content; content moderation of student free text (there is none: students only pick from options); alerts to parents.
+-- 
+2.43.0
+

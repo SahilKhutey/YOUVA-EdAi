@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HighSchoolPilotCohortSchema",
+  "type": "object",
+  "required": [
+    "pilotId",
+    "tier",
+    "grade",
+    "institution",
+    "startDate",
+    "endDate",
+    "teachers",
+    "cohortSize",
+    "students"
+  ],
+  "properties": {
+    "pilotId": { "type": "string" },
+    "tier": { "type": "string", "enum": ["HIGH_SCHOOL"] },
+    "grade": { "type": "string", "enum": ["Grade 10"] },
+    "institution": {
+      "type": "object",
+      "required": ["name", "campus", "city", "cbseAffiliationNumber"],
+      "properties": {
+        "name": { "type": "string" },
+        "campus": { "type": "string" },
+        "city": { "type": "string" },
+        "cbseAffiliationNumber": { "type": "string" }
+      }
+    },
+    "startDate": { "type": "string" },
+    "endDate": { "type": "string" },
+    "teachers": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["teacherId", "name", "role", "emailDomain", "overrideCertified"],
+        "properties": {
+          "teacherId": { "type": "string" },
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "emailDomain": { "type": "string" },
+          "overrideCertified": { "type": "boolean" }
+        }
+      }
+    },
+    "cohortSize": { "type": "integer", "minimum": 20 },
+    "students": {
+      "type": "array",
+      "minItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["studentToken", "section", "grade", "consentStatus", "consentVerifiedAt", "consentHmacSha256"],
+        "properties": {
+          "studentToken": { "type": "string", "pattern": "^anon_[0-9a-fA-F]{12}$" },
+          "section": { "type": "string" },
+          "grade": { "type": "string" },
+          "consentStatus": { "type": "string", "enum": ["VERIFIED"] },
+          "consentVerifiedAt": { "type": "string" },
+          "consentHmacSha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

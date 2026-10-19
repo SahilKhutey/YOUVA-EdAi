@@ -2,3 +2,13 @@
 # local databases
 *.db
 *.db-journal
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Test reports
+playwright-report/
+frontend/playwright-report/

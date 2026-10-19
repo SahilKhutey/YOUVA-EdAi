@@ -1,0 +1,132 @@
+From 0634626bed68397c15679ed57eb99e374db6f2bf Mon Sep 17 00:00:00 2001
+From: phase6-fixes <phase6@example.invalid>
+Date: Thu, 15 Oct 2026 08:51:39 +0000
+Subject: [PATCH 2/4] fix(security): edge-sync requires login, accepts only the
+ caller's own user id, and the answer-bearing curriculum pack is teacher/admin
+ only (+3 tests)
+
+---
+ backend/src/edge-sync/edge-sync.controller.ts | 14 ++++++--
+ backend/src/edge-sync/edge-sync.service.ts    |  9 +++--
+ backend/src/edge-sync/edge-sync.spec.ts       | 35 +++++++++++++++++++
+ 3 files changed, 53 insertions(+), 5 deletions(-)
+ create mode 100644 backend/src/edge-sync/edge-sync.spec.ts
+
+diff --git a/backend/src/edge-sync/edge-sync.controller.ts b/backend/src/edge-sync/edge-sync.controller.ts
+index 295a9da..ae0df66 100644
+--- a/backend/src/edge-sync/edge-sync.controller.ts
++++ b/backend/src/edge-sync/edge-sync.controller.ts
+@@ -1,6 +1,12 @@
+-import { Controller, Post, Get, Body, Param } from '@nestjs/common';
++import { Controller, Post, Get, Body, Param, Req, UseGuards } from '@nestjs/common';
++import { JwtAuthGuard } from '../auth/jwt-auth.guard';
++import { RolesGuard } from '../auth/roles.guard';
++import { Roles } from '../auth/roles.decorator';
++import { Role } from '../auth/role.enum';
+ import { EdgeSyncService } from './edge-sync.service';
+ 
++// Both endpoints used to be open to anyone on the internet.
++@UseGuards(JwtAuthGuard, RolesGuard)
+ @Controller('edge-sync')
+ export class EdgeSyncController {
+     constructor(private readonly edgeSyncService: EdgeSyncService) { }
+@@ -9,13 +15,15 @@ export class EdgeSyncController {
+      * Endpoint for PWA Service Workers or local Edge Nodes to flush offline telemetry.
+      */
+     @Post('flush')
+-    async flushOfflineData(@Body('compressedPayload') compressedPayload: string) {
+-        return this.edgeSyncService.processIntercalatedSync(compressedPayload);
++    async flushOfflineData(@Req() req: any, @Body('compressedPayload') compressedPayload: string) {
++        return this.edgeSyncService.processIntercalatedSync(compressedPayload, req.user.id);
+     }
+ 
+     /**
+      * Endpoint to fetch a low-bandwidth curriculum pack for offline caching.
+      */
++    // The pack includes correct answers, so students must not be able to fetch it.
++    @Roles(Role.TEACHER, Role.ADMIN)
+     @Get('curriculum/:topicId')
+     async getCurriculumPack(@Param('topicId') topicId: string) {
+         return this.edgeSyncService.downloadCurriculumPack(topicId);
+diff --git a/backend/src/edge-sync/edge-sync.service.ts b/backend/src/edge-sync/edge-sync.service.ts
+index d06a692..8d69a34 100644
+--- a/backend/src/edge-sync/edge-sync.service.ts
++++ b/backend/src/edge-sync/edge-sync.service.ts
+@@ -1,4 +1,4 @@
+-import { Injectable, Logger } from '@nestjs/common';
++import { ForbiddenException, HttpException, Injectable, Logger } from '@nestjs/common';
+ import { PrismaService } from '../prisma/prisma.service';
+ // Minimalist payload schema for 2G/3G text-only connections
+ interface SyncPayload {
+@@ -20,7 +20,7 @@ export class EdgeSyncService {
+      * Receives compressed, batched telemetry from a local edge node
+      * when the student regains internet connection.
+      */
+-    async processIntercalatedSync(compressedPayload: string) {
++    async processIntercalatedSync(compressedPayload: string, actingUserId: string) {
+         try {
+             // In a real scenario, this payload could be gzip or base64 decoded
+             let parsed;
+@@ -37,6 +37,10 @@ export class EdgeSyncService {
+             if (!validatedData.userId || !validatedData.offlineEvents) {
+                 throw new Error("Invalid Edge Sync Payload Structure");
+             }
++            // A caller may only sync their own data; otherwise anyone could write rows for any student.
++            if (validatedData.userId !== actingUserId) {
++                throw new ForbiddenException('You can only sync your own data.');
++            }
+ 
+             let ingestedCount = 0;
+             // Iterate and flush local caching into massive cloud DB
+@@ -85,6 +89,7 @@ export class EdgeSyncService {
+             };
+ 
+         } catch (error) {
++            if (error instanceof HttpException) throw error;
+             this.logger.error('Edge sync payload rejected', error);
+             throw new Error('Failed to parse or validate Edge Sync Payload.');
+         }
+diff --git a/backend/src/edge-sync/edge-sync.spec.ts b/backend/src/edge-sync/edge-sync.spec.ts
+new file mode 100644
+index 0000000..29396a1
+--- /dev/null
++++ b/backend/src/edge-sync/edge-sync.spec.ts
+@@ -0,0 +1,35 @@
++import { ForbiddenException } from '@nestjs/common';
++import { EdgeSyncService } from './edge-sync.service';
++import { EdgeSyncController } from './edge-sync.controller';
++import { JwtAuthGuard } from '../auth/jwt-auth.guard';
++import { RolesGuard } from '../auth/roles.guard';
++import { ROLES_KEY } from '../auth/roles.decorator';
++import { Role } from '../auth/role.enum';
++
++const payload = (userId: string) => Buffer.from(JSON.stringify({
++  userId, localTimestamp: '2026-10-20T10:00:00Z',
++  offlineEvents: [{ type: 'STUDY_SESSION_COMPLETE', data: { topicId: 't1' } }],
++})).toString('base64');
++
++describe('edge sync access control', () => {
++  const prisma: any = { learningSession: { create: jest.fn(async () => ({})) }, cognitiveStateLog: { create: jest.fn() } };
++  beforeEach(() => jest.clearAllMocks());
++
++  it('lets a user sync their own events', async () => {
++    const out: any = await new EdgeSyncService(prisma).processIntercalatedSync(payload('s1'), 's1');
++    expect(out.eventsProcessed).toBe(1);
++    expect(prisma.learningSession.create).toHaveBeenCalledTimes(1);
++  });
++
++  it('refuses a payload naming a different user, and writes nothing', async () => {
++    await expect(new EdgeSyncService(prisma).processIntercalatedSync(payload('victim'), 'attacker')).rejects.toBeInstanceOf(ForbiddenException);
++    expect(prisma.learningSession.create).not.toHaveBeenCalled();
++    expect(prisma.cognitiveStateLog.create).not.toHaveBeenCalled();
++  });
++
++  it('requires login on the whole controller, and teacher/admin for the answer-bearing curriculum pack', () => {
++    const guards = Reflect.getMetadata('__guards__', EdgeSyncController);
++    expect(guards).toEqual(expect.arrayContaining([JwtAuthGuard, RolesGuard]));
++    expect(Reflect.getMetadata(ROLES_KEY, EdgeSyncController.prototype.getCurriculumPack)).toEqual([Role.TEACHER, Role.ADMIN]);
++  });
++});
+-- 
+2.43.0
+

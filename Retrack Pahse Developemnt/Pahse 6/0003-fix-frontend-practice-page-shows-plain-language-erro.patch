@@ -1,0 +1,289 @@
+From 0448e5529553ae0dd3ffe55651d623ec4411b035 Mon Sep 17 00:00:00 2001
+From: phase6-fixes <phase6@example.invalid>
+Date: Thu, 15 Oct 2026 08:51:39 +0000
+Subject: [PATCH 3/4] fix(frontend): practice page shows plain-language errors,
+ honest loading text, and hides the AI sidebar unless enabled; Node tests for
+ the helper (+4 frontend tests)
+
+---
+ .github/workflows/verify.yml                  |  1 +
+ .../app/dashboard/learn/[topicId]/page.tsx    | 11 ++--
+ .../app/dashboard/practice/[topicId]/page.tsx | 56 +++++++++++++++----
+ frontend/lib/practice-errors.mjs              | 25 +++++++++
+ frontend/lib/practice-errors.test.mjs         | 34 +++++++++++
+ frontend/package.json                         |  3 +-
+ 6 files changed, 113 insertions(+), 17 deletions(-)
+ create mode 100644 frontend/lib/practice-errors.mjs
+ create mode 100644 frontend/lib/practice-errors.test.mjs
+
+diff --git a/.github/workflows/verify.yml b/.github/workflows/verify.yml
+index 509bfff..6dbf728 100644
+--- a/.github/workflows/verify.yml
++++ b/.github/workflows/verify.yml
+@@ -35,6 +35,7 @@ jobs:
+           cache-dependency-path: frontend/package-lock.json
+       - run: npm ci
+       - run: npx tsc --noEmit
++      - run: npm test
+       - run: npm run build
+         env:
+           NEXT_PUBLIC_API_URL: http://localhost:3001
+diff --git a/frontend/app/dashboard/learn/[topicId]/page.tsx b/frontend/app/dashboard/learn/[topicId]/page.tsx
+index 8c55f80..9a0889b 100644
+--- a/frontend/app/dashboard/learn/[topicId]/page.tsx
++++ b/frontend/app/dashboard/learn/[topicId]/page.tsx
+@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
+ import { Skeleton } from "@/app/components/ui/Skeleton";
+ import { ThinkingIndicator } from "@/app/components/ThinkingIndicator";
+ import { VoiceTutor } from "@/app/components/workspace/VoiceTutor";
++import { aiMentorEnabled } from "@/lib/practice-errors.mjs";
+ 
+ interface Message {
+   id: number;
+@@ -185,10 +186,12 @@ export default function LearningPage() {
+         </div>
+       </div>
+ 
+-      {/* New AI Mentor Sidebar */}
+-      <div className="flex flex-col h-full">
+-        <VoiceTutor topicId={topicId as string} topicTitle="Current Topic" />
+-      </div>
++      {/* AI Mentor Sidebar (off unless NEXT_PUBLIC_ENABLE_AI_MENTOR=true) */}
++      {aiMentorEnabled(process.env.NEXT_PUBLIC_ENABLE_AI_MENTOR) && (
++        <div className="flex flex-col h-full">
++          <VoiceTutor topicId={topicId as string} topicTitle="Current Topic" />
++        </div>
++      )}
+ 
+     </div>
+   );
+diff --git a/frontend/app/dashboard/practice/[topicId]/page.tsx b/frontend/app/dashboard/practice/[topicId]/page.tsx
+index 04ce8b2..dc114f1 100644
+--- a/frontend/app/dashboard/practice/[topicId]/page.tsx
++++ b/frontend/app/dashboard/practice/[topicId]/page.tsx
+@@ -5,6 +5,7 @@ import api from "@/lib/axios";
+ import { useRouter, useParams } from "next/navigation";
+ import { ThinkingIndicator } from "@/app/components/ThinkingIndicator";
+ import { VoiceTutor } from "@/app/components/workspace/VoiceTutor";
++import { aiMentorEnabled, practiceLoadMessage, practiceSubmitMessage } from "@/lib/practice-errors.mjs";
+ 
+ interface Question {
+   id: string;
+@@ -34,6 +35,11 @@ export default function PracticePage() {
+     results: Result[];
+   } | null>(null);
+   const [submitting, setSubmitting] = useState(false);
++  const [loadError, setLoadError] = useState<string | null>(null);
++  const [submitError, setSubmitError] = useState<string | null>(null);
++  // The AI mentor (typed and spoken chat with an AI) is off unless NEXT_PUBLIC_ENABLE_AI_MENTOR=true.
++  const aiOn = aiMentorEnabled(process.env.NEXT_PUBLIC_ENABLE_AI_MENTOR);
++  const gridCols = aiOn ? "lg:grid-cols-2" : "lg:grid-cols-1";
+ 
+   useEffect(() => {
+     if (!authLoading && !user) {
+@@ -50,12 +56,13 @@ export default function PracticePage() {
+   const generateQuiz = async () => {
+     try {
+       setLoading(true);
++      setLoadError(null);
+       const response = await api.post("/practice/generate", { topicId });
+       setSessionId(response.data.sessionId);
+       setQuestions(response.data.questions);
+     } catch (err) {
+       console.error("Failed to generate quiz:", err);
+-      // Handle error
++      setLoadError(practiceLoadMessage((err as any)?.response?.status));
+     } finally {
+       setLoading(false);
+     }
+@@ -75,6 +82,7 @@ export default function PracticePage() {
+     }
+ 
+     setSubmitting(true);
++    setSubmitError(null);
+     const formattedAnswers = Object.entries(answers).map(([qId, ans]) => ({
+       questionId: qId,
+       answer: ans,
+@@ -88,6 +96,7 @@ export default function PracticePage() {
+       setResults(response.data);
+     } catch (err) {
+       console.error("Failed to submit quiz:", err);
++      setSubmitError(practiceSubmitMessage((err as any)?.response?.status));
+     } finally {
+       setSubmitting(false);
+     }
+@@ -98,7 +107,7 @@ export default function PracticePage() {
+       <div className="flex min-h-screen items-center justify-center bg-muted/20 flex-col gap-4">
+         <ThinkingIndicator />
+         <p className="text-muted-foreground font-medium animate-pulse">
+-          Generating your personalized quiz...
++          Getting your questions...
+         </p>
+       </div>
+     );
+@@ -106,9 +115,25 @@ export default function PracticePage() {
+ 
+   if (!user) return null;
+ 
++  if (loadError && questions.length === 0) {
++    return (
++      <div className="flex min-h-screen items-center justify-center bg-muted/20 p-4">
++        <div className="max-w-md rounded-lg border border-border bg-card p-6 text-center shadow-sm">
++          <p className="text-foreground" role="alert">{loadError}</p>
++          <button
++            onClick={() => router.back()}
++            className="mt-4 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
++          >
++            &larr; Back
++          </button>
++        </div>
++      </div>
++    );
++  }
++
+   if (results) {
+     return (
+-      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen bg-muted/20 gap-4 p-4">
++      <div className={`grid grid-cols-1 ${gridCols} min-h-screen bg-muted/20 gap-4 p-4`}>
+         <div className="flex flex-col overflow-y-auto w-full max-w-3xl mx-auto py-8 px-4">
+           <div className="bg-card shadow-sm border border-border overflow-hidden sm:rounded-lg mb-6">
+             <div className="px-4 py-5 sm:px-6 text-center">
+@@ -161,16 +186,18 @@ export default function PracticePage() {
+           </div>
+         </div>
+ 
+-        {/* AI Mentor Sidebar */}
+-        <div className="flex flex-col h-[calc(100vh-2rem)] sticky top-4">
+-          <VoiceTutor topicId={topicId as string} topicTitle="Quiz Review" />
+-        </div>
++        {/* AI Mentor Sidebar (off by default) */}
++        {aiOn && (
++          <div className="flex flex-col h-[calc(100vh-2rem)] sticky top-4">
++            <VoiceTutor topicId={topicId as string} topicTitle="Quiz Review" />
++          </div>
++        )}
+       </div>
+     );
+   }
+ 
+   return (
+-    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen bg-muted/20 gap-4 p-4">
++    <div className={`grid grid-cols-1 ${gridCols} min-h-screen bg-muted/20 gap-4 p-4`}>
+       <div className="flex flex-col overflow-y-auto w-full max-w-3xl mx-auto py-8 px-4">
+         <div className="mb-8 flex items-center justify-between">
+           <button
+@@ -216,6 +243,9 @@ export default function PracticePage() {
+           ))}
+         </div>
+ 
++        {submitError && (
++          <p className="mt-6 text-sm text-destructive" role="alert">{submitError}</p>
++        )}
+         <div className="mt-8 flex justify-end">
+           <button
+             onClick={submitQuiz}
+@@ -227,10 +257,12 @@ export default function PracticePage() {
+         </div>
+       </div>
+ 
+-      {/* AI Mentor Sidebar */}
+-      <div className="flex flex-col h-[calc(100vh-2rem)] sticky top-4">
+-        <VoiceTutor topicId={topicId as string} topicTitle="Practice Session" />
+-      </div>
++      {/* AI Mentor Sidebar (off by default) */}
++      {aiOn && (
++        <div className="flex flex-col h-[calc(100vh-2rem)] sticky top-4">
++          <VoiceTutor topicId={topicId as string} topicTitle="Practice Session" />
++        </div>
++      )}
+     </div>
+   );
+ }
+diff --git a/frontend/lib/practice-errors.mjs b/frontend/lib/practice-errors.mjs
+new file mode 100644
+index 0000000..f226a8a
+--- /dev/null
++++ b/frontend/lib/practice-errors.mjs
+@@ -0,0 +1,25 @@
++/** Plain-language messages for the practice page, plus the AI-mentor switch. No dependencies, so it is easy to test. */
++
++/** @param {number | undefined} status HTTP status, or undefined when the server could not be reached */
++export function practiceLoadMessage(status) {
++  if (status === undefined) return "We couldn't reach the server. Check your connection and try again.";
++  if (status === 401) return "Please log in again.";
++  if (status === 403) return "Your teacher needs to record your parent or guardian's consent before you can start. Please tell your teacher.";
++  if (status === 404) return "There are no questions ready for this topic yet. Please tell your teacher.";
++  if (status === 503) return "Questions are not available right now. Please try again in a moment.";
++  return "Something went wrong loading your questions. Please tell your teacher.";
++}
++
++/** @param {number | undefined} status */
++export function practiceSubmitMessage(status) {
++  if (status === undefined) return "We couldn't reach the server. Your answers are still on this page; try submitting again.";
++  if (status === 401) return "Please log in again.";
++  if (status === 409) return "This quiz was already submitted. Go back and start a new one.";
++  if (status === 400) return "Some answers couldn't be accepted. Go back and start a new quiz.";
++  return "Something went wrong submitting your answers. Please tell your teacher.";
++}
++
++/** The AI mentor sidebar is shown only when NEXT_PUBLIC_ENABLE_AI_MENTOR is exactly "true" (any case). */
++export function aiMentorEnabled(flag) {
++  return String(flag ?? "").toLowerCase() === "true";
++}
+diff --git a/frontend/lib/practice-errors.test.mjs b/frontend/lib/practice-errors.test.mjs
+new file mode 100644
+index 0000000..c67c52e
+--- /dev/null
++++ b/frontend/lib/practice-errors.test.mjs
+@@ -0,0 +1,34 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { aiMentorEnabled, practiceLoadMessage, practiceSubmitMessage } from "./practice-errors.mjs";
++
++test("load messages tell the student what to do for each failure", () => {
++  assert.match(practiceLoadMessage(403), /consent/);
++  assert.match(practiceLoadMessage(404), /no questions/i);
++  assert.match(practiceLoadMessage(401), /log in/i);
++  assert.match(practiceLoadMessage(undefined), /reach the server/);
++  assert.match(practiceLoadMessage(500), /tell your teacher/i);
++});
++
++test("every load and submit message is non-empty and never shows raw error text", () => {
++  for (const s of [undefined, 400, 401, 403, 404, 409, 500, 503]) {
++    for (const m of [practiceLoadMessage(s), practiceSubmitMessage(s)]) {
++      assert.ok(m.length > 10);
++      assert.doesNotMatch(m, /Error|Exception|\{|undefined/);
++    }
++  }
++});
++
++test("submit messages distinguish an already-submitted quiz and a lost connection", () => {
++  assert.match(practiceSubmitMessage(409), /already submitted/);
++  assert.match(practiceSubmitMessage(undefined), /still on this page/);
++});
++
++test("AI mentor is off unless the flag is exactly true", () => {
++  assert.equal(aiMentorEnabled(undefined), false);
++  assert.equal(aiMentorEnabled(""), false);
++  assert.equal(aiMentorEnabled("false"), false);
++  assert.equal(aiMentorEnabled("1"), false);
++  assert.equal(aiMentorEnabled("true"), true);
++  assert.equal(aiMentorEnabled("TRUE"), true);
++});
+diff --git a/frontend/package.json b/frontend/package.json
+index 82a24fe..15df5c4 100644
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -6,7 +6,8 @@
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+-    "lint": "eslint"
++    "lint": "eslint",
++    "test": "node --test lib/*.test.mjs"
+   },
+   "dependencies": {
+     "@ducanh2912/next-pwa": "^10.2.9",
+-- 
+2.43.0
+

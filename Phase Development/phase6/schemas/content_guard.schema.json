@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EarlyChildhoodContentGuardSchema",
+  "type": "object",
+  "required": [
+    "guardVersion",
+    "targetTier",
+    "lexiconSize",
+    "maxSentenceLength",
+    "forbiddenDarkPatterns",
+    "prohibitedCategories"
+  ],
+  "properties": {
+    "guardVersion": { "type": "string" },
+    "targetTier": { "type": "string", "enum": ["KINDERGARTEN_JUNIOR"] },
+    "lexiconSize": { "type": "integer", "minimum": 100, "maximum": 1000 },
+    "maxSentenceLength": { "type": "integer", "maximum": 10 },
+    "forbiddenDarkPatterns": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "prohibitedCategories": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

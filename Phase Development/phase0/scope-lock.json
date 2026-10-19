@@ -1,0 +1,66 @@
+{
+  "document": {
+    "name": "YOUVA EdAI MVP Scope Lock",
+    "version": "1.0.0",
+    "status": "locked",
+    "dateLocked": "2026-09-08"
+  },
+
+  "launchTier": {
+    "tier": "middle_school",
+    "gradeBand": "Grade 8",
+    "deferredTiers": [
+      "kindergarten_junior",
+      "high_school"
+    ],
+    "rationale": "Middle school students possess reading fluency and basic metacognition without requiring high-stakes high school credentialing or the physical/voice scaffolding of early childhood. This allows rigorous validation of AI-teacher collaboration under the lowest baseline risk."
+  },
+
+  "jurisdiction": {
+    "country": "India",
+    "region": "Delhi NCR",
+    "regulation": "Digital Personal Data Protection Act, 2023 (DPDP Act)",
+    "reviewRequired": true,
+    "reviewedBy": "Adv. Rajesh Sharma, TechLaw & Governance Advisors LLP",
+    "reviewDate": "2026-09-08",
+    "deferredJurisdictions": [
+      "United States",
+      "European Union",
+      "United Kingdom"
+    ]
+  },
+
+  "launchModel": {
+    "model": "b2b_school_first",
+    "pilotPartner": "Delhi Public School, R.K. Puram",
+    "pilotRecruitmentPlan": null,
+    "rationale": "B2B school pilot embeds verified classroom teachers as authoritative co-pilots, ensuring direct human supervision and immediate qualitative feedback before direct-to-consumer exposure."
+  },
+
+  "mvpSubject": {
+    "subject": "Mathematics",
+    "grade": "Grade 8",
+    "curriculumStandard": "CBSE / NCERT",
+    "units": [
+      "Linear Equations in One Variable"
+    ],
+    "contentSourcingApproach": "build",
+    "contentOwner": "Curriculum Lead & Subject Matter Expert Team",
+    "estimatedTimelineWeeks": 8,
+    "estimatedBudget": 250000
+  },
+
+  "outOfScope": [
+    "billing",
+    "stripe",
+    "multi_tenant_lms_sis_interoperability",
+    "autonomous_ai_policy_engine",
+    "skills_passport",
+    "additional_tiers"
+  ],
+
+  "nextPhase": {
+    "target": "phase_1",
+    "requiresPhase0Gate": true
+  }
+}

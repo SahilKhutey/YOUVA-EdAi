@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SchoolLicensingConfig",
+  "description": "Schema for B2B institutional school seat licensing and quota management.",
+  "type": "object",
+  "required": [
+    "licenseId",
+    "contractId",
+    "tenantId",
+    "allocatedStudentSeats",
+    "allocatedTeacherSeats",
+    "status",
+    "expiresAt"
+  ],
+  "properties": {
+    "licenseId": {
+      "type": "string",
+      "pattern": "^LIC-[A-Z0-9-]+$"
+    },
+    "contractId": {
+      "type": "string",
+      "pattern": "^CONTRACT-[A-Z0-9-]+$"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^tenant-[a-z0-9-]+$"
+    },
+    "allocatedStudentSeats": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "allocatedTeacherSeats": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["DRAFT", "ACTIVE", "SUSPENDED", "EXPIRED", "TERMINATED"]
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "features": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,35 @@
+From 72494cfb03b260b718872cd8061a5ffc692c7664 Mon Sep 17 00:00:00 2001
+From: phase0-fixes <phase0@example.invalid>
+Date: Sun, 11 Oct 2026 14:24:39 +0000
+Subject: [PATCH 3/5] chore(governance): add CODEOWNERS and PR template
+ requiring reproducible verification
+
+---
+ .github/CODEOWNERS               | 2 ++
+ .github/pull_request_template.md | 5 +++++
+ 2 files changed, 7 insertions(+)
+ create mode 100644 .github/CODEOWNERS
+ create mode 100644 .github/pull_request_template.md
+
+diff --git a/.github/CODEOWNERS b/.github/CODEOWNERS
+new file mode 100644
+index 0000000..489c88b
+--- /dev/null
++++ b/.github/CODEOWNERS
+@@ -0,0 +1,2 @@
++# Every change requires review from the repository owner.
++* @SahilKhutey
+diff --git a/.github/pull_request_template.md b/.github/pull_request_template.md
+new file mode 100644
+index 0000000..b1618d4
+--- /dev/null
++++ b/.github/pull_request_template.md
+@@ -0,0 +1,5 @@
++## What changed
++## How I verified it (paste the command and its real output)
++## Claims check
++- [ ] No test counts, "verified", "approved", "pilot", or "audit" claims added unless backed by a reproducible artifact
++- [ ] Typecheck (`npx tsc --noEmit`) and tests (`npx jest`) run locally
+-- 
+2.43.0
+

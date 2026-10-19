@@ -1,0 +1,59 @@
+From aad094ad501ebec233198894257b047eac793907 Mon Sep 17 00:00:00 2001
+From: phase4-fixes <phase4@example.invalid>
+Date: Wed, 14 Oct 2026 03:07:03 +0000
+Subject: [PATCH 2/4] fix(practice): record durationSeconds on submit so pilot
+ minutes can be reported (+1 test)
+
+---
+ backend/src/practice/practice.behavior.spec.ts | 10 +++++++++-
+ backend/src/practice/practice.service.ts       |  8 +++++++-
+ 2 files changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/backend/src/practice/practice.behavior.spec.ts b/backend/src/practice/practice.behavior.spec.ts
+index 57f63f1..4e2b230 100644
+--- a/backend/src/practice/practice.behavior.spec.ts
++++ b/backend/src/practice/practice.behavior.spec.ts
+@@ -15,7 +15,7 @@ function makeDb(questions: any[]) {
+       create: async ({ data }: any) => { const q = { id: id('qa'), ...data }; db.questions.push(q); return q; },
+     },
+     practiceSession: {
+-      create: async ({ data }: any) => { const s = { id: id('s'), endTime: null, ...data }; db.sessions.push(s); return s; },
++      create: async ({ data }: any) => { const s = { id: id('s'), endTime: null, startTime: new Date(Date.now() - 90_000), ...data }; db.sessions.push(s); return s; },
+       findUnique: async ({ where }: any) => db.sessions.find((s: any) => s.id === where.id) ?? null,
+       update: async ({ where, data }: any) => Object.assign(db.sessions.find((s: any) => s.id === where.id), data),
+     },
+@@ -125,4 +125,12 @@ describe('PracticeService - reviewed item bank flow', () => {
+     await svc.generateQuiz('a1', 'topic1', 'ADMIN');
+     expect(consent.assertActiveConsent).not.toHaveBeenCalled();
+   });
++
++  it('records how long the session took (needed for pilot minutes)', async () => {
++    const { svc, db } = build([bank(1, 0.5)]);
++    const quiz = await svc.generateQuiz('u1', 'topic1');
++    await svc.submitQuiz(quiz.sessionId, 'u1', [{ questionId: 'b1', answer: 'A' }]);
++    expect(db.sessions[0].durationSeconds).toBeGreaterThanOrEqual(90);
++    expect(db.sessions[0].durationSeconds).toBeLessThan(120);
++  });
+ });
+diff --git a/backend/src/practice/practice.service.ts b/backend/src/practice/practice.service.ts
+index 2285b2d..a3b2131 100644
+--- a/backend/src/practice/practice.service.ts
++++ b/backend/src/practice/practice.service.ts
+@@ -195,7 +195,13 @@ export class PracticeService {
+     const xpEarned = Number(10 + Math.round((score / 100) * 10));
+     await this.prisma.practiceSession.update({
+       where: { id: sessionId },
+-      data: { score, endTime: new Date(), isCompleted: true, xpEarned },
++      data: {
++        score,
++        endTime: new Date(),
++        isCompleted: true,
++        xpEarned,
++        durationSeconds: Math.max(0, Math.round((Date.now() - new Date(session.startTime).getTime()) / 1000)),
++      },
+     });
+ 
+     await this.gamificationService.addXp(userId, xpEarned);
+-- 
+2.43.0
+

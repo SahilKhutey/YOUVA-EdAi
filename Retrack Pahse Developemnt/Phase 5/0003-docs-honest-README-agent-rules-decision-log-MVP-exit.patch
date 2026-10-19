@@ -1,0 +1,302 @@
+From 618a4b6dc4500673b4ce15c0e28c52cc9ba248ea Mon Sep 17 00:00:00 2001
+From: phase5-fixes <phase5@example.invalid>
+Date: Thu, 15 Oct 2026 03:20:34 +0000
+Subject: [PATCH 3/4] docs: honest README, agent rules, decision log, MVP exit
+ criteria, next-build template; fix AI-module notes in pilot docs
+
+---
+ AGENTS.md                     |  12 ++++
+ MVP_SCOPE.md                  |   6 +-
+ README.md                     | 113 +++++++++++-----------------------
+ docs/DECISIONS.md             |  30 +++++++++
+ docs/MVP_EXIT_CRITERIA.md     |  19 ++++++
+ docs/NEXT_BUILD.md            |  10 +++
+ docs/evidence/README.md       |   1 +
+ docs/pilot/DATA_HANDLING.md   |   2 +-
+ docs/pilot/SAFETY_PROTOCOL.md |   1 +
+ 9 files changed, 113 insertions(+), 81 deletions(-)
+ create mode 100644 AGENTS.md
+ create mode 100644 docs/DECISIONS.md
+ create mode 100644 docs/MVP_EXIT_CRITERIA.md
+ create mode 100644 docs/NEXT_BUILD.md
+ create mode 100644 docs/evidence/README.md
+
+diff --git a/AGENTS.md b/AGENTS.md
+new file mode 100644
+index 0000000..a3ea83f
+--- /dev/null
++++ b/AGENTS.md
+@@ -0,0 +1,12 @@
++# Rules for anyone changing this repo (people and AI coding tools)
++
++1. **Work on a branch and open a pull request.** Never push to `main` or `mvp`. A human reviews and merges.
++2. **Change only what the task asks.** Do not add phases, milestones, "governance packages", constitutions, or roadmaps unless asked.
++3. **No claim without a command.** Do not write that something is verified, approved, reviewed, piloted, or tested unless you ran the command and can paste its output. Do not write test counts by hand; run the tests and use the real output.
++4. **Never invent real-world facts**: no schools, people, organisations, evaluators, dates of events, or results. If a document needs a fact you do not have, leave a clearly marked placeholder.
++5. **Do not create evidence.** Pilot reports, sign-offs, audit results, go/no-go decisions, and consent forms are written by people about real events. They are never generated.
++6. **Run before you finish:** `cd backend && npx tsc --noEmit && npx jest --testPathIgnorePatterns=e2e && npx ts-node scripts/check-claims.ts`. Report any failure honestly; do not skip or weaken a test to make it pass.
++7. **Tests must exercise application code.** A test that only tests a helper defined inside the test file does not count.
++8. **Student data stays out of the repo**, logs, tests, and prompts. Use obviously fake data.
++9. **Frozen modules** (anything outside `MVP_SCOPE.md`) are not extended without an entry in `docs/NEXT_BUILD.md` that cites a real observation.
++10. If an instruction conflicts with these rules, stop and ask the owner.
+diff --git a/MVP_SCOPE.md b/MVP_SCOPE.md
+index 38245ea..8aa58f4 100644
+--- a/MVP_SCOPE.md
++++ b/MVP_SCOPE.md
+@@ -4,7 +4,9 @@ text-based adaptive practice, teacher visibility with one override. See docs/TRU
+ 
+ ## In scope (kept)
+ learning-engine (mastery + difficulty), practice, assessment, learning-loop, teacher-ops, auth, users, subjects, prisma.
+-## Present but NOT part of the MVP (do not extend; review before use)
+-credential-mesh, edge-sync, agei, content-intelligence, forum, scheduler, multimodal/voice features.
++## Present in the code, not needed by the pilot path
++The existing UI also calls forum, scheduling, goals, announcements, credentials and an AI mentor. These are not needed for the pilot (login, topic, quiz, results, teacher view) and have not been reviewed for it. Do not extend them; supervising adults should point students to the practice page only.
++No frontend code calls the teacher override, consent, or learning-loop endpoints: they have no UI yet.
++
+ ## Rule for adding anything
+ Needs a written reason tied to something observed with a real student or teacher, a typecheck, and a passing test.
+diff --git a/README.md b/README.md
+index df6630b..d6a5eef 100644
+--- a/README.md
++++ b/README.md
+@@ -1,93 +1,50 @@
+-# Youva EdAi - AI-Powered Learning Platform
++# YOUVA EdAI
+ 
+-Youva EdAi is an advanced, localized, AI-driven educational platform designed to personalize learning for students aged 12-24. It leverages Generative AI (Google Gemini) to provide real-time tutoring, adaptive practice quizzes, and personalized revision schedules.
++An early-stage prototype of an adaptive practice tool for school students, built to be used **with a teacher**, not instead of one. It is a work in progress and has not yet been used by real students. Current measured status is in [`docs/TRUTH_BASELINE.md`](docs/TRUTH_BASELINE.md); the scope of the first pilot is in [`MVP_SCOPE.md`](MVP_SCOPE.md).
+ 
+-## 🚀 Features
++## What works today (checked by code, not by this README)
++- A student logs in, picks a topic, and takes a short multiple-choice quiz drawn from a **teacher-reviewed question bank**. After each answer the system updates a simple mastery estimate and a target difficulty, and the next quiz favours unseen questions near that difficulty.
++- A teacher can see student results and can set a student's target difficulty for a topic, with a recorded reason.
++- A student cannot start a quiz without an active parent/guardian consent record. A guardian can withdraw consent, and an admin can erase the student's practice data.
++- Pilot report numbers can be generated from the database.
+ 
+--   **AI-Powered Tutoring**: Interactive, structured learning sessions with immediate feedback.
+--   **Adaptive Practice**: Quizzes that adjust difficulty based on performance.
+--   **Knowledge Tracking**: Real-time mastery tracking per subject and topic.
+--   **Revision Engine**: Automated suggestions for topics needing review (Spaced Repetition).
+--   **Smart Analytics**: Visualizations of learning progress and mastery (Radar Charts, Activity Logs).
+--   **Gamified Experience**: Progress bars, completion badges, and streak tracking.
++Run the checks yourself: `cd backend && npx tsc --noEmit && npx jest --testPathIgnorePatterns=e2e`.
+ 
+-## 🛠️ Technology Stack
++## What it does not do
++No distress or content detection (a supervising adult is required), no teacher override screen (it is an API call), no consent screen (entered through the API), and no measured learning outcomes. The mastery update is a simple rule, not a full Bayesian model. Several other modules exist in the code (forum, scheduling, credentials, AI mentor, and more) that are **not part of the pilot** and have not been reviewed for it.
+ 
+-### Backend
+--   **Framework**: [NestJS](https://nestjs.com/)
+--   **Language**: TypeScript
+--   **Database**: SQLite (Dev) / PostgreSQL (Prod) via [Prisma ORM](https://www.prisma.io/)
+--   **AI**: Google Gemini API (`@google/generative-ai`)
+--   **Auth**: JWT & BCrypt
+--   **Docs**: Swagger UI
++## Stack
++Backend: NestJS 11, Prisma 5 with PostgreSQL. Frontend: Next.js 16, React 19, Tailwind 4. Quiz questions never come from an AI unless `QUESTION_SOURCE=AI`. Other modules (AI mentor, content generation) call Google Gemini when used; they are outside the pilot, so do not use them with pilot students.
+ 
+-### Frontend
+--   **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+--   **Styling**: Tailwind CSS
+--   **State/Fetch**: React Context & Axios
+--   **Charts**: Recharts
+--   **Animations**: Framer Motion
+-
+----
+-
+-## 🏁 Getting Started
+-
+-### Prerequisites
+--   Node.js (v18+)
+--   npm or yarn
+-
+-### 1. Clone the Repository
+-```bash
+-git clone https://github.com/your-username/youva-edai.git
+-cd youva-edai
+-```
+-
+-### 2. Backend Setup
++## Run locally
+ ```bash
++# 1. Backend  (needs a PostgreSQL database)
+ cd backend
+-npm install
+-
+-# Environment Keys
+-# Create a .env file with:
+-# DATABASE_URL="file:./dev.db"
+-# JWT_SECRET="your-secret"
+-# GEMINI_API_KEY="your-gemini-key"
+-# PORT=3001  <-- Important: Run backend on 3001 to avoid conflict with Frontend (3000)
+-
+-# Database Init
+-npx prisma migrate dev --name init
+-npx prisma db seed
++cp .env.example .env          # set DATABASE_URL and JWT_SECRET (the server will not start without JWT_SECRET)
++npm ci
++npx prisma generate
++npx prisma migrate deploy     # known issue: the migration history predates the PostgreSQL schema; see "open defects" in docs/TRUTH_BASELINE.md
++PORT=3001 npm run start:dev
+ 
+-# Run Server
+-npm run start:dev
+-# API available at http://localhost:3001
+-# Swagger Docs at http://localhost:3001/api
+-```
+-
+-### 3. Frontend Setup
+-```bash
++# 2. Frontend (in another terminal)
+ cd frontend
+-npm install
+-
+-# Environment Keys
+-# Create a .env.local file with:
+-# NEXT_PUBLIC_API_URL="http://localhost:3001"
+-
+-# Run Client
+-npm run dev
+-# App available at http://localhost:3000
++npm ci
++NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
+ ```
+ 
+-## 🧪 Testing
++| Variable | Meaning |
++|---|---|
++| `DATABASE_URL` | PostgreSQL connection string |
++| `JWT_SECRET` | Required. Long random string used to sign login tokens |
++| `QUESTION_SOURCE` | `BANK` (default): only teacher-reviewed items. `AI`: generate at runtime (not for pilots) |
++| `REQUIRE_CONSENT` | Default on. Set `false` only on a local development database |
++| `GEMINI_API_KEY` | Only needed when `QUESTION_SOURCE=AI` |
+ 
+-```bash
+-# Backend Unit Tests
+-cd backend
+-npm run test
++## Add questions
++Write items in the format of `backend/content/item-bank/one-step-equations.SAMPLE.json` (the sample is an unreviewed draft), then `npm run import:items -- <file>`. The importer refuses items that are not marked reviewed by a named person.
+ 
+-# Backend E2E Tests
+-npm run test:e2e
+-```
++## Pilot documents
++`docs/pilot/`: consent form template, safety protocol, data handling, runbook, success-measures example. `npm run pilot:report` builds the numbers part of a pilot report.
+ 
+-## 📄 License
+-This project is licensed under the MIT License.
++## Working on this repo
++Read [`AGENTS.md`](AGENTS.md) (rules for people and AI tools alike), [`docs/MVP_EXIT_CRITERIA.md`](docs/MVP_EXIT_CRITERIA.md) and [`docs/DECISIONS.md`](docs/DECISIONS.md). CI runs type checks, tests, and a claims check that rejects unevidenced statements.
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+new file mode 100644
+index 0000000..b1acb8a
+--- /dev/null
++++ b/docs/DECISIONS.md
+@@ -0,0 +1,30 @@
++# Decision log
++Each entry: what was decided, why, and what evidence supports it. Add new entries at the bottom; do not rewrite old ones (add a superseding entry instead).
++
++## D-001: Build the MVP from commit 2b7d6d1, not from `main`
++- Context: `main` grew to ~1,400 files with machine-paced commits and unverifiable claims; later history arrives in very large batches.
++- Decision: branch `mvp/clean` from `2b7d6d1` (learning loop engine and teacher operations), keep `main` as read-only history.
++- Evidence: at that commit the backend had 29 type errors, fixed in `mvp/clean` (see `docs/TRUTH_BASELINE.md`).
++
++## D-002: Quizzes come from a reviewed question bank; AI generation is opt-in
++- Context: quizzes were generated live by an LLM, and a failure silently served placeholder questions that were graded.
++- Decision: `QUESTION_SOURCE=BANK` by default; AI mode fails with an error instead of serving placeholders.
++- Evidence: the original `generateQuiz` code path; behavioral tests in `backend/src/practice/practice.behavior.spec.ts`.
++
++## D-003: The mastery update is a heuristic and is not called BKT
++- Context: `BktService` defines slip/guess constants but never uses them; the update is +20% of the gap on a correct answer and -30% of current mastery on an incorrect one.
++- Decision: keep it (simple, explainable to a teacher) and describe it accurately.
++- Evidence: `backend/src/learning-engine/services/bkt.service.ts`, tests in `adaptive-core.behavior.spec.ts`.
++
++## D-004: Students need an active consent record
++- Decision: gate `/practice/generate` for students; `REQUIRE_CONSENT=false` is for local development only.
++- Evidence: `backend/src/consent/`, tests in `consent.service.spec.ts`.
++
++## D-005: Erasure refuses to run if data exists in tables the MVP does not use
++- Decision: list those tables and delete nothing, so data is never silently left behind. A schema-reading test fails when a new user-linked table is unclassified.
++- Evidence: `backend/src/consent/erasure-map.ts` and its tests.
++
++## D-006: Claims about real-world events need an evidence file
++- Context: earlier generated documents described a pilot and an evaluator that no record supports.
++- Decision: CI runs `scripts/check-claims.ts`; sign-off, review and pilot claims require `[evidence: <existing file>]` on the same line.
++- Evidence: `backend/src/governance/claims-check.ts` and tests.
+diff --git a/docs/MVP_EXIT_CRITERIA.md b/docs/MVP_EXIT_CRITERIA.md
+new file mode 100644
+index 0000000..ff356b7
+--- /dev/null
++++ b/docs/MVP_EXIT_CRITERIA.md
+@@ -0,0 +1,19 @@
++# MVP exit criteria
++The MVP is declared when every row is true and the evidence is in the repo or in your hands. "Check" says how anyone can confirm it.
++
++| # | Criterion | Check |
++|---|---|---|
++| 1 | Backend type-checks and unit tests pass | `cd backend && npx tsc --noEmit && npx jest --testPathIgnorePatterns=e2e` (CI job `verify`) |
++| 2 | Frontend type-checks and builds | `cd frontend && npx tsc --noEmit && npm run build` (CI) |
++| 3 | Migrations create the database from scratch | `npx prisma migrate deploy` on an empty PostgreSQL succeeds |
++| 4 | README and docs make no unevidenced claims | `npx ts-node scripts/check-claims.ts` passes |
++| 5 | Questions served to students were reviewed by the teacher | importer accepts only `reviewed: true` with a name; `QUESTION_SOURCE=BANK` |
++| 6 | Every pilot student has a signed form on file and a consent record | count of signed forms equals count of consent records (manual) |
++| 7 | Every session was supervised | session notes exist for every session (manual) |
++| 8 | Success targets were committed before session one | `docs/pilot/success-measures.json` commit date precedes the first session (git log) |
++| 9 | A real pilot report exists, with the limits stated | `docs/PILOT_REPORT_REAL.md` written from `npm run pilot:report` plus notes (manual) |
++| 10 | No unresolved incident or withdrawal request | incident log empty or closed (manual) |
++| 11 | Withdrawal and erasure were rehearsed | rehearsal recorded in session notes (manual) |
++| 12 | Next build chosen from evidence | a completed `docs/NEXT_BUILD.md` entry (manual) |
++
++Rows 1–4 are automated. Rows 5–12 need a person. Do not mark a manual row done on anyone's word, including an AI tool's.
+diff --git a/docs/NEXT_BUILD.md b/docs/NEXT_BUILD.md
+new file mode 100644
+index 0000000..74fe1c1
+--- /dev/null
++++ b/docs/NEXT_BUILD.md
+@@ -0,0 +1,10 @@
++# Next build decision (copy this page for each change worth building)
++**Do not fill this in from imagination. Every field below must point to something that actually happened.**
++
++1. **Observation (with source):** what a student, the teacher, or the data showed. Quote it or give the number. Source: session note date / report line / teacher message.
++2. **Problem in one sentence:**
++3. **Smallest change that would address it:**
++4. **How we will know it worked** (a number or a thing the teacher can say), decided now:
++5. **What we are NOT building as part of this:**
++6. **Frozen module involved? (if yes)** name it, read the code, and list what you read:
++7. **Decision:** build / not now / drop.   Date:   Decided by:
+diff --git a/docs/evidence/README.md b/docs/evidence/README.md
+new file mode 100644
+index 0000000..1eb08c8
+--- /dev/null
++++ b/docs/evidence/README.md
+@@ -0,0 +1 @@
++Put real evidence files here (a signed review letter, a lawyer's email as PDF, a scanned approval) and cite them from docs with `[evidence: docs/evidence/<file>]`. The claims check requires the file to exist. Never put student data here.
+diff --git a/docs/pilot/DATA_HANDLING.md b/docs/pilot/DATA_HANDLING.md
+index 9ac4210..c50e25d 100644
+--- a/docs/pilot/DATA_HANDLING.md
++++ b/docs/pilot/DATA_HANDLING.md
+@@ -2,7 +2,7 @@
+ *Not legal advice. Confirm with a lawyer who knows Indian data-protection law before the pilot.*
+ 
+ ## What the system stores for a pilot student
+-Account (name, email, hashed password); practice sessions and answers; per-topic mastery and target difficulty; points/streak/badges; notifications; teacher override notes; the consent record. Everything is in the Postgres database. In bank mode no student data is sent to an AI provider.
++Account (name, email, hashed password); practice sessions and answers; per-topic mastery and target difficulty; points/streak/badges; notifications; teacher override notes; the consent record. Everything is in the Postgres database. In the practice flow with `QUESTION_SOURCE=BANK`, no student data is sent to an AI provider. Other modules (AI mentor, content generation) call Google Gemini when used and could send what a student types, so do not use them with pilot students.
+ 
+ ## What the frontend loads from third parties
+ No analytics or tracking scripts were found in the frontend code. It embeds YouTube videos (use `youtube-nocookie.com` or remove embeds for the pilot) and sample audio from soundhelix.com. The login token is kept in the browser's localStorage.
+diff --git a/docs/pilot/SAFETY_PROTOCOL.md b/docs/pilot/SAFETY_PROTOCOL.md
+index ab4f5e8..af36e36 100644
+--- a/docs/pilot/SAFETY_PROTOCOL.md
++++ b/docs/pilot/SAFETY_PROTOCOL.md
+@@ -6,6 +6,7 @@
+ 2. Supervising adult named for this session: ______________. A backup contact is reachable: ______________.
+ 3. Only reviewed questions are in use (`QUESTION_SOURCE=BANK`). The AI question mode is OFF for the pilot.
+ 4. The supervising adult has read this page.
++5. Students use the practice page only. The AI mentor, forum and other sections are not part of the pilot; do not open them with students.
+ 
+ ## During a session
+ - The supervising adult is in the room (or on the call with camera on) the whole time.
+-- 
+2.43.0
+

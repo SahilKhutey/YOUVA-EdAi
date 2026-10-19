@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstitutionalDemandContract",
+  "description": "Schema for demand-validated enterprise contracts required to activate scale infrastructure.",
+  "type": "object",
+  "required": [
+    "contractId",
+    "tenantId",
+    "institutionName",
+    "minCommittedSeats",
+    "status",
+    "validFrom",
+    "validUntil",
+    "authorizedSigners",
+    "slaUptimePercent",
+    "jurisdiction"
+  ],
+  "properties": {
+    "contractId": {
+      "type": "string",
+      "pattern": "^CONTRACT-[A-Z0-9-]+$"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^tenant-[a-z0-9-]+$"
+    },
+    "institutionName": {
+      "type": "string",
+      "minLength": 3
+    },
+    "minCommittedSeats": {
+      "type": "integer",
+      "minimum": 50
+    },
+    "status": {
+      "type": "string",
+      "enum": ["DRAFT", "ACTIVE", "SIGNED", "SUSPENDED", "EXPIRED", "TERMINATED"]
+    },
+    "validFrom": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "validUntil": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "authorizedSigners": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "role", "email", "signedAt"],
+        "properties": {
+          "name": { "type": "string", "minLength": 2 },
+          "role": { "type": "string", "minLength": 2 },
+          "email": { "type": "string", "format": "email" },
+          "signedAt": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "slaUptimePercent": {
+      "type": "number",
+      "minimum": 99.9,
+      "maximum": 100.0
+    },
+    "jurisdiction": {
+      "type": "string",
+      "enum": ["IN_DPDP", "US_COPPA_FERPA", "EU_GDPR", "GLOBAL_DEFAULT"]
+    },
+    "allowedLmsHosts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    }
+  },
+  "additionalProperties": false
+}

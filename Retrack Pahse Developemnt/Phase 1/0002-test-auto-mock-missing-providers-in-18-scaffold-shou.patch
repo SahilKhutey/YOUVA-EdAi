@@ -1,0 +1,250 @@
+From bb4d85231eac7ec45945a7c740ebc6418aa8099d Mon Sep 17 00:00:00 2001
+From: phase1-fixes <phase1@example.invalid>
+Date: Sun, 11 Oct 2026 14:34:36 +0000
+Subject: [PATCH 2/5] test: auto-mock missing providers in 18 scaffold 'should
+ be defined' specs so they run
+
+---
+ backend/src/ai-mentor/ai-mentor.controller.spec.ts              | 2 +-
+ .../src/ai-mentor/services/pedagogy/pedagogy.service.spec.ts    | 2 +-
+ .../src/ai-mentor/services/validator/validator.service.spec.ts  | 2 +-
+ backend/src/analytics/analytics.service.spec.ts                 | 2 +-
+ backend/src/assessment/assessment.controller.spec.ts            | 2 +-
+ .../services/anti-cheating/anti-cheating.service.spec.ts        | 2 +-
+ .../assessment/services/assessment/assessment.service.spec.ts   | 2 +-
+ backend/src/auth/auth.service.spec.ts                           | 2 +-
+ backend/src/content-gen/content-gen.controller.spec.ts          | 2 +-
+ .../prompt-orchestrator/prompt-orchestrator.service.spec.ts     | 2 +-
+ backend/src/engagement/engagement.controller.spec.ts            | 2 +-
+ backend/src/gamification/gamification.controller.spec.ts        | 2 +-
+ backend/src/gamification/gamification.service.spec.ts           | 2 +-
+ backend/src/learning-engine/services/bkt.service.spec.ts        | 2 +-
+ .../src/learning-engine/services/rl-difficulty.service.spec.ts  | 2 +-
+ backend/src/practice/practice.service.spec.ts                   | 2 +-
+ backend/src/revision/revision.service.spec.ts                   | 2 +-
+ 17 files changed, 17 insertions(+), 17 deletions(-)
+
+diff --git a/backend/src/ai-mentor/ai-mentor.controller.spec.ts b/backend/src/ai-mentor/ai-mentor.controller.spec.ts
+index 63d936b..0396c42 100644
+--- a/backend/src/ai-mentor/ai-mentor.controller.spec.ts
++++ b/backend/src/ai-mentor/ai-mentor.controller.spec.ts
+@@ -7,7 +7,7 @@ describe('AiMentorController', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       controllers: [AiMentorController],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     controller = module.get<AiMentorController>(AiMentorController);
+   });
+diff --git a/backend/src/ai-mentor/services/pedagogy/pedagogy.service.spec.ts b/backend/src/ai-mentor/services/pedagogy/pedagogy.service.spec.ts
+index ff553e9..39aa986 100644
+--- a/backend/src/ai-mentor/services/pedagogy/pedagogy.service.spec.ts
++++ b/backend/src/ai-mentor/services/pedagogy/pedagogy.service.spec.ts
+@@ -7,7 +7,7 @@ describe('PedagogyService', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       providers: [PedagogyService],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<PedagogyService>(PedagogyService);
+   });
+diff --git a/backend/src/ai-mentor/services/validator/validator.service.spec.ts b/backend/src/ai-mentor/services/validator/validator.service.spec.ts
+index 2fd3f52..02270e1 100644
+--- a/backend/src/ai-mentor/services/validator/validator.service.spec.ts
++++ b/backend/src/ai-mentor/services/validator/validator.service.spec.ts
+@@ -7,7 +7,7 @@ describe('ValidatorService', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       providers: [ValidatorService],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<ValidatorService>(ValidatorService);
+   });
+diff --git a/backend/src/analytics/analytics.service.spec.ts b/backend/src/analytics/analytics.service.spec.ts
+index 3427430..27e7c28 100644
+--- a/backend/src/analytics/analytics.service.spec.ts
++++ b/backend/src/analytics/analytics.service.spec.ts
+@@ -29,7 +29,7 @@ describe('AnalyticsService', () => {
+           },
+         },
+       ],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<AnalyticsService>(AnalyticsService);
+   });
+diff --git a/backend/src/assessment/assessment.controller.spec.ts b/backend/src/assessment/assessment.controller.spec.ts
+index 696096b..0fa3325 100644
+--- a/backend/src/assessment/assessment.controller.spec.ts
++++ b/backend/src/assessment/assessment.controller.spec.ts
+@@ -7,7 +7,7 @@ describe('AssessmentController', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       controllers: [AssessmentController],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     controller = module.get<AssessmentController>(AssessmentController);
+   });
+diff --git a/backend/src/assessment/services/anti-cheating/anti-cheating.service.spec.ts b/backend/src/assessment/services/anti-cheating/anti-cheating.service.spec.ts
+index 1ff4192..2b7cf19 100644
+--- a/backend/src/assessment/services/anti-cheating/anti-cheating.service.spec.ts
++++ b/backend/src/assessment/services/anti-cheating/anti-cheating.service.spec.ts
+@@ -7,7 +7,7 @@ describe('AntiCheatingService', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       providers: [AntiCheatingService],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<AntiCheatingService>(AntiCheatingService);
+   });
+diff --git a/backend/src/assessment/services/assessment/assessment.service.spec.ts b/backend/src/assessment/services/assessment/assessment.service.spec.ts
+index 064bd56..7264fde 100644
+--- a/backend/src/assessment/services/assessment/assessment.service.spec.ts
++++ b/backend/src/assessment/services/assessment/assessment.service.spec.ts
+@@ -7,7 +7,7 @@ describe('AssessmentService', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       providers: [AssessmentService],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<AssessmentService>(AssessmentService);
+   });
+diff --git a/backend/src/auth/auth.service.spec.ts b/backend/src/auth/auth.service.spec.ts
+index 71f6b4c..8454388 100644
+--- a/backend/src/auth/auth.service.spec.ts
++++ b/backend/src/auth/auth.service.spec.ts
+@@ -24,7 +24,7 @@ describe('AuthService', () => {
+           },
+         },
+       ],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<AuthService>(AuthService);
+   });
+diff --git a/backend/src/content-gen/content-gen.controller.spec.ts b/backend/src/content-gen/content-gen.controller.spec.ts
+index 00715de..a704eda 100644
+--- a/backend/src/content-gen/content-gen.controller.spec.ts
++++ b/backend/src/content-gen/content-gen.controller.spec.ts
+@@ -7,7 +7,7 @@ describe('ContentGenController', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       controllers: [ContentGenController],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     controller = module.get<ContentGenController>(ContentGenController);
+   });
+diff --git a/backend/src/content-gen/services/prompt-orchestrator/prompt-orchestrator.service.spec.ts b/backend/src/content-gen/services/prompt-orchestrator/prompt-orchestrator.service.spec.ts
+index 7d047a7..7ef23f2 100644
+--- a/backend/src/content-gen/services/prompt-orchestrator/prompt-orchestrator.service.spec.ts
++++ b/backend/src/content-gen/services/prompt-orchestrator/prompt-orchestrator.service.spec.ts
+@@ -7,7 +7,7 @@ describe('PromptOrchestratorService', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       providers: [PromptOrchestratorService],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<PromptOrchestratorService>(PromptOrchestratorService);
+   });
+diff --git a/backend/src/engagement/engagement.controller.spec.ts b/backend/src/engagement/engagement.controller.spec.ts
+index b532aa6..d465584 100644
+--- a/backend/src/engagement/engagement.controller.spec.ts
++++ b/backend/src/engagement/engagement.controller.spec.ts
+@@ -7,7 +7,7 @@ describe('EngagementController', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       controllers: [EngagementController],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     controller = module.get<EngagementController>(EngagementController);
+   });
+diff --git a/backend/src/gamification/gamification.controller.spec.ts b/backend/src/gamification/gamification.controller.spec.ts
+index 49ed62c..b7527e9 100644
+--- a/backend/src/gamification/gamification.controller.spec.ts
++++ b/backend/src/gamification/gamification.controller.spec.ts
+@@ -7,7 +7,7 @@ describe('GamificationController', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       controllers: [GamificationController],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     controller = module.get<GamificationController>(GamificationController);
+   });
+diff --git a/backend/src/gamification/gamification.service.spec.ts b/backend/src/gamification/gamification.service.spec.ts
+index 8b92b15..0c85197 100644
+--- a/backend/src/gamification/gamification.service.spec.ts
++++ b/backend/src/gamification/gamification.service.spec.ts
+@@ -7,7 +7,7 @@ describe('GamificationService', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       providers: [GamificationService],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<GamificationService>(GamificationService);
+   });
+diff --git a/backend/src/learning-engine/services/bkt.service.spec.ts b/backend/src/learning-engine/services/bkt.service.spec.ts
+index 3ac7a79..0534396 100644
+--- a/backend/src/learning-engine/services/bkt.service.spec.ts
++++ b/backend/src/learning-engine/services/bkt.service.spec.ts
+@@ -7,7 +7,7 @@ describe('BktService', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       providers: [BktService],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<BktService>(BktService);
+   });
+diff --git a/backend/src/learning-engine/services/rl-difficulty.service.spec.ts b/backend/src/learning-engine/services/rl-difficulty.service.spec.ts
+index 0dd5b83..bd73d54 100644
+--- a/backend/src/learning-engine/services/rl-difficulty.service.spec.ts
++++ b/backend/src/learning-engine/services/rl-difficulty.service.spec.ts
+@@ -7,7 +7,7 @@ describe('RlDifficultyService', () => {
+   beforeEach(async () => {
+     const module: TestingModule = await Test.createTestingModule({
+       providers: [RlDifficultyService],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<RlDifficultyService>(RlDifficultyService);
+   });
+diff --git a/backend/src/practice/practice.service.spec.ts b/backend/src/practice/practice.service.spec.ts
+index a53b574..b323463 100644
+--- a/backend/src/practice/practice.service.spec.ts
++++ b/backend/src/practice/practice.service.spec.ts
+@@ -30,7 +30,7 @@ describe('PracticeService', () => {
+           useValue: { generateText: jest.fn() },
+         },
+       ],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<PracticeService>(PracticeService);
+   });
+diff --git a/backend/src/revision/revision.service.spec.ts b/backend/src/revision/revision.service.spec.ts
+index 1d3da06..f0bf70f 100644
+--- a/backend/src/revision/revision.service.spec.ts
++++ b/backend/src/revision/revision.service.spec.ts
+@@ -16,7 +16,7 @@ describe('RevisionService', () => {
+           },
+         },
+       ],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<RevisionService>(RevisionService);
+   });
+-- 
+2.43.0
+

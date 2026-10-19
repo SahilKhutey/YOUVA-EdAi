@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "registry": {
+    "defaultJurisdiction": "in-dpdp",
+    "supportedJurisdictions": [
+      {
+        "id": "in-dpdp",
+        "name": "India - Digital Personal Data Protection Act (DPDP 2023)",
+        "file": "in-dpdp.json",
+        "status": "active",
+        "priority": 1
+      },
+      {
+        "id": "us-coppa-ferpa",
+        "name": "United States - COPPA / FERPA Compliance Envelope",
+        "file": "us-coppa-ferpa.json",
+        "status": "active",
+        "priority": 2
+      },
+      {
+        "id": "eu-gdpr",
+        "name": "European Union - General Data Protection Regulation (GDPR)",
+        "file": "eu-gdpr.json",
+        "status": "draft",
+        "priority": 3
+      }
+    ],
+    "routingRules": {
+      "ipGeoHeader": "CF-IPCountry",
+      "tenantOverrideAllowed": true,
+      "enforceStrictestChildAgeRuleOnMismatch": true,
+      "failoverJurisdiction": "in-dpdp"
+    }
+  }
+}

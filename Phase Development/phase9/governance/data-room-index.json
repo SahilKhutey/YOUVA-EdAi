@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Institutional Procurement Data Room Index",
+  "dataRoom": {
+    "sections": [
+      {
+        "id": "SEC-ARCH",
+        "title": "Architecture & Security Whitepaper",
+        "documents": [
+          {
+            "docId": "DOC-ARCH-01",
+            "name": "YOUVA EdAI Platform Architecture & Trust Boundaries v2.0",
+            "status": "APPROVED",
+            "classification": "PUBLIC"
+          },
+          {
+            "docId": "DOC-SEC-01",
+            "name": "Zero-Trust Multi-Tenant Isolation & Encryption Key Management",
+            "status": "APPROVED",
+            "classification": "CONFIDENTIAL"
+          }
+        ]
+      },
+      {
+        "id": "SEC-COMPLIANCE",
+        "title": "Independent Compliance & Legal Attestations",
+        "documents": [
+          {
+            "docId": "DOC-COMP-DPDP",
+            "name": "India DPDP Act 2023 Statutory Compliance Assessment & Legal Opinion",
+            "status": "APPROVED",
+            "classification": "CONFIDENTIAL"
+          },
+          {
+            "docId": "DOC-COMP-COPPA",
+            "name": "US COPPA / FERPA Independent Legal Audit Report",
+            "status": "APPROVED",
+            "classification": "CONFIDENTIAL"
+          },
+          {
+            "docId": "DOC-SOC2-TYPE2",
+            "name": "SOC 2 Type II Readiness Assessment Report",
+            "status": "APPROVED",
+            "classification": "CONFIDENTIAL"
+          }
+        ]
+      },
+      {
+        "id": "SEC-SLA",
+        "title": "Service Level Agreement (SLA) & Incident Response Policy",
+        "documents": [
+          {
+            "docId": "DOC-SLA-01",
+            "name": "Enterprise Institutional SLA (99.9% Availability, Financial Credits)",
+            "status": "APPROVED",
+            "classification": "PUBLIC"
+          },
+          {
+            "docId": "DOC-INCIDENT-01",
+            "name": "Security Incident Response & Child Safety Escalation Plan",
+            "status": "APPROVED",
+            "classification": "CONFIDENTIAL"
+          }
+        ]
+      },
+      {
+        "id": "SEC-CREDENTIALS",
+        "title": "Verifiable Credential & Open Badges Technical Specifications",
+        "documents": [
+          {
+            "docId": "DOC-CRED-W3C",
+            "name": "W3C VC 2.0 / Open Badges 3.0 Cryptographic Signature Standard",
+            "status": "APPROVED",
+            "classification": "PUBLIC"
+          },
+          {
+            "docId": "DOC-ANTI-GAMING",
+            "name": "Anti-Gaming, Speedrun Prevention & Human Teacher Signoff Invariants",
+            "status": "APPROVED",
+            "classification": "PUBLIC"
+          }
+        ]
+      },
+      {
+        "id": "SEC-RFP",
+        "title": "Standard Institutional RFP Questionnaire Library",
+        "documents": [
+          {
+            "docId": "DOC-RFP-LIB",
+            "name": "HECVAT / CAIQ / National School Board Association Standard RFP Library",
+            "status": "APPROVED",
+            "classification": "PUBLIC"
+          }
+        ]
+      }
+    ]
+  }
+}

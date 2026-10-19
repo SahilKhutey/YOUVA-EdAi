@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ParentCopilotSessionSchema",
+  "type": "object",
+  "required": [
+    "sessionId",
+    "parentToken",
+    "childToken",
+    "startTime",
+    "maxDurationMinutes",
+    "currentStatus",
+    "audioTranscripts",
+    "parentInterventions"
+  ],
+  "properties": {
+    "sessionId": { "type": "string" },
+    "parentToken": { "type": "string" },
+    "childToken": { "type": "string" },
+    "startTime": { "type": "string" },
+    "maxDurationMinutes": { "type": "integer", "maximum": 15 },
+    "currentStatus": {
+      "type": "string",
+      "enum": ["ACTIVE", "PAUSED_BY_PARENT", "TERMINATED_BY_PARENT", "AUTO_STOPPED_TIME_LIMIT"]
+    },
+    "audioTranscripts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "promptId", "spokenText", "childResponse"],
+        "properties": {
+          "timestamp": { "type": "string" },
+          "promptId": { "type": "string" },
+          "spokenText": { "type": "string" },
+          "childResponse": { "type": "string" }
+        }
+      }
+    },
+    "parentInterventions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "action", "notes"],
+        "properties": {
+          "timestamp": { "type": "string" },
+          "action": {
+            "type": "string",
+            "enum": ["PAUSE", "RESUME", "TERMINATE", "CO_PLAY_HINT_OFFERED"]
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

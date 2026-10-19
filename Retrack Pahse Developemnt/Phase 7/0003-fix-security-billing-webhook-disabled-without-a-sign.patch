@@ -1,0 +1,182 @@
+From da68e40f23c25ede72d50646bb418c923e1221ff Mon Sep 17 00:00:00 2001
+From: phase7-fixes <phase7@example.invalid>
+Date: Fri, 16 Oct 2026 08:04:44 +0000
+Subject: [PATCH 3/5] fix(security): billing webhook disabled without a signing
+ secret and rejects bad signatures; content search/engage require login (+5
+ tests)
+
+---
+ .../content-intelligence/content-auth.spec.ts | 18 +++++++++
+ .../controllers/content-search.controller.ts  | 17 +++++----
+ .../src/subscription/subscription.service.ts  | 16 ++++----
+ .../src/subscription/webhook.security.spec.ts | 37 +++++++++++++++++++
+ 4 files changed, 72 insertions(+), 16 deletions(-)
+ create mode 100644 backend/src/content-intelligence/content-auth.spec.ts
+ create mode 100644 backend/src/subscription/webhook.security.spec.ts
+
+diff --git a/backend/src/content-intelligence/content-auth.spec.ts b/backend/src/content-intelligence/content-auth.spec.ts
+new file mode 100644
+index 0000000..59c9d09
+--- /dev/null
++++ b/backend/src/content-intelligence/content-auth.spec.ts
+@@ -0,0 +1,18 @@
++import { ContentSearchController } from './controllers/content-search.controller';
++import { JwtAuthGuard } from '../auth/jwt-auth.guard';
++
++describe('content search and engagement', () => {
++  it('require login', () => {
++    expect(Reflect.getMetadata('__guards__', ContentSearchController)).toContain(JwtAuthGuard);
++  });
++
++  it('always act as the logged-in user, ignoring a userId sent by the caller', async () => {
++    const orchestrator: any = { searchContent: jest.fn(async () => []), trackEngagement: jest.fn(async () => ({})) };
++    const ctrl = new ContentSearchController(orchestrator);
++    const req = { user: { id: 'me' } };
++    await ctrl.search(req, 'fractions', 'general');
++    expect(orchestrator.searchContent).toHaveBeenCalledWith('fractions', 'me', 'general');
++    await ctrl.trackEngagement(req, { resourceId: 'r1', type: 'VIEW', userId: 'someone-else' } as any);
++    expect(orchestrator.trackEngagement).toHaveBeenCalledWith('r1', 'VIEW', 'me');
++  });
++});
+diff --git a/backend/src/content-intelligence/controllers/content-search.controller.ts b/backend/src/content-intelligence/controllers/content-search.controller.ts
+index 0bf6712..a297abb 100644
+--- a/backend/src/content-intelligence/controllers/content-search.controller.ts
++++ b/backend/src/content-intelligence/controllers/content-search.controller.ts
+@@ -1,16 +1,16 @@
+-import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
++import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/common';
+ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+ import { OrchestratorService } from '../services/orchestrator.service';
+-// Assuming JwtAuthGuard exists in shared/auth
+-// import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
++import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+ 
++// Login required. These routes used to be open and trusted a userId sent by the caller.
++@UseGuards(JwtAuthGuard)
+ @ApiTags('Content Intelligence')
+ @Controller('content')
+ export class ContentSearchController {
+   constructor(private readonly orchestratorService: OrchestratorService) {}
+ 
+   @Get('search')
+-  // @UseGuards(JwtAuthGuard) // Enable if auth is ready
+   @ApiOperation({
+     summary: 'Search for educational content from YouTube and Web',
+   })
+@@ -26,27 +26,28 @@ export class ContentSearchController {
+     description: 'Topic ID context',
+   })
+   async search(
++    @Req() req: any,
+     @Query('query') query: string,
+-    @Query('userId') userId: string,
+     @Query('topicId') topicId: string = 'general',
+   ) {
+-    return this.orchestratorService.searchContent(query, userId, topicId);
++    // The user is always the logged-in user; a userId in the query string is ignored.
++    return this.orchestratorService.searchContent(query, req.user.id, topicId);
+   }
+ 
+   @Post('engage')
+   @ApiOperation({ summary: 'Track user engagement with a resource' })
+   async trackEngagement(
++    @Req() req: any,
+     @Body()
+     body: {
+       resourceId: string;
+       type: 'CLICK' | 'LIKE' | 'VIEW';
+-      userId: string;
+     },
+   ) {
+     return this.orchestratorService.trackEngagement(
+       body.resourceId,
+       body.type,
+-      body.userId,
++      req.user.id,
+     );
+   }
+ }
+diff --git a/backend/src/subscription/subscription.service.ts b/backend/src/subscription/subscription.service.ts
+index 3845e1f..a32939a 100644
+--- a/backend/src/subscription/subscription.service.ts
++++ b/backend/src/subscription/subscription.service.ts
+@@ -1,4 +1,4 @@
+-import { Injectable, Logger } from '@nestjs/common';
++import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+ import { PrismaService } from '../prisma/prisma.service';
+ import Stripe from 'stripe';
+ 
+@@ -60,7 +60,12 @@ export class SubscriptionService {
+ 
+   async handleStripeWebhook(signature: string, payload: Buffer) {
+     try {
+-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_dummy';
++      // Without a real signing secret the webhook is disabled. It used to fall back to a dummy secret and trust
++      // unsigned JSON, which let anyone mark any user as premium.
++      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
++      if (!webhookSecret) {
++        throw new ServiceUnavailableException('Stripe webhook is not configured.');
++      }
+ 
+       let event: Stripe.Event;
+       try {
+@@ -73,12 +78,7 @@ export class SubscriptionService {
+         this.logger.error(
+           `Webhook signature verification failed: ${err.message}`,
+         );
+-        // If dummy key, bypass verification for local testing purposes
+-        if (webhookSecret === 'whsec_dummy') {
+-          event = JSON.parse(payload.toString());
+-        } else {
+-          throw new Error(`Webhook Error: ${err.message}`);
+-        }
++        throw new BadRequestException('Webhook signature verification failed.');
+       }
+ 
+       if (event.type === 'checkout.session.completed') {
+diff --git a/backend/src/subscription/webhook.security.spec.ts b/backend/src/subscription/webhook.security.spec.ts
+new file mode 100644
+index 0000000..4eae3cd
+--- /dev/null
++++ b/backend/src/subscription/webhook.security.spec.ts
+@@ -0,0 +1,37 @@
++import { BadRequestException, ServiceUnavailableException } from '@nestjs/common';
++import { SubscriptionService } from './subscription.service';
++
++const event = JSON.stringify({ id: 'evt_1', object: 'event', type: 'checkout.session.completed', data: { object: { id: 'cs_1', object: 'checkout.session', client_reference_id: 'victim-user' } } });
++
++function setup() {
++  const prisma: any = { subscription: { upsert: jest.fn(async () => ({})) } };
++  return { prisma, svc: new SubscriptionService(prisma) };
++}
++
++describe('Stripe webhook security', () => {
++  const OLD = process.env.STRIPE_WEBHOOK_SECRET;
++  afterEach(() => { if (OLD === undefined) delete process.env.STRIPE_WEBHOOK_SECRET; else process.env.STRIPE_WEBHOOK_SECRET = OLD; });
++
++  it('is disabled when no signing secret is set (it used to trust unsigned JSON)', async () => {
++    delete process.env.STRIPE_WEBHOOK_SECRET;
++    const { svc, prisma } = setup();
++    await expect(svc.handleStripeWebhook('anything', Buffer.from(event))).rejects.toBeInstanceOf(ServiceUnavailableException);
++    expect(prisma.subscription.upsert).not.toHaveBeenCalled();
++  });
++
++  it('rejects a forged event with a bad signature and grants nothing', async () => {
++    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';
++    const { svc, prisma } = setup();
++    await expect(svc.handleStripeWebhook('t=1,v1=deadbeef', Buffer.from(event))).rejects.toBeInstanceOf(BadRequestException);
++    expect(prisma.subscription.upsert).not.toHaveBeenCalled();
++  });
++
++  it('still processes a correctly signed event', async () => {
++    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';
++    const { svc, prisma } = setup();
++    const header = (svc as any).stripe.webhooks.generateTestHeaderString({ payload: event, secret: 'whsec_test_secret' });
++    await svc.handleStripeWebhook(header, Buffer.from(event));
++    expect(prisma.subscription.upsert).toHaveBeenCalledTimes(1);
++    expect(prisma.subscription.upsert.mock.calls[0][0].where).toEqual({ userId: 'victim-user' });
++  });
++});
+-- 
+2.43.0
+

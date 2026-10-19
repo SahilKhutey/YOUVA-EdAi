@@ -1,0 +1,409 @@
+From 6ec8b237125c26bc345a6f092453814a8448d87c Mon Sep 17 00:00:00 2001
+From: phase7-fixes <phase7@example.invalid>
+Date: Sat, 17 Oct 2026 09:17:54 +0000
+Subject: [PATCH 7/9] fix(security): websocket gateways require a login token;
+ classroom rooms admit only the session's participants; shared board off by
+ default; frontend sends the token (+8 tests)
+
+---
+ backend/src/auth/auth.module.ts               |   2 +-
+ backend/src/board/board.gateway.ts            |  24 +++-
+ backend/src/board/board.module.ts             |   2 +
+ backend/src/classroom/classroom.gateway.ts    |  53 +++++--
+ .../src/classroom/gateways.security.spec.ts   | 133 ++++++++++++++++++
+ backend/src/security/socket-auth.ts           |  24 ++++
+ .../workspace/CollaborativeBoard.tsx          |   1 +
+ .../workspace/classroom/[sessionId]/page.tsx  |   5 +-
+ 8 files changed, 227 insertions(+), 17 deletions(-)
+ create mode 100644 backend/src/classroom/gateways.security.spec.ts
+ create mode 100644 backend/src/security/socket-auth.ts
+
+diff --git a/backend/src/auth/auth.module.ts b/backend/src/auth/auth.module.ts
+index 20d3846..85ba9dc 100644
+--- a/backend/src/auth/auth.module.ts
++++ b/backend/src/auth/auth.module.ts
+@@ -28,6 +28,6 @@ import { ResourceScopeGuard } from './guards/resource-scope.guard';
+   ],
+   providers: [AuthService, LocalStrategy, JwtStrategy, ScopeAuthorizationService, ResourceScopeGuard],
+   controllers: [AuthController],
+-  exports: [AuthService, ScopeAuthorizationService, ResourceScopeGuard],
++  exports: [AuthService, ScopeAuthorizationService, ResourceScopeGuard, JwtModule],
+ })
+ export class AuthModule { }
+diff --git a/backend/src/board/board.gateway.ts b/backend/src/board/board.gateway.ts
+index 68f6123..8c14b93 100644
+--- a/backend/src/board/board.gateway.ts
++++ b/backend/src/board/board.gateway.ts
+@@ -9,11 +9,17 @@ import {
+ } from '@nestjs/websockets';
+ import { Server, Socket } from 'socket.io';
+ import { Logger } from '@nestjs/common';
++import { JwtService } from '@nestjs/jwt';
++import { authenticateSocket } from '../security/socket-auth';
++import { corsOrigins } from '../security/http-config';
+ 
++/**
++ * Shared whiteboard. OFF unless ENABLE_SHARED_BOARD=true, because the frontend uses one hardcoded room
++ * ("default-room") for every user, which would put unrelated students in the same room. When enabled,
++ * a valid login token is required.
++ */
+ @WebSocketGateway({
+-  cors: {
+-    origin: '*', // In production, restrict this
+-  },
++  cors: { origin: corsOrigins(process.env.CORS_ORIGINS), credentials: true },
+   namespace: 'board',
+ })
+ export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
+@@ -23,14 +29,24 @@ export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   private logger: Logger = new Logger('BoardGateway');
+   private activeUsers: Map<string, any> = new Map();
+ 
++  constructor(private readonly jwt: JwtService) {}
++
+   handleConnection(client: Socket) {
++    const enabled = (process.env.ENABLE_SHARED_BOARD ?? 'false').toLowerCase() === 'true';
++    const user = enabled ? authenticateSocket(client, this.jwt) : null;
++    if (!user) {
++      client.emit('error', { message: enabled ? 'unauthorized' : 'shared board is turned off' });
++      client.disconnect(true);
++      return;
++    }
++    client.data.user = user;
+     this.logger.log(`Client connected: ${client.id}`);
+   }
+ 
+   handleDisconnect(client: Socket) {
+     this.logger.log(`Client disconnected: ${client.id}`);
+     this.activeUsers.delete(client.id);
+-    this.server.emit('user-left', { id: client.id });
++    if (client.data?.user) this.server.emit('user-left', { id: client.id });
+   }
+ 
+   @SubscribeMessage('join-board')
+diff --git a/backend/src/board/board.module.ts b/backend/src/board/board.module.ts
+index 04331e1..4e5ebeb 100644
+--- a/backend/src/board/board.module.ts
++++ b/backend/src/board/board.module.ts
+@@ -1,7 +1,9 @@
+ import { Module } from '@nestjs/common';
+ import { BoardGateway } from './board.gateway';
++import { AuthModule } from '../auth/auth.module';
+ 
+ @Module({
++  imports: [AuthModule],
+   providers: [BoardGateway],
+ })
+ export class BoardModule {}
+diff --git a/backend/src/classroom/classroom.gateway.ts b/backend/src/classroom/classroom.gateway.ts
+index 5dfd831..b779ab9 100644
+--- a/backend/src/classroom/classroom.gateway.ts
++++ b/backend/src/classroom/classroom.gateway.ts
+@@ -8,45 +8,73 @@ import {
+     OnGatewayDisconnect
+ } from '@nestjs/websockets';
+ import { Server, Socket } from 'socket.io';
++import { JwtService } from '@nestjs/jwt';
+ import { PrismaService } from '../prisma/prisma.service';
++import { authenticateSocket } from '../security/socket-auth';
++import { corsOrigins } from '../security/http-config';
+ 
+-@WebSocketGateway({ cors: { origin: '*' } })
++/**
++ * Live 1-on-1 classroom: whiteboard, lesson steps and video-call signalling.
++ * A connection must carry a valid login token, and a client can only join, send to, or hear from a session
++ * that it is a participant of (the session's teacher, its student, or an admin).
++ */
++@WebSocketGateway({ cors: { origin: corsOrigins(process.env.CORS_ORIGINS), credentials: true } })
+ export class ClassroomGateway implements OnGatewayConnection, OnGatewayDisconnect {
+     @WebSocketServer()
+     server: Server;
+ 
+-    constructor(private prisma: PrismaService) { }
++    constructor(private prisma: PrismaService, private jwt: JwtService) { }
+ 
+     handleConnection(client: Socket) {
+-        console.log(`Client connected: ${client.id}`);
++        const user = authenticateSocket(client, this.jwt);
++        if (!user) {
++            client.emit('error', { message: 'unauthorized' });
++            client.disconnect(true);
++            return;
++        }
++        client.data.user = user;
++        client.data.roles = {} as Record<string, 'teacher' | 'student' | 'admin'>;
+     }
+ 
+-    handleDisconnect(client: Socket) {
+-        console.log(`Client disconnected: ${client.id}`);
++    handleDisconnect(_client: Socket) { /* nothing to clean up: rooms are left automatically */ }
++
++    /** True when this client has joined the session as an authorised participant. */
++    private role(client: Socket, sessionId: unknown): 'teacher' | 'student' | 'admin' | undefined {
++        return typeof sessionId === 'string' ? client.data?.roles?.[sessionId] : undefined;
+     }
+ 
+     @SubscribeMessage('join-room')
+     async handleJoinRoom(@MessageBody() data: { sessionId: string }, @ConnectedSocket() client: Socket) {
+-        client.join(data.sessionId);
+-        console.log(`Client ${client.id} joined room ${data.sessionId}`);
+-        client.to(data.sessionId).emit('user-joined', { userId: client.id });
++        const user = client.data?.user;
++        if (!user || typeof data?.sessionId !== 'string') return { status: 'denied' };
++        const session = await this.prisma.digitalClassroomSession.findUnique({ where: { id: data.sessionId } });
++        if (!session) return { status: 'denied' };
++        const role = session.teacherId === user.id ? 'teacher' : session.studentId === user.id ? 'student' : user.role === 'ADMIN' ? 'admin' : undefined;
++        if (!role) return { status: 'denied' };
++        client.join(session.id);
++        client.data.roles[session.id] = role;
++        client.to(session.id).emit('user-joined', { userId: client.id });
++        return { status: 'joined', role };
+     }
+ 
+     @SubscribeMessage('draw')
+     handleDraw(@MessageBody() data: { sessionId: string; drawData: any }, @ConnectedSocket() client: Socket) {
++        if (!this.role(client, data?.sessionId)) return;
+         client.to(data.sessionId).emit('draw', data.drawData);
+     }
+ 
+     @SubscribeMessage('clear-board')
+     handleClearBoard(@MessageBody() data: { sessionId: string }, @ConnectedSocket() client: Socket) {
++        if (!this.role(client, data?.sessionId)) return;
+         client.to(data.sessionId).emit('clear-board');
+     }
+ 
+     @SubscribeMessage('change-step')
+     async handleChangeStep(@MessageBody() data: { sessionId: string, stepIndex: number }, @ConnectedSocket() client: Socket) {
+-        // Broadcast the step change
++        const role = this.role(client, data?.sessionId);
++        if (role !== 'teacher' && role !== 'admin') return; // only the teacher moves the lesson on
++        if (!Number.isInteger(data.stepIndex) || data.stepIndex < 0) return;
+         client.to(data.sessionId).emit('change-step', data.stepIndex);
+-        // Persist the state
+         try {
+             await this.prisma.digitalClassroomSession.update({
+                 where: { id: data.sessionId },
+@@ -57,19 +85,22 @@ export class ClassroomGateway implements OnGatewayConnection, OnGatewayDisconnec
+         }
+     }
+ 
+-    // WebRTC Signaling
++    // WebRTC signalling: forwarded only inside a session the sender has joined
+     @SubscribeMessage('offer')
+     handleOffer(@MessageBody() data: { sessionId: string, offer: any }, @ConnectedSocket() client: Socket) {
++        if (!this.role(client, data?.sessionId)) return;
+         client.to(data.sessionId).emit('offer', data.offer);
+     }
+ 
+     @SubscribeMessage('answer')
+     handleAnswer(@MessageBody() data: { sessionId: string, answer: any }, @ConnectedSocket() client: Socket) {
++        if (!this.role(client, data?.sessionId)) return;
+         client.to(data.sessionId).emit('answer', data.answer);
+     }
+ 
+     @SubscribeMessage('ice-candidate')
+     handleIceCandidate(@MessageBody() data: { sessionId: string, candidate: any }, @ConnectedSocket() client: Socket) {
++        if (!this.role(client, data?.sessionId)) return;
+         client.to(data.sessionId).emit('ice-candidate', data.candidate);
+     }
+ }
+diff --git a/backend/src/classroom/gateways.security.spec.ts b/backend/src/classroom/gateways.security.spec.ts
+new file mode 100644
+index 0000000..b6f5084
+--- /dev/null
++++ b/backend/src/classroom/gateways.security.spec.ts
+@@ -0,0 +1,133 @@
++import { JwtService } from '@nestjs/jwt';
++import { ClassroomGateway } from './classroom.gateway';
++import { BoardGateway } from '../board/board.gateway';
++import { tokenFromHandshake } from '../security/socket-auth';
++
++const jwt = new JwtService({ secret: 'gateway-test-secret' });
++const token = (sub: string, role: string) => jwt.sign({ sub, role });
++
++/** A stand-in for a socket.io client that records what it sends and which rooms it joined. */
++function fakeClient(opts: { token?: string; header?: string } = {}) {
++  const sent: { room: string; event: string; payload?: any }[] = [];
++  const rooms = new Set<string>();
++  const client: any = {
++    id: 'sock-' + Math.random().toString(36).slice(2, 7),
++    data: {},
++    handshake: { auth: opts.token ? { token: opts.token } : {}, headers: opts.header ? { authorization: opts.header } : {} },
++    emitted: [] as any[],
++    disconnected: false,
++    emit(event: string, payload?: any) { client.emitted.push({ event, payload }); },
++    disconnect() { client.disconnected = true; },
++    join(room: string) { rooms.add(room); },
++    to(room: string) { return { emit: (event: string, payload?: any) => sent.push({ room, event, payload }) }; },
++    sent, rooms,
++  };
++  return client;
++}
++
++function makeClassroom() {
++  const session: any = { id: 'sess1', teacherId: 't1', studentId: 's1' };
++  const prisma: any = { digitalClassroomSession: {
++    findUnique: jest.fn(async ({ where }: any) => (where.id === 'sess1' ? session : null)),
++    update: jest.fn(async () => ({})),
++  } };
++  return { gw: new ClassroomGateway(prisma, jwt), prisma };
++}
++
++describe('ClassroomGateway authentication', () => {
++  it('disconnects a client with no token, a bad token, or an expired token', () => {
++    const { gw } = makeClassroom();
++    for (const c of [fakeClient(), fakeClient({ token: 'garbage' }), fakeClient({ token: jwt.sign({ sub: 'x', role: 'STUDENT' }, { expiresIn: -10 }) })]) {
++      gw.handleConnection(c);
++      expect(c.disconnected).toBe(true);
++      expect(c.data.user).toBeUndefined();
++    }
++  });
++
++  it('accepts a valid token from the handshake or an Authorization header', () => {
++    const { gw } = makeClassroom();
++    const a = fakeClient({ token: token('s1', 'STUDENT') });
++    const b = fakeClient({ header: `Bearer ${token('t1', 'TEACHER')}` });
++    gw.handleConnection(a); gw.handleConnection(b);
++    expect([a.disconnected, b.disconnected]).toEqual([false, false]);
++    expect(a.data.user).toEqual({ id: 's1', role: 'STUDENT' });
++    expect(tokenFromHandshake({ headers: { authorization: 'Basic abc' } })).toBeUndefined();
++  });
++});
++
++describe('ClassroomGateway rooms', () => {
++  async function connect(sub: string, role: string) {
++    const c = fakeClient({ token: token(sub, role) });
++    return c;
++  }
++
++  it('lets the session\'s teacher, its student and an admin join, and refuses everyone else', async () => {
++    const { gw } = makeClassroom();
++    const results: any = {};
++    for (const [name, sub, role] of [['teacher', 't1', 'TEACHER'], ['student', 's1', 'STUDENT'], ['admin', 'a1', 'ADMIN'], ['stranger', 's2', 'STUDENT'], ['otherTeacher', 't2', 'TEACHER']] as const) {
++      const c = await connect(sub, role); gw.handleConnection(c);
++      results[name] = { reply: await gw.handleJoinRoom({ sessionId: 'sess1' }, c), rooms: [...c.rooms] };
++    }
++    expect(results.teacher.reply).toEqual({ status: 'joined', role: 'teacher' });
++    expect(results.student.reply).toEqual({ status: 'joined', role: 'student' });
++    expect(results.admin.reply).toEqual({ status: 'joined', role: 'admin' });
++    expect(results.stranger.reply).toEqual({ status: 'denied' });
++    expect(results.stranger.rooms).toEqual([]);
++    expect(results.otherTeacher.reply).toEqual({ status: 'denied' });
++  });
++
++  it('refuses unknown sessions and clients that never authenticated', async () => {
++    const { gw } = makeClassroom();
++    const c = await connect('t1', 'TEACHER'); gw.handleConnection(c);
++    expect(await gw.handleJoinRoom({ sessionId: 'nope' }, c)).toEqual({ status: 'denied' });
++    const anon = fakeClient(); gw.handleConnection(anon);
++    expect(await gw.handleJoinRoom({ sessionId: 'sess1' }, anon)).toEqual({ status: 'denied' });
++  });
++
++  it('forwards whiteboard, signalling and clear events only from a client that has joined that session', async () => {
++    const { gw } = makeClassroom();
++    const member = await connect('s1', 'STUDENT'); gw.handleConnection(member); await gw.handleJoinRoom({ sessionId: 'sess1' }, member);
++    member.sent.length = 0; // forget the join announcement; we only want what is forwarded afterwards
++    const outsider = await connect('s2', 'STUDENT'); gw.handleConnection(outsider);
++    for (const c of [member, outsider]) {
++      gw.handleDraw({ sessionId: 'sess1', drawData: { x: 1 } }, c);
++      gw.handleOffer({ sessionId: 'sess1', offer: 'sdp' }, c);
++      gw.handleAnswer({ sessionId: 'sess1', answer: 'sdp' }, c);
++      gw.handleIceCandidate({ sessionId: 'sess1', candidate: 'c' }, c);
++      gw.handleClearBoard({ sessionId: 'sess1' }, c);
++    }
++    expect(member.sent.map((m: any) => m.event).sort()).toEqual(['answer', 'clear-board', 'draw', 'ice-candidate', 'offer']);
++    expect(outsider.sent).toEqual([]);
++  });
++
++  it('lets only the teacher (or admin) change the lesson step, and saves a valid step', async () => {
++    const { gw, prisma } = makeClassroom();
++    const student = await connect('s1', 'STUDENT'); gw.handleConnection(student); await gw.handleJoinRoom({ sessionId: 'sess1' }, student);
++    await gw.handleChangeStep({ sessionId: 'sess1', stepIndex: 2 }, student);
++    expect(prisma.digitalClassroomSession.update).not.toHaveBeenCalled();
++    const teacher = await connect('t1', 'TEACHER'); gw.handleConnection(teacher); await gw.handleJoinRoom({ sessionId: 'sess1' }, teacher);
++    await gw.handleChangeStep({ sessionId: 'sess1', stepIndex: -1 }, teacher);
++    await gw.handleChangeStep({ sessionId: 'sess1', stepIndex: 1.5 }, teacher);
++    expect(prisma.digitalClassroomSession.update).not.toHaveBeenCalled();
++    await gw.handleChangeStep({ sessionId: 'sess1', stepIndex: 2 }, teacher);
++    expect(prisma.digitalClassroomSession.update).toHaveBeenCalledWith({ where: { id: 'sess1' }, data: { currentStep: 2 } });
++  });
++});
++
++describe('BoardGateway', () => {
++  afterEach(() => { delete process.env.ENABLE_SHARED_BOARD; });
++  it('is off by default: every client is disconnected', () => {
++    const gw = new BoardGateway(jwt);
++    (gw as any).server = { emit: jest.fn() };
++    const c = fakeClient({ token: token('s1', 'STUDENT') });
++    gw.handleConnection(c);
++    expect(c.disconnected).toBe(true);
++  });
++  it('when enabled, still requires a valid login token', () => {
++    process.env.ENABLE_SHARED_BOARD = 'true';
++    const gw = new BoardGateway(jwt);
++    const anon = fakeClient(); gw.handleConnection(anon);
++    const ok = fakeClient({ token: token('s1', 'STUDENT') }); gw.handleConnection(ok);
++    expect([anon.disconnected, ok.disconnected]).toEqual([true, false]);
++  });
++});
+diff --git a/backend/src/security/socket-auth.ts b/backend/src/security/socket-auth.ts
+new file mode 100644
+index 0000000..daac0f9
+--- /dev/null
++++ b/backend/src/security/socket-auth.ts
+@@ -0,0 +1,24 @@
++import { JwtService } from '@nestjs/jwt';
++
++export interface SocketUser { id: string; role: string }
++
++/** Token from the socket.io handshake (`auth: { token }`) or an Authorization: Bearer header. */
++export function tokenFromHandshake(handshake: any): string | undefined {
++  const t = handshake?.auth?.token;
++  if (typeof t === 'string' && t) return t;
++  const h = handshake?.headers?.authorization;
++  if (typeof h === 'string' && h.startsWith('Bearer ') && h.length > 7) return h.slice(7);
++  return undefined;
++}
++
++/** Returns the logged-in user, or null if the token is missing, invalid or expired. */
++export function authenticateSocket(client: any, jwt: JwtService): SocketUser | null {
++  const token = tokenFromHandshake(client?.handshake);
++  if (!token) return null;
++  try {
++    const payload: any = jwt.verify(token);
++    return payload?.sub ? { id: payload.sub, role: payload.role } : null;
++  } catch {
++    return null;
++  }
++}
+diff --git a/frontend/app/components/workspace/CollaborativeBoard.tsx b/frontend/app/components/workspace/CollaborativeBoard.tsx
+index c3839fb..6a3371a 100644
+--- a/frontend/app/components/workspace/CollaborativeBoard.tsx
++++ b/frontend/app/components/workspace/CollaborativeBoard.tsx
+@@ -123,6 +123,7 @@ export default function CollaborativeBoard({
+     // Connect to namespace
+     const newSocket = io(`${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'}/board`, {
+       transports: ["websocket"],
++      auth: { token: localStorage.getItem("token") },
+     });
+ 
+     newSocket.on("connect", () => {
+diff --git a/frontend/app/workspace/classroom/[sessionId]/page.tsx b/frontend/app/workspace/classroom/[sessionId]/page.tsx
+index 0685d85..ae7c288 100644
+--- a/frontend/app/workspace/classroom/[sessionId]/page.tsx
++++ b/frontend/app/workspace/classroom/[sessionId]/page.tsx
+@@ -30,7 +30,10 @@ export default function ClassroomWorkspace() {
+         };
+         fetchSession();
+ 
+-        const newSocket = io(`${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'}`);
++        // The server only accepts connections that carry the login token, and only for sessions you take part in.
++        const newSocket = io(`${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'}`, {
++            auth: { token: localStorage.getItem('token') },
++        });
+         setSocket(newSocket);
+ 
+         newSocket.on('connect', () => {
+-- 
+2.43.0
+

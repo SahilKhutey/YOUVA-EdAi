@@ -1,0 +1,156 @@
+From 15b81d407ccd87333895bd74701c5c9a56819f04 Mon Sep 17 00:00:00 2001
+From: phase7-fixes <phase7@example.invalid>
+Date: Sat, 17 Oct 2026 09:17:54 +0000
+Subject: [PATCH 9/9] docs: decisions D-014 to D-017, README/scope notes,
+ regenerated route inventory, baseline for Phase 7 part 2
+
+---
+ MVP_SCOPE.md                  |  1 +
+ README.md                     |  1 +
+ backend/.env.example          |  1 +
+ docs/DECISIONS.md             | 20 ++++++++++++++++++++
+ docs/ROUTE_AUDIT.generated.md | 22 +++++++++++-----------
+ docs/TRUTH_BASELINE.md        | 10 ++++++++--
+ 6 files changed, 42 insertions(+), 13 deletions(-)
+
+diff --git a/MVP_SCOPE.md b/MVP_SCOPE.md
+index 4c4184a..90cba03 100644
+--- a/MVP_SCOPE.md
++++ b/MVP_SCOPE.md
+@@ -7,6 +7,7 @@ learning-engine (mastery + difficulty), practice, assessment, learning-loop, tea
+ ## Present in the code, not needed by the pilot path
+ The existing UI also calls forum, scheduling, goals, announcements, credentials and an AI mentor. These are not needed for the pilot (login, topic, quiz, results, teacher view) and have not been reviewed for it. Do not extend them; supervising adults should point students to the practice page only.
+ No frontend code calls the teacher override, consent, or learning-loop endpoints: they have no UI yet.
++The live classroom (whiteboard, video call) now only admits its two participants and needs a login token. The shared whiteboard on the workspace page is off by default (`ENABLE_SHARED_BOARD`). Neither is part of the pilot path.
+ The Learn page is built around AI chat, so it does not work while `ENABLE_AI_FEATURES` is off (the default). Keep pilot students on the Practice page.
+ 
+ ## Rule for adding anything
+diff --git a/README.md b/README.md
+index c5a792b..5d5030a 100644
+--- a/README.md
++++ b/README.md
+@@ -44,6 +44,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
+ | `ALLOW_PUBLIC_REGISTRATION` | Default `true` (creates student accounts only). `false` closes public sign-up; create accounts with `npm run create:user` |
+ | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (for example your frontend's URL). Default: `http://localhost:3000` only |
+ | `TRUST_PROXY_HOPS` | Number of reverse proxies in front of the server (0 to 3). Set `1` on Render or behind nginx, or rate limiting will treat everyone as one user |
++| `ENABLE_SHARED_BOARD` | Default off. The shared whiteboard uses one room for every user, so it stays off for pilots; when on, a login token is still required |
+ | `ENABLE_SWAGGER` | API docs are served at `/api` outside production; set `true` to serve them in production |
+ | `STRIPE_WEBHOOK_SECRET` | Billing webhook is disabled unless this is set |
+ 
+diff --git a/backend/.env.example b/backend/.env.example
+index c1a5443..8f90959 100644
+--- a/backend/.env.example
++++ b/backend/.env.example
+@@ -10,3 +10,4 @@ CORS_ORIGINS="http://localhost:3000" # comma-separated frontend origins allowed
+ TRUST_PROXY_HOPS="0" # set 1 behind a reverse proxy (Render, nginx) so rate limiting sees real client addresses
+ # ENABLE_SWAGGER="true" # API docs are off in production unless set
+ # STRIPE_WEBHOOK_SECRET="" # billing webhook is disabled unless set
++ENABLE_SHARED_BOARD="false" # the shared whiteboard puts all users in one room; keep off for pilots
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+index 1e3ec2a..1fabe41 100644
+--- a/docs/DECISIONS.md
++++ b/docs/DECISIONS.md
+@@ -60,3 +60,23 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
+ 
+ ## D-013: Correction to D-008 about edge sync
+ - `EdgeSyncModule` is imported in `app.module.ts` but never listed in the module's `imports`, so in this branch its routes do not exist at runtime. D-008 described them as open to the internet; that was true of the code, not of the running application here. The login and own-data checks stay as protection in case the module is registered later. A test now lists any controller that exists but is not registered.
++
++## D-014: Classroom routes check the role and who owns the item
++- Context: any logged-in user, including a student, could publish any teacher's lesson plan or worksheet, read any worksheet (with its answer key) or any submission by id, start a classroom session naming any other student (which also blocks that student's erasure), and read both users' full records, password hashes included, from a session id.
++- Decision: teacher tools need TEACHER or ADMIN; drafts are visible only to their owner or an admin; students see published worksheets without the answer key; a submission is visible to its student, the worksheet's teacher, or an admin; a session starts only with a student in the teacher's scope and is visible only to its two participants or an admin, returning names only. Worksheet submissions must be to a published worksheet, for its own questions, once each.
++- Evidence: `backend/src/classroom/classroom-access.spec.ts` (mutation-checked: removing the owner check on publishing made a test fail).
++
++## D-015: Websocket gateways need a login token; the shared board is off by default
++- Context: the classroom gateway accepted any client from any origin: anyone knowing a session id could join its room, receive the whiteboard and video-call signalling, send events into it, and change the saved lesson step. The shared board used one hardcoded room for all users.
++- Decision: a valid login token is required to connect; a client can join, send to and hear from a session only as its teacher, its student, or an admin; only the teacher or an admin changes the step; allowed origins come from `CORS_ORIGINS`. The board gateway is off unless `ENABLE_SHARED_BOARD=true` and then still needs a token. The frontend now sends the token on both connections.
++- Evidence: `backend/src/classroom/gateways.security.spec.ts` (mutation-checked).
++- Limit: the allowed-origin list is read when the application starts, so set `CORS_ORIGINS` in the real environment, not only in a `.env` file loaded later.
++
++## D-016: Content generation, project assignment and evaluation are restricted
++- Decision: content generation and publishing are teacher/admin only and only the author can publish a draft; assigning a project needs teacher/admin and a student in scope; evaluating a project needs its student, their teacher, or an admin, and is off unless `ENABLE_AI_FEATURES=true`; free-text worksheet answers are not sent to an AI unless that switch is on (they wait for the teacher).
++- Evidence: `backend/src/content-gen/ownership.spec.ts`, `backend/src/security/route-coverage.spec.ts`.
++
++## D-017: A teacher reads a student's audit trail only within their own scope
++- Context: the route blocked other students but let any teacher read any student's trail.
++- Decision: teachers need the student in their class or assignment (admins unchanged).
++- Evidence: `backend/src/learning-loop/learning-loop.controller.spec.ts`.
+diff --git a/docs/ROUTE_AUDIT.generated.md b/docs/ROUTE_AUDIT.generated.md
+index b0044da..50aefab 100644
+--- a/docs/ROUTE_AUDIT.generated.md
++++ b/docs/ROUTE_AUDIT.generated.md
+@@ -20,7 +20,7 @@ Read from decorator metadata. "Login" = JwtAuthGuard present. Ownership checks i
+ | DELETE | /announcements/:id | yes | TEACHER, ADMIN | AnnouncementController |
+ | GET | /announcements | yes | - | AnnouncementController |
+ | POST | /announcements | yes | TEACHER, ADMIN | AnnouncementController |
+-| POST | /assessment-intelligence/assign | yes | - | AssessmentIntelligenceController |
++| POST | /assessment-intelligence/assign | yes | TEACHER, ADMIN | AssessmentIntelligenceController |
+ | POST | /assessment-intelligence/evaluate/:id | yes | - | AssessmentIntelligenceController |
+ | POST | /assessment/:sessionId/log-anomaly | yes | - | AssessmentController |
+ | POST | /assessment/:sessionId/submit | yes | - | AssessmentController |
+@@ -28,18 +28,18 @@ Read from decorator metadata. "Login" = JwtAuthGuard present. Ownership checks i
+ | PATCH | /auth/complete-onboarding | yes | - | AuthController |
+ | POST | /auth/login | **NO** | - | AuthController |
+ | POST | /auth/register | **NO** | - | AuthController |
+-| PUT | /classroom/lesson-plan/:id/publish | yes | - | ClassroomController |
++| PUT | /classroom/lesson-plan/:id/publish | yes | TEACHER, ADMIN | ClassroomController |
+ | GET | /classroom/lesson-plan/:id | yes | - | ClassroomController |
+-| POST | /classroom/lesson-plan/generate | yes | - | ClassroomController |
+-| GET | /classroom/lesson-plan | yes | - | ClassroomController |
++| POST | /classroom/lesson-plan/generate | yes | TEACHER, ADMIN | ClassroomController |
++| GET | /classroom/lesson-plan | yes | TEACHER, ADMIN | ClassroomController |
+ | GET | /classroom/session/:id | yes | - | ClassroomController |
+-| POST | /classroom/session/start | yes | - | ClassroomController |
+-| PUT | /classroom/worksheet/:id/publish | yes | - | ClassroomController |
++| POST | /classroom/session/start | yes | TEACHER, ADMIN | ClassroomController |
++| PUT | /classroom/worksheet/:id/publish | yes | TEACHER, ADMIN | ClassroomController |
+ | POST | /classroom/worksheet/:id/submit | yes | - | ClassroomController |
+ | GET | /classroom/worksheet/:id | yes | - | ClassroomController |
+-| POST | /classroom/worksheet/generate | yes | - | ClassroomController |
++| POST | /classroom/worksheet/generate | yes | TEACHER, ADMIN | ClassroomController |
+ | GET | /classroom/worksheet/submission/:id | yes | - | ClassroomController |
+-| GET | /classroom/worksheet | yes | - | ClassroomController |
++| GET | /classroom/worksheet | yes | TEACHER, ADMIN | ClassroomController |
+ | POST | /cognitive-state/hebbian-transfer | yes | - | NeuralCognitiveController |
+ | POST | /cognitive-state/log | yes | - | NeuralCognitiveController |
+ | POST | /consent/student/:studentId/erase | yes | ADMIN | ConsentController |
+@@ -47,9 +47,9 @@ Read from decorator metadata. "Login" = JwtAuthGuard present. Ownership checks i
+ | POST | /consent/student/:studentId/revoke | yes | TEACHER, ADMIN | ConsentController |
+ | GET | /consent/student/:studentId | yes | TEACHER, ADMIN | ConsentController |
+ | POST | /consent | yes | TEACHER, ADMIN | ConsentController |
+-| GET | /content-gen/drafts | yes | - | ContentGenController |
+-| POST | /content-gen/generate | yes | - | ContentGenController |
+-| PUT | /content-gen/publish/:draftId | yes | - | ContentGenController |
++| GET | /content-gen/drafts | yes | TEACHER, ADMIN | ContentGenController |
++| POST | /content-gen/generate | yes | TEACHER, ADMIN | ContentGenController |
++| PUT | /content-gen/publish/:draftId | yes | TEACHER, ADMIN | ContentGenController |
+ | POST | /content/engage | yes | - | ContentSearchController |
+ | GET | /content/search | yes | - | ContentSearchController |
+ | GET | /credential-mesh/my-credentials | yes | - | CredentialMeshController |
+diff --git a/docs/TRUTH_BASELINE.md b/docs/TRUTH_BASELINE.md
+index 912b9e8..562e739 100644
+--- a/docs/TRUTH_BASELINE.md
++++ b/docs/TRUTH_BASELINE.md
+@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ |---|---|
+ | Files tracked | 381 (was 1,425 on main) |
+ | Backend TypeScript errors | 0 (was 29 at base) |
+-| Unit test suites | 63 passed of 63 (excluding prisma.service.spec, which needs a DB engine) |
+-| Unit tests | 167 passed, 0 failed |
++| Unit test suites | 66 passed of 66 (excluding prisma.service.spec, which needs a DB engine) |
++| Unit tests | 191 passed, 0 failed |
+ | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
+ | Schema models / migrations | 53 / 4 |
+ 
+@@ -58,3 +58,9 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ - Found and fixed (with tests, 18 new): anonymous registration as ADMIN or TEACHER and mass assignment of any user field; password hash returned on registration; forged billing webhooks accepted when no secret was set; content search/engage open and trusting a caller-supplied user id; no rate limiting; CORS hardcoded to localhost; API docs public in production.
+ - Correction: the edge-sync routes described as open in Phase 6 were not registered in this branch (see D-013).
+ - Still open: migrations vs PostgreSQL schema; no account lockout; per-address rate limit shared by students on one school address; handlers' ownership checks (whether a student can read another student's data by id) were not reviewed route by route; global validation does not strip unknown fields; no security headers middleware; frontend production build and CI not run here.
++
++## Phase 7 additions, part 2 (measured)
++- Read the 23 login-only routes that take an id in the URL. Found and fixed, each with tests (23 new in classroom, gateways, content and assessment): classroom routes with no role or owner checks (publish anyone's plan or worksheet, read any worksheet with its answer key or any submission, create a session naming any student, session lookup returning password hashes); an unauthenticated classroom websocket (join any session, hear and send whiteboard and video signalling, change the lesson step); a shared board that put every user in one room; content publishing and project assignment/evaluation with no ownership checks; free-text worksheet answers sent to the AI by default.
++- Two mutation checks (removing the gateway membership check; removing the publish owner check) each made a test fail.
++- Also fixed: the `learning-loop` audit-trail route let any teacher read any student's trail; teachers now need the student in their scope (1 test).
++- Still open: notifications, scheduler and learning-session id routes were read and are scoped to the caller, but forum and the other login-only routes were not each read; AI-graded free text can be manipulated by the student's wording; global validation does not strip unknown fields; no security-headers middleware.
+-- 
+2.43.0
+

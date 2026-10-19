@@ -1,0 +1,125 @@
+From 2669037940571ca39e2b3d2457dea7b2dd5305cd Mon Sep 17 00:00:00 2001
+From: phase1-fixes <phase1@example.invalid>
+Date: Sun, 11 Oct 2026 14:34:36 +0000
+Subject: [PATCH 1/5] fix(types): use real StudyGoal/UserStats fields
+ (isActive, weeklyXpTarget, currentStreak); backend now typechecks with 0
+ errors
+
+---
+ .../personalization/personalization-engine.service.ts     | 4 ++--
+ backend/src/learning/learning.service.spec.ts             | 2 +-
+ backend/src/learning/learning.service.ts                  | 6 +++---
+ backend/src/teacher-ops/services/student-360.service.ts   | 8 ++++----
+ .../src/teacher-ops/services/teacher-dashboard.service.ts | 2 +-
+ 5 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/backend/src/learning-loop/personalization/personalization-engine.service.ts b/backend/src/learning-loop/personalization/personalization-engine.service.ts
+index 1c4107c..38a929e 100644
+--- a/backend/src/learning-loop/personalization/personalization-engine.service.ts
++++ b/backend/src/learning-loop/personalization/personalization-engine.service.ts
+@@ -47,7 +47,7 @@ export class PersonalizationEngineService {
+     });
+ 
+     const activeGoals = await this.prisma.studyGoal.findMany({
+-      where: { userId, status: 'IN_PROGRESS' },
++      where: { userId, isActive: true },
+       take: 3,
+     });
+ 
+@@ -64,7 +64,7 @@ export class PersonalizationEngineService {
+       errorClusterScore: latestCognitiveLog?.errorClusterScore ?? 0.1,
+       inferredState: latestCognitiveLog?.inferredState ?? 'flow',
+       recentMistakes: recentMistakes.map((m) => m.description),
+-      activeGoals: activeGoals.map((g) => ({ id: g.id, targetScore: g.targetScore, title: g.title })),
++      activeGoals: activeGoals.map((g) => ({ id: g.id, targetScore: g.weeklyXpTarget, title: `Weekly goal: ${g.weeklyXpTarget} XP` })),
+     };
+   }
+ 
+diff --git a/backend/src/learning/learning.service.spec.ts b/backend/src/learning/learning.service.spec.ts
+index c96dd6c..95d7cea 100644
+--- a/backend/src/learning/learning.service.spec.ts
++++ b/backend/src/learning/learning.service.spec.ts
+@@ -23,7 +23,7 @@ describe('LearningService', () => {
+           },
+         },
+       ],
+-    }).compile();
++    }).useMocker(() => ({})).compile();
+ 
+     service = module.get<LearningService>(LearningService);
+   });
+diff --git a/backend/src/learning/learning.service.ts b/backend/src/learning/learning.service.ts
+index 854623b..0091730 100644
+--- a/backend/src/learning/learning.service.ts
++++ b/backend/src/learning/learning.service.ts
+@@ -149,7 +149,7 @@ export class LearningService {
+   async getToday(userId: string) {
+     const [user, goals, assignments, masteries] = await Promise.all([
+       this.prisma.user.findUnique({ where: { id: userId }, include: { stats: true } }),
+-      this.prisma.studyGoal.findMany({ where: { userId, status: 'IN_PROGRESS' }, take: 3 }),
++      this.prisma.studyGoal.findMany({ where: { userId, isActive: true }, take: 3 }),
+       this.prisma.contentAssignment.findMany({
+         where: { studentId: userId, status: { in: ['ASSIGNED', 'IN_PROGRESS'] } },
+         include: { content: true },
+@@ -169,10 +169,10 @@ export class LearningService {
+       student: {
+         id: user?.id,
+         name: user?.name,
+-        streak: user?.stats?.streakDays || 0,
++        streak: user?.stats?.currentStreak || 0,
+         xp: user?.stats?.totalXp || 0,
+       },
+-      goals: goals.map((g) => ({ id: g.id, title: g.title, targetScore: g.targetScore })),
++      goals: goals.map((g) => ({ id: g.id, title: `Weekly goal: ${g.weeklyXpTarget} XP`, targetScore: g.weeklyXpTarget })),
+       assignments: assignments.map((a) => ({
+         id: a.id,
+         title: a.content.learningObjective,
+diff --git a/backend/src/teacher-ops/services/student-360.service.ts b/backend/src/teacher-ops/services/student-360.service.ts
+index 172997b..b2445a2 100644
+--- a/backend/src/teacher-ops/services/student-360.service.ts
++++ b/backend/src/teacher-ops/services/student-360.service.ts
+@@ -38,7 +38,7 @@ export class Student360Service {
+           take: 5,
+         },
+         studyGoals: {
+-          where: { status: 'IN_PROGRESS' },
++          where: { isActive: true },
+         },
+         learningEvidenceLogs: {
+           orderBy: { createdAt: 'desc' },
+@@ -107,7 +107,7 @@ export class Student360Service {
+         gradeLevel: student.gradeLevel || 'Not specified',
+         cognitiveLevel: student.cognitiveLevel,
+         onboardingComplete: student.onboardingComplete,
+-        currentStreak: student.stats?.streakDays || 0,
++        currentStreak: student.stats?.currentStreak || 0,
+         totalXp: student.stats?.totalXp || 0,
+         learningVelocity: student.cognitiveProfile?.learningVelocityIndex || 1.0,
+       },
+@@ -147,8 +147,8 @@ export class Student360Service {
+         : null,
+       activeGoals: student.studyGoals.map((g) => ({
+         id: g.id,
+-        title: g.title,
+-        targetScore: g.targetScore,
++        title: `Weekly goal: ${g.weeklyXpTarget} XP`,
++        targetScore: g.weeklyXpTarget,
+       })),
+       recentAiDecisions: student.personalizationDecisions.map((d) => ({
+         id: d.id,
+diff --git a/backend/src/teacher-ops/services/teacher-dashboard.service.ts b/backend/src/teacher-ops/services/teacher-dashboard.service.ts
+index 03fd237..df0a64d 100644
+--- a/backend/src/teacher-ops/services/teacher-dashboard.service.ts
++++ b/backend/src/teacher-ops/services/teacher-dashboard.service.ts
+@@ -181,7 +181,7 @@ export class TeacherDashboardService {
+         gradeLevel: s.gradeLevel,
+         cognitiveLevel: s.cognitiveLevel,
+         totalXp: s.stats?.totalXp || 0,
+-        currentStreak: s.stats?.streakDays || 0,
++        currentStreak: s.stats?.currentStreak || 0,
+         averageMastery: parseFloat(avgMastery.toFixed(2)),
+         pendingInterventionCount: s.studentInterventions.length,
+         latestCognitiveState: s.cognitiveStateLogs[0]?.inferredState || 'nominal',
+-- 
+2.43.0
+

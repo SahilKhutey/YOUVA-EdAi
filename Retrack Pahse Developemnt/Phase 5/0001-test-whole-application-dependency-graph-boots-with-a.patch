@@ -1,0 +1,42 @@
+From f00ed3db37a035e47d34e816aa5fe4b070caf743 Mon Sep 17 00:00:00 2001
+From: phase5-fixes <phase5@example.invalid>
+Date: Thu, 15 Oct 2026 03:20:34 +0000
+Subject: [PATCH 1/4] test: whole-application dependency graph boots with a
+ stubbed database; fails when module wiring breaks (+1 test, mutation-checked)
+
+---
+ backend/src/app.boot.spec.ts | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+ create mode 100644 backend/src/app.boot.spec.ts
+
+diff --git a/backend/src/app.boot.spec.ts b/backend/src/app.boot.spec.ts
+new file mode 100644
+index 0000000..07eadeb
+--- /dev/null
++++ b/backend/src/app.boot.spec.ts
+@@ -0,0 +1,22 @@
++import { Test } from '@nestjs/testing';
++import { AppModule } from './app.module';
++import { PrismaService } from './prisma/prisma.service';
++
++/**
++ * Builds the whole application's dependency graph with the database replaced by a stub.
++ * Catches missing providers, circular imports and bad module wiring that unit tests with
++ * hand-built objects cannot. It does NOT touch a real database or start an HTTP server.
++ */
++describe('application boot (dependency graph)', () => {
++  const OLD = { ...process.env };
++  beforeAll(() => { process.env.JWT_SECRET = 'boot-test-secret'; process.env.GEMINI_API_KEY = 'x'; });
++  afterAll(() => { process.env = OLD; });
++
++  it('resolves every module and provider', async () => {
++    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
++      .overrideProvider(PrismaService).useValue({ $connect: async () => undefined, $disconnect: async () => undefined })
++      .compile();
++    expect(moduleRef).toBeDefined();
++    await moduleRef.close();
++  }, 60_000);
++});
+-- 
+2.43.0
+

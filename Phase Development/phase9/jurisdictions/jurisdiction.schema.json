@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "YOUVA EdAI Jurisdiction Compliance Schema",
+  "type": "object",
+  "required": [
+    "jurisdictionId",
+    "name",
+    "status",
+    "governingRegulation",
+    "minimumAgeRules",
+    "consentRules",
+    "retentionRules",
+    "safetyEscalationSLAHours",
+    "legalReview",
+    "childSafetyReview"
+  ],
+  "properties": {
+    "jurisdictionId": { "type": "string" },
+    "name": { "type": "string" },
+    "status": { "enum": ["draft", "review", "active", "deprecated"] },
+    "governingRegulation": { "type": "string" },
+    "minimumAgeRules": {
+      "type": "object",
+      "required": ["childAgeThreshold", "parentalConsentRequiredUnder"],
+      "properties": {
+        "childAgeThreshold": { "type": "integer" },
+        "parentalConsentRequiredUnder": { "type": "integer" }
+      }
+    },
+    "consentRules": {
+      "type": "object",
+      "required": ["mechanism", "verifiableParentalConsentRequired", "withdrawalPurgeSLAHours"],
+      "properties": {
+        "mechanism": { "type": "string" },
+        "verifiableParentalConsentRequired": { "type": "boolean" },
+        "withdrawalPurgeSLAHours": { "type": "integer", "maximum": 72 }
+      }
+    },
+    "retentionRules": {
+      "type": "object",
+      "required": ["maxInactiveStudentDataRetentionDays", "allowAnonymizedResearchTelemetry"],
+      "properties": {
+        "maxInactiveStudentDataRetentionDays": { "type": "integer" },
+        "allowAnonymizedResearchTelemetry": { "type": "boolean" }
+      }
+    },
+    "safetyEscalationSLAHours": { "type": "integer", "maximum": 24 },
+    "crossBorderTransferAllowed": { "type": "boolean" },
+    "legalReview": {
+      "type": "object",
+      "required": ["reviewedBy", "firm", "reviewDate", "approved"],
+      "properties": {
+        "reviewedBy": { "type": ["string", "null"] },
+        "firm": { "type": ["string", "null"] },
+        "reviewDate": { "type": ["string", "null"] },
+        "approved": { "type": "boolean" }
+      }
+    },
+    "childSafetyReview": {
+      "type": "object",
+      "required": ["reviewerRole", "reviewDate", "approved"],
+      "properties": {
+        "reviewerRole": { "type": ["string", "null"] },
+        "reviewDate": { "type": ["string", "null"] },
+        "approved": { "type": "boolean" }
+      }
+    }
+  }
+}

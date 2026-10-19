@@ -1,0 +1,102 @@
+# YOUVA EdAI — Phase 2: Core Loop Hardening
+## Execution Steps and Fixes (built and tested on `mvp/clean`)
+
+**Where this sits:** Phase 0 contained the repo. Phase 1 produced the small branch `mvp/clean`. Phase 2 makes one student session actually safe and teacher-controllable. Five patches are in `phase2-patches/`; they apply on top of the Phase 1 patches (I checked: the series applies cleanly and produces the identical tree). I cannot push to your repo, so you apply them.
+
+---
+
+## What I found by tracing the real student flow
+
+The frontend calls `/practice/generate` and `/practice/submit`. I read that path end to end:
+
+| # | Finding | Why it matters |
+|---|---|---|
+| 1 | **Every quiz was generated live by an LLM.** There was no question bank. "Adaptive" difficulty only changed one word ("easy/medium/hard") in the prompt. | A classroom pilot would show students unreviewed, possibly wrong math. |
+| 2 | **If the AI call failed, the code silently served fake questions** ("What is the speed of light? (Mock)", "What is 2 + 2? (Mock)") and graded them. | Students would see and be scored on placeholder content. |
+| 3 | **Submission checks were missing.** Any question id was accepted, answers could repeat, a quiz could be resubmitted (XP farming), and the score divided by *answered* questions, so answering one question correctly scored 100%. | Scores and mastery could not be trusted. |
+| 4 | **`JwtStrategy` returned `userId`, but 47 call sites read `req.user.id`** (all teacher-ops, learning-loop and assessment controllers). | Teacher endpoints would receive `undefined` instead of the teacher's id. Unit tests missed it because they hand-build `req.user`. |
+| 5 | **A hardcoded fallback JWT secret (`'defaultSecret'`)** was used if `JWT_SECRET` was unset. | Anyone could forge tokens on a misconfigured deployment. |
+| 6 | **The teacher override never reached the student.** The intervention/gate flow lives under `/learning-loop/*`, which nothing in the frontend calls. | A teacher could not change what a student sees. |
+| 7 | **Migrations don't match the database in `schema.prisma`.** `migration_lock.toml` says `sqlite`, the first two migrations use SQLite syntax (`DATETIME`), but the datasource is `postgresql`. | `prisma migrate deploy` on Postgres will fail. I could not run Postgres, so this is read from the files, not observed. |
+
+---
+
+## What the patches change
+
+| Patch | Change |
+|---|---|
+| 0001 | `req.user` now carries both `id` and `userId`; the server refuses to start without `JWT_SECRET` (2 tests) |
+| 0002 | Quizzes come from a teacher-reviewed bank by default (`QUESTION_SOURCE=BANK`): unseen questions first, then nearest to the student's target difficulty. No mock fallback; AI mode (opt-in) fails with a clear error. Submissions are validated (served questions only, no duplicates, no resubmission, empty rejected) and scored out of everything served. Adds `Question.source` and `PracticeSession.servedQuestionIds` (6 tests) |
+| 0003 | `POST /teacher/students/:studentId/topics/:topicId/difficulty` `{value, reason}`: sets the student's target difficulty, checks the teacher's scope, and writes an audit record (4 tests) |
+| 0004 | Item-bank JSON format, validator, import script (`npm run import:items`) that **refuses unreviewed items**, and a clearly-marked unreviewed SAMPLE file for one-step equations (5 tests) |
+| 0005 | Updates `docs/TRUTH_BASELINE.md` and records open defects |
+
+**Measured after these patches (sandbox):** TypeScript errors 0; 51 test suites, 111 tests, all passing (excluding `prisma.service.spec.ts`, which needs a DB engine). The tests run against an in-memory stand-in for the database, including one full loop: answer correctly, mastery rises, and the next quiz serves unseen, harder items. **Not verified:** any real Postgres run, e2e tests, HTTP-level behavior, or the frontend.
+
+The sample items are my draft for format and testing only. They are marked `reviewed: false`, so the importer rejects them unless you pass `--allow-unreviewed` on a dev database. Real items must come from your teacher.
+
+---
+
+## Execution steps
+
+### Step 2.1 — Apply the patches
+```bash
+git checkout mvp/clean            # after Phase 1 patches are applied
+git am phase2-patches/*.patch
+cd backend && npm ci && npx prisma generate
+npx tsc --noEmit && npx jest --testPathIgnorePatterns=e2e
+```
+**Deployment impact:** the server now exits at startup if `JWT_SECRET` is not set. Set it in Render/your host before deploying. `QUESTION_SOURCE` defaults to `BANK`, so `/practice/generate` returns 404 for a topic until reviewed items are imported. Both are intended.
+
+### Step 2.2 — Regenerate the migration baseline (required before any Postgres use)
+```bash
+cd backend
+git mv prisma/migrations prisma/legacy_sqlite_migrations
+mkdir -p prisma/migrations/0001_baseline
+npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0001_baseline/migration.sql
+printf '# Please do not edit this file manually\nprovider = "postgresql"\n' > prisma/migrations/migration_lock.toml
+```
+Review the SQL, then on an empty Postgres: `npx prisma migrate deploy`. If you already have a database built some other way, mark the baseline as applied with `npx prisma migrate resolve --applied 0001_baseline` instead. This also creates the two new columns.
+
+### Step 2.3 — Run the app against real Postgres
+1. Set `DATABASE_URL`, `JWT_SECRET`, `GEMINI_API_KEY` (only needed if you use AI mode).
+2. `npx prisma migrate deploy`, then `npm run start:dev`.
+3. Register a student and a teacher; assign the student to the teacher (via the existing teacher-ops class or assignment endpoints).
+
+### Step 2.4 — Put in the real content (needs your teacher)
+1. Agree one concept with the teacher. Copy `content/item-bank/one-step-equations.SAMPLE.json` to a new file and replace the items with the teacher's own (4 options, correct answer exactly matching one option, difficulty 0.1–1.0, an explanation, `"reviewed": true`, `"reviewedBy": "<teacher name>"`).
+2. Import: `npm run import:items -- content/item-bank/<file>.json`. The importer prints every problem it finds and imports nothing if any item fails.
+3. Aim for 10–15 items spread across difficulty. With 5 questions per quiz, 10–15 gives 2–3 distinct quizzes before repeats.
+
+### Step 2.5 — Walk the loop by hand, over HTTP
+Log in as the student, `POST /practice/generate {topicId}`, answer via `POST /practice/submit`, and confirm: the explanation appears, a second submit is rejected (409), and the next `generate` serves different items. Then, as the teacher, call the override:
+```bash
+curl -X POST $API/teacher/students/$STUDENT_ID/topics/$TOPIC_ID/difficulty \
+  -H "Authorization: Bearer $TEACHER_TOKEN" -H "Content-Type: application/json" \
+  -d '{"value":0.3,"reason":"Struggling with negatives"}'
+```
+and confirm the student's next quiz changes. Write what you observed in `docs/LOOP_TRACE.md`. A teacher can use this endpoint (or a simple script) for the pilot; there is no teacher override screen yet.
+
+### Step 2.6 — Write the one real end-to-end test
+Against a test Postgres: register, import items, generate, submit, override, generate again, assert the quiz changed. I did not write this because I cannot run it here, and I won't ship a test I haven't executed.
+
+### Step 2.7 — Deploy a staging copy
+Use the existing Render/Vercel setup with the new environment variables, so the teacher can reach it from a browser.
+
+---
+
+## What this phase did not do (and you still must)
+- **Consent record:** not built. For a small pilot the signed paper form is the record. A digital consent record is a later task.
+- **Teacher override screen:** not built; the endpoint works, the UI does not exist.
+- **Pinned override:** the override sets the starting difficulty; later answers adjust it again.
+- **Learning-loop flow (`/learning-loop/*`):** untouched and unused by the frontend. Decide in Phase 3 whether to wire it in or leave it out of the MVP.
+- **Real content, real teacher, real consent:** nothing in this phase replaces them.
+
+## Exit checklist
+- [ ] Patches applied; `tsc` and tests pass on your machine, numbers recorded
+- [ ] `JWT_SECRET` set in every environment
+- [ ] Migration baseline regenerated and applied to a real Postgres
+- [ ] Teacher-reviewed items imported (not my sample)
+- [ ] Student and teacher paths walked by hand; `docs/LOOP_TRACE.md` written
+- [ ] One real e2e test passing in CI
+- [ ] Staging reachable by the teacher

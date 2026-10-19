@@ -1,0 +1,42 @@
+{
+  "taxonomyVersion": "1.0.0",
+  "subject": "Mathematics",
+  "grade": "Grade 8",
+  "categories": [
+    {
+      "errorCode": "SIGN_ERROR",
+      "name": "Sign Reversal / Transposition Error",
+      "description": "Failure to invert signs when transposing terms across the equality operator, or erroneous negative multiplication.",
+      "misconceptionExplanation": "Student treats the equals sign as an inert separator rather than a balance operator, forgetting that adding or subtracting across sides inverts the term's sign.",
+      "remedialAction": "Provide balancing beam visualization and step-by-step subtraction/addition demonstration on both sides simultaneously."
+    },
+    {
+      "errorCode": "DISTRIBUTIVE_ERROR",
+      "name": "Partial Distribution Error",
+      "description": "Multiplying the factor outside parentheses by only the first term inside parentheses.",
+      "misconceptionExplanation": "Student forgets that a multiplier outside parentheses applies to every monomial term enclosed within parentheses: a(b + c) = ab + ac, not ab + c.",
+      "remedialAction": "Highlight grouped terms with area-model expansion boxes before algebraic substitution."
+    },
+    {
+      "errorCode": "COMBINING_LIKE_TERMS_ERROR",
+      "name": "Incompatible Variable Combination",
+      "description": "Adding or subtracting coefficient of variable with a constant term (e.g., 3x + 4 = 7x).",
+      "misconceptionExplanation": "Student conflates algebraic variables with scalar constants, ignoring dimensional/term compatibility.",
+      "remedialAction": "Use tactile counters or fruit metaphors (apples vs oranges) to reinforce that variables cannot merge with scalar numbers."
+    },
+    {
+      "errorCode": "FRACTION_CLEARANCE_ERROR",
+      "name": "Denominator Clearance / LCM Omission",
+      "description": "Multiplying only one side or a subset of terms by the common denominator when clearing fractions.",
+      "misconceptionExplanation": "Student forgets that maintaining equation equivalence requires distributing the LCM across all additive terms on both sides of the equation.",
+      "remedialAction": "Require explicit parentheses around entire left and right hand expressions before applying multiplier."
+    },
+    {
+      "errorCode": "ARITHMETIC_ERROR",
+      "name": "Basic Calculation Slip",
+      "description": "Elementary multiplication, division, addition, or subtraction mistake during intermediate evaluation.",
+      "misconceptionExplanation": "Conceptual understanding of algebra is intact, but working memory cognitive overload caused an arithmetic execution mistake.",
+      "remedialAction": "Isolate the arithmetic operation into a scratch step to decouple algorithmic strategy from computation."
+    }
+  ]
+}

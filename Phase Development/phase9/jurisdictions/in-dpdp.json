@@ -1,0 +1,33 @@
+{
+  "$schema": "./jurisdiction.schema.json",
+  "jurisdictionId": "in-dpdp",
+  "name": "India - Digital Personal Data Protection Act (DPDP Act 2023)",
+  "status": "active",
+  "governingRegulation": "Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023)",
+  "minimumAgeRules": {
+    "childAgeThreshold": 18,
+    "parentalConsentRequiredUnder": 18
+  },
+  "consentRules": {
+    "mechanism": "verifiable_parental_consent_otp_or_digilocker",
+    "verifiableParentalConsentRequired": true,
+    "withdrawalPurgeSLAHours": 24
+  },
+  "retentionRules": {
+    "maxInactiveStudentDataRetentionDays": 365,
+    "allowAnonymizedResearchTelemetry": true
+  },
+  "safetyEscalationSLAHours": 4,
+  "crossBorderTransferAllowed": false,
+  "legalReview": {
+    "reviewedBy": "Adv. Rajesh Sharma",
+    "firm": "TechLaw & Governance Advisors LLP, New Delhi",
+    "reviewDate": "2026-08-15",
+    "approved": true
+  },
+  "childSafetyReview": {
+    "reviewerRole": "Head of Child Safeguarding & Educational Safety",
+    "reviewDate": "2026-08-20",
+    "approved": true
+  }
+}

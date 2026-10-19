@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AutonomyPolicyConfig",
+  "description": "Schema for autonomous agent governance policy, risk tiers, and prohibited actions.",
+  "type": "object",
+  "required": [
+    "policyVersion",
+    "effectiveDate",
+    "prohibitedActions",
+    "supervisedActions",
+    "lowRiskActions",
+    "driftRollbackThresholdPercent"
+  ],
+  "properties": {
+    "policyVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "effectiveDate": { "type": "string", "format": "date-time" },
+    "prohibitedActions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 4
+    },
+    "supervisedActions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "lowRiskActions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "driftRollbackThresholdPercent": {
+      "type": "number",
+      "minimum": 1.0,
+      "maximum": 10.0,
+      "default": 5.0
+    }
+  },
+  "additionalProperties": false
+}

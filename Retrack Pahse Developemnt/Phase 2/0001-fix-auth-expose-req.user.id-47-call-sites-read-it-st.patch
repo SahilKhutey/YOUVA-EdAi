@@ -1,0 +1,61 @@
+From c8739a1495f5bcdb73d588e6675622eb1fdf2b84 Mon Sep 17 00:00:00 2001
+From: phase1-fixes <phase1@example.invalid>
+Date: Mon, 12 Oct 2026 04:17:03 +0000
+Subject: [PATCH 1/5] fix(auth): expose req.user.id (47 call sites read it;
+ strategy only set userId) and refuse to start without JWT_SECRET (removes
+ hardcoded fallback)
+
+---
+ backend/src/auth/jwt.strategy.spec.ts | 13 +++++++++++++
+ backend/src/auth/jwt.strategy.ts      |  9 +++++++--
+ 2 files changed, 20 insertions(+), 2 deletions(-)
+ create mode 100644 backend/src/auth/jwt.strategy.spec.ts
+
+diff --git a/backend/src/auth/jwt.strategy.spec.ts b/backend/src/auth/jwt.strategy.spec.ts
+new file mode 100644
+index 0000000..d247968
+--- /dev/null
++++ b/backend/src/auth/jwt.strategy.spec.ts
+@@ -0,0 +1,13 @@
++import { JwtStrategy } from './jwt.strategy';
++
++const config = (secret?: string): any => ({ get: () => secret });
++
++describe('JwtStrategy', () => {
++  it('exposes both id and userId (controllers use both names)', async () => {
++    const out = await new JwtStrategy(config('a-test-secret')).validate({ sub: 'u1', email: 'a@b.c', role: 'TEACHER' });
++    expect(out).toEqual({ id: 'u1', userId: 'u1', email: 'a@b.c', role: 'TEACHER' });
++  });
++  it('refuses to start without JWT_SECRET instead of falling back to a default secret', () => {
++    expect(() => new JwtStrategy(config(undefined))).toThrow(/JWT_SECRET/);
++  });
++});
+diff --git a/backend/src/auth/jwt.strategy.ts b/backend/src/auth/jwt.strategy.ts
+index 7d9fce9..31d2267 100644
+--- a/backend/src/auth/jwt.strategy.ts
++++ b/backend/src/auth/jwt.strategy.ts
+@@ -6,14 +6,19 @@ import { ConfigService } from '@nestjs/config';
+ @Injectable()
+ export class JwtStrategy extends PassportStrategy(Strategy) {
+   constructor(configService: ConfigService) {
++    const secret = configService.get<string>('JWT_SECRET');
++    if (!secret) {
++      throw new Error('JWT_SECRET must be set; refusing to start with a default signing secret.');
++    }
+     super({
+       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+       ignoreExpiration: false,
+-      secretOrKey: configService.get<string>('JWT_SECRET') || 'defaultSecret',
++      secretOrKey: secret,
+     });
+   }
+ 
+   async validate(payload: any) {
+-    return { userId: payload.sub, email: payload.email, role: payload.role };
++    // Controllers read both req.user.userId (51 call sites) and req.user.id (47 call sites).
++    return { id: payload.sub, userId: payload.sub, email: payload.email, role: payload.role };
+   }
+ }
+-- 
+2.43.0
+

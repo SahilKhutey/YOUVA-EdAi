@@ -1,0 +1,56 @@
+From f637a80eee968e9a20becbbebe111ed63146f318 Mon Sep 17 00:00:00 2001
+From: phase0-fixes <phase0@example.invalid>
+Date: Sun, 11 Oct 2026 14:24:39 +0000
+Subject: [PATCH 1/5] fix(test): lowercase sensitive-key set so UT-GEN-017
+ redaction helper matches mixed-case keys
+
+---
+ backend/data/v01_pilot_attempts.jsonl   | 10 ++++++++++
+ backend/data/v01_task_logs.jsonl        |  2 ++
+ backend/src/common/tests/errors.spec.ts |  2 +-
+ 3 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/backend/data/v01_pilot_attempts.jsonl b/backend/data/v01_pilot_attempts.jsonl
+index b031af9..5ff8a19 100644
+--- a/backend/data/v01_pilot_attempts.jsonl
++++ b/backend/data/v01_pilot_attempts.jsonl
+@@ -43,3 +43,13 @@
+ {"id":"att-1790305052146-eiij","studentId":"stu-1790305052146-ltee","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"6","correct":true,"difficulty":"EASY","nextDifficulty":"MEDIUM","createdAt":"2026-09-25T02:57:32.146Z"}
+ {"id":"att-1790305052146-wjz9","studentId":"stu-1790305052146-ltee","itemId":"eq-med-01","conceptId":"one-step-equations","answer":"18","correct":true,"difficulty":"MEDIUM","nextDifficulty":"EASY","overrideApplied":"TEACHER_NEEDS_HELP","createdAt":"2026-09-25T02:57:32.146Z"}
+ {"id":"att-1790305052148-6ysq","studentId":"stu-1790305052148-8yut","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"6","correct":true,"difficulty":"EASY","nextDifficulty":"EASY","overrideApplied":"TEACHER_SET_DIFFICULTY","createdAt":"2026-09-25T02:57:32.148Z"}
++{"id":"att-1791728534915-u9xq","studentId":"stu-1791728534915-0vwf","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"6","correct":true,"difficulty":"EASY","nextDifficulty":"MEDIUM","createdAt":"2026-10-11T14:22:14.915Z"}
++{"id":"att-1791728534918-flpz","studentId":"stu-1791728534918-309g","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"999","correct":false,"difficulty":"EASY","nextDifficulty":"EASY","createdAt":"2026-10-11T14:22:14.918Z"}
++{"id":"att-1791728534973-9a9w","studentId":"stu-1791728534973-4jcz","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"6","correct":true,"difficulty":"EASY","nextDifficulty":"MEDIUM","createdAt":"2026-10-11T14:22:14.973Z"}
++{"id":"att-1791728534973-0g0k","studentId":"stu-1791728534973-4jcz","itemId":"eq-med-01","conceptId":"one-step-equations","answer":"18","correct":true,"difficulty":"MEDIUM","nextDifficulty":"EASY","overrideApplied":"TEACHER_NEEDS_HELP","createdAt":"2026-10-11T14:22:14.973Z"}
++{"id":"att-1791728534982-v3r1","studentId":"stu-1791728534982-2brk","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"6","correct":true,"difficulty":"EASY","nextDifficulty":"EASY","overrideApplied":"TEACHER_SET_DIFFICULTY","createdAt":"2026-10-11T14:22:14.982Z"}
++{"id":"att-1791728615570-hy75","studentId":"stu-1791728615569-mdf5","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"6","correct":true,"difficulty":"EASY","nextDifficulty":"MEDIUM","createdAt":"2026-10-11T14:23:35.570Z"}
++{"id":"att-1791728615590-oj74","studentId":"stu-1791728615590-58in","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"999","correct":false,"difficulty":"EASY","nextDifficulty":"EASY","createdAt":"2026-10-11T14:23:35.590Z"}
++{"id":"att-1791728615642-2z0y","studentId":"stu-1791728615641-xcnv","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"6","correct":true,"difficulty":"EASY","nextDifficulty":"MEDIUM","createdAt":"2026-10-11T14:23:35.642Z"}
++{"id":"att-1791728615642-ejoy","studentId":"stu-1791728615641-xcnv","itemId":"eq-med-01","conceptId":"one-step-equations","answer":"18","correct":true,"difficulty":"MEDIUM","nextDifficulty":"EASY","overrideApplied":"TEACHER_NEEDS_HELP","createdAt":"2026-10-11T14:23:35.642Z"}
++{"id":"att-1791728615650-te9t","studentId":"stu-1791728615650-w4n8","itemId":"eq-easy-01","conceptId":"one-step-equations","answer":"6","correct":true,"difficulty":"EASY","nextDifficulty":"EASY","overrideApplied":"TEACHER_SET_DIFFICULTY","createdAt":"2026-10-11T14:23:35.650Z"}
+diff --git a/backend/data/v01_task_logs.jsonl b/backend/data/v01_task_logs.jsonl
+index 837a80a..0eed7d5 100644
+--- a/backend/data/v01_task_logs.jsonl
++++ b/backend/data/v01_task_logs.jsonl
+@@ -8,3 +8,5 @@
+ {"id":"tlog-1790304357606-xdgi","taskId":"TASK-V01-TEST-f27pz8","track":"F","title":"Bottleneck Root Cause Analysis","status":"INTERNAL_VERIFIED","evidence":"Session trace confirms 0% dropoff on equation fractions.","verifiedBy":"Lead Educational Researcher","timestamp":"2026-09-25T02:45:57.606Z"}
+ {"id":"tlog-1790304896897-gnxb","taskId":"TASK-V01-TEST-qlfzf0","track":"F","title":"Bottleneck Root Cause Analysis","status":"INTERNAL_VERIFIED","evidence":"Session trace confirms 0% dropoff on equation fractions.","verifiedBy":"Lead Educational Researcher","timestamp":"2026-09-25T02:54:56.897Z"}
+ {"id":"tlog-1790305052157-5szr","taskId":"TASK-V01-TEST-26mttz","track":"F","title":"Bottleneck Root Cause Analysis","status":"INTERNAL_VERIFIED","evidence":"Session trace confirms 0% dropoff on equation fractions.","verifiedBy":"Lead Educational Researcher","timestamp":"2026-09-25T02:57:32.157Z"}
++{"id":"tlog-1791728535013-fus6","taskId":"TASK-V01-TEST-selfge","track":"F","title":"Bottleneck Root Cause Analysis","status":"INTERNAL_VERIFIED","evidence":"Session trace confirms 0% dropoff on equation fractions.","verifiedBy":"Lead Educational Researcher","timestamp":"2026-10-11T14:22:15.013Z"}
++{"id":"tlog-1791728615680-ya55","taskId":"TASK-V01-TEST-r2h2fh","track":"F","title":"Bottleneck Root Cause Analysis","status":"INTERNAL_VERIFIED","evidence":"Session trace confirms 0% dropoff on equation fractions.","verifiedBy":"Lead Educational Researcher","timestamp":"2026-10-11T14:23:35.680Z"}
+diff --git a/backend/src/common/tests/errors.spec.ts b/backend/src/common/tests/errors.spec.ts
+index 77bd7ee..10dbe8e 100644
+--- a/backend/src/common/tests/errors.spec.ts
++++ b/backend/src/common/tests/errors.spec.ts
+@@ -30,7 +30,7 @@ describe('General Unit Tests: Error Handling & Logging Redaction (UT-GEN-013 - U
+   }
+ 
+   function sanitizeLogData(payload: Record<string, any>): Record<string, any> {
+-    const sensitiveKeys = new Set(['password', 'token', 'jwt', 'secret', 'secretKey', 'apiKey', 'creditCard']);
++    const sensitiveKeys = new Set(['password', 'token', 'jwt', 'secret', 'secretKey', 'apiKey', 'creditCard'].map((k) => k.toLowerCase()));
+     const sanitized: Record<string, any> = {};
+ 
+     for (const [key, value] of Object.entries(payload)) {
+-- 
+2.43.0
+

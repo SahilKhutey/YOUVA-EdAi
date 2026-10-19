@@ -1,0 +1,267 @@
+From 215861142739e70b1f8d9d48fb50deb0cc2bb16b Mon Sep 17 00:00:00 2001
+From: phase7-fixes <phase7@example.invalid>
+Date: Fri, 16 Oct 2026 08:04:44 +0000
+Subject: [PATCH 2/5] fix(security): public sign-up creates students only,
+ validates input, never returns the password hash, can be closed; staff
+ accounts via script (+5 tests, +1 rate-limit test)
+
+---
+ backend/prisma/create-user.ts        |  23 ++++++
+ backend/src/auth/auth.controller.ts  |   9 ++-
+ backend/src/auth/auth.http.spec.ts   | 105 +++++++++++++++++++++++++++
+ backend/src/auth/auth.service.ts     |  29 +++++++-
+ backend/src/auth/dto/register.dto.ts |  24 ++++++
+ 5 files changed, 184 insertions(+), 6 deletions(-)
+ create mode 100644 backend/prisma/create-user.ts
+ create mode 100644 backend/src/auth/auth.http.spec.ts
+ create mode 100644 backend/src/auth/dto/register.dto.ts
+
+diff --git a/backend/prisma/create-user.ts b/backend/prisma/create-user.ts
+new file mode 100644
+index 0000000..c0ebb83
+--- /dev/null
++++ b/backend/prisma/create-user.ts
+@@ -0,0 +1,23 @@
++/**
++ * Create a teacher, admin or student account without exposing a public sign-up for staff.
++ * Usage:  NEW_USER_PASSWORD='...' npx ts-node prisma/create-user.ts --email a@school.org --role TEACHER --name "Ms Rao"
++ * The password is read from the environment so it does not end up in shell history or process lists.
++ */
++import { PrismaClient } from '@prisma/client';
++import * as bcrypt from 'bcrypt';
++
++const ROLES = ['ADMIN', 'TEACHER', 'STUDENT'];
++const arg = (n: string) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? process.argv[i + 1] : undefined; };
++
++async function main() {
++  const email = arg('email'); const role = (arg('role') || '').toUpperCase(); const name = arg('name');
++  const password = process.env.NEW_USER_PASSWORD;
++  if (!email || !ROLES.includes(role)) throw new Error(`Provide --email and --role (${ROLES.join(' | ')}).`);
++  if (!password || password.length < 12 || password.length > 72) throw new Error('Set NEW_USER_PASSWORD (12 to 72 characters).');
++  const prisma = new PrismaClient();
++  try {
++    const user = await prisma.user.create({ data: { email: email.trim(), password: await bcrypt.hash(password, 10), role, name: name ?? null } });
++    console.log(`Created ${role} ${user.email} (id ${user.id}).`);
++  } finally { await prisma.$disconnect(); }
++}
++main().catch((e) => { console.error(e.message ?? e); process.exit(1); });
+diff --git a/backend/src/auth/auth.controller.ts b/backend/src/auth/auth.controller.ts
+index f562259..79c52e9 100644
+--- a/backend/src/auth/auth.controller.ts
++++ b/backend/src/auth/auth.controller.ts
+@@ -2,20 +2,25 @@ import { Controller, Request, Post, Patch, UseGuards, Body } from '@nestjs/commo
+ import { AuthGuard } from '@nestjs/passport';
+ import { AuthService } from './auth.service';
+ import { JwtAuthGuard } from './jwt-auth.guard';
++import { Throttle } from '@nestjs/throttler';
++import { RegisterDto } from './dto/register.dto';
++import { LOGIN_THROTTLE, REGISTER_THROTTLE } from '../security/throttle-config';
+ 
+ @Controller('auth')
+ export class AuthController {
+   constructor(private authService: AuthService) { }
+ 
++  @Throttle(LOGIN_THROTTLE)
+   @UseGuards(AuthGuard('local'))
+   @Post('login')
+   async login(@Request() req: any) {
+     return this.authService.login(req.user);
+   }
+ 
++  @Throttle(REGISTER_THROTTLE)
+   @Post('register')
+-  async register(@Body() user: any) {
+-    return this.authService.register(user);
++  async register(@Body() dto: RegisterDto) {
++    return this.authService.register(dto);
+   }
+ 
+   @Patch('complete-onboarding')
+diff --git a/backend/src/auth/auth.http.spec.ts b/backend/src/auth/auth.http.spec.ts
+new file mode 100644
+index 0000000..39cacca
+--- /dev/null
++++ b/backend/src/auth/auth.http.spec.ts
+@@ -0,0 +1,105 @@
++import { INestApplication, ValidationPipe } from '@nestjs/common';
++import { Test } from '@nestjs/testing';
++import { APP_GUARD } from '@nestjs/core';
++import { PassportModule } from '@nestjs/passport';
++import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
++import request from 'supertest';
++import { AuthController } from './auth.controller';
++import { AuthService } from './auth.service';
++import { LocalStrategy } from './local.strategy';
++import { DEFAULT_THROTTLE } from '../security/throttle-config';
++
++/** Real controller, real AuthService, real login strategy, real throttler and validation pipe; only storage is fake. */
++async function buildApp(opts: { existingEmail?: string } = {}) {
++  const created: any[] = [];
++  const users = {
++    create: jest.fn(async (data: any) => {
++      if (data.email === opts.existingEmail) throw Object.assign(new Error('dup'), { code: 'P2002' });
++      created.push(data);
++      return { id: 'u-new', ...data };
++    }),
++    findOne: jest.fn(async () => null), // nobody exists: every login attempt fails
++  };
++  const moduleRef = await Test.createTestingModule({
++    imports: [PassportModule, ThrottlerModule.forRoot([DEFAULT_THROTTLE])],
++    controllers: [AuthController],
++    providers: [
++      AuthService, LocalStrategy,
++      { provide: 'UsersService', useValue: users },
++      { provide: APP_GUARD, useClass: ThrottlerGuard },
++    ],
++  })
++    .useMocker((token: any) => {
++      if (token?.name === 'UsersService') return users;
++      if (token?.name === 'JwtService') return { sign: () => 'signed-token' };
++      return {};
++    })
++    .compile();
++  const app: INestApplication = moduleRef.createNestApplication();
++  app.useGlobalPipes(new ValidationPipe());
++  await app.init();
++  return { app, created, users };
++}
++
++describe('POST /auth/register', () => {
++  afterEach(() => { delete process.env.ALLOW_PUBLIC_REGISTRATION; });
++
++  it('creates a STUDENT even when the request asks for ADMIN, and ignores other fields', async () => {
++    const { app, created } = await buildApp();
++    const res = await request(app.getHttpServer()).post('/auth/register')
++      .send({ email: 'kid@school.org', password: 'a-long-password', role: 'ADMIN', id: 'forced-id', onboardingComplete: true });
++    expect(res.status).toBe(201);
++    expect(created[0]).toMatchObject({ email: 'kid@school.org', role: 'STUDENT' });
++    expect(created[0]).not.toHaveProperty('id');
++    expect(created[0]).not.toHaveProperty('onboardingComplete');
++    await app.close();
++  });
++
++  it('never returns the password hash', async () => {
++    const { app } = await buildApp();
++    const res = await request(app.getHttpServer()).post('/auth/register').send({ email: 'kid@school.org', password: 'a-long-password' });
++    expect(JSON.stringify(res.body)).not.toMatch(/password/i);
++    expect(res.body.access_token).toBe('signed-token');
++    await app.close();
++  });
++
++  it('rejects a bad email, a short password and an over-long password', async () => {
++    const { app } = await buildApp();
++    const post = (b: any) => request(app.getHttpServer()).post('/auth/register').send(b);
++    expect((await post({ email: 'not-an-email', password: 'a-long-password' })).status).toBe(400);
++    expect((await post({ email: 'a@b.org', password: 'short' })).status).toBe(400);
++    expect((await post({ email: 'a@b.org', password: 'x'.repeat(73) })).status).toBe(400);
++    await app.close();
++  });
++
++  it('answers 409 for a duplicate email and 403 when registration is closed', async () => {
++    const dup = await buildApp({ existingEmail: 'taken@school.org' });
++    expect((await request(dup.app.getHttpServer()).post('/auth/register').send({ email: 'taken@school.org', password: 'a-long-password' })).status).toBe(409);
++    await dup.app.close();
++    process.env.ALLOW_PUBLIC_REGISTRATION = 'false';
++    const closed = await buildApp();
++    expect((await request(closed.app.getHttpServer()).post('/auth/register').send({ email: 'x@school.org', password: 'a-long-password' })).status).toBe(403);
++    expect(closed.users.create).not.toHaveBeenCalled();
++    await closed.app.close();
++  });
++
++  it('allows 10 sign-ups per minute from one address, then answers 429', async () => {
++    const { app } = await buildApp();
++    const codes: number[] = [];
++    for (let i = 0; i < 12; i++) codes.push((await request(app.getHttpServer()).post('/auth/register').send({ email: `k${i}@school.org`, password: 'a-long-password' })).status);
++    expect(codes.slice(0, 10).every((c) => c === 201)).toBe(true);
++    expect(codes.slice(10)).toEqual([429, 429]);
++    await app.close();
++  });
++});
++
++describe('POST /auth/login rate limit', () => {
++  it('answers 401 for 20 wrong attempts from one address, then 429', async () => {
++    const { app } = await buildApp();
++    const codes: number[] = [];
++    for (let i = 0; i < 22; i++) codes.push((await request(app.getHttpServer()).post('/auth/login').send({ email: 'a@school.org', password: 'wrong' })).status);
++    expect(codes.slice(0, 20).every((c) => c === 401)).toBe(true);
++    expect(codes.slice(20)).toEqual([429, 429]);
++    await app.close();
++  });
++});
+diff --git a/backend/src/auth/auth.service.ts b/backend/src/auth/auth.service.ts
+index e9c5ab8..5128fbd 100644
+--- a/backend/src/auth/auth.service.ts
++++ b/backend/src/auth/auth.service.ts
+@@ -1,4 +1,5 @@
+-import { Injectable } from '@nestjs/common';
++import { ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
++import { Role } from './role.enum';
+ import { UsersService } from '../users/users.service';
+ import { JwtService } from '@nestjs/jwt';
+ import { PrismaService } from '../prisma/prisma.service';
+@@ -29,9 +30,29 @@ export class AuthService {
+     };
+   }
+ 
+-  async register(user: any) {
+-    const newUser = await this.usersService.create(user);
+-    return this.login(newUser);
++  /**
++   * Public sign-up. Always creates a STUDENT: the role is never taken from the request, so nobody can
++   * register themselves as a teacher or admin. Staff accounts are created with `npm run create:user`.
++   */
++  async register(dto: { email: string; password: string; name?: string; gradeLevel?: string }) {
++    if ((process.env.ALLOW_PUBLIC_REGISTRATION ?? 'true').toLowerCase() === 'false') {
++      throw new ForbiddenException('Registration is closed. Please ask your teacher for an account.');
++    }
++    let newUser: any;
++    try {
++      newUser = await this.usersService.create({
++        email: dto.email.trim(),
++        password: dto.password,
++        name: dto.name?.trim() || null,
++        gradeLevel: dto.gradeLevel?.trim() || null,
++        role: Role.STUDENT,
++      } as any);
++    } catch (e: any) {
++      if (e?.code === 'P2002') throw new ConflictException('An account with this email already exists.');
++      throw e;
++    }
++    const { password, ...safeUser } = newUser; // never return the password hash
++    return this.login(safeUser);
+   }
+ 
+   async completeOnboarding(
+diff --git a/backend/src/auth/dto/register.dto.ts b/backend/src/auth/dto/register.dto.ts
+new file mode 100644
+index 0000000..07bdbe6
+--- /dev/null
++++ b/backend/src/auth/dto/register.dto.ts
+@@ -0,0 +1,24 @@
++import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
++
++/** Public sign-up accepts only these fields. Anything else in the request (for example "role") is ignored. */
++export class RegisterDto {
++  @IsEmail()
++  @MaxLength(254)
++  email: string;
++
++  // 72 is bcrypt's limit: longer passwords are silently truncated.
++  @IsString()
++  @MinLength(8)
++  @MaxLength(72)
++  password: string;
++
++  @IsOptional()
++  @IsString()
++  @MaxLength(100)
++  name?: string;
++
++  @IsOptional()
++  @IsString()
++  @MaxLength(20)
++  gradeLevel?: string;
++}
+-- 
+2.43.0
+

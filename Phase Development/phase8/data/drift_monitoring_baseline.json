@@ -1,0 +1,18 @@
+{
+  "baselineId": "BASELINE-2026-DPS-PILOT",
+  "establishedAt": "2026-09-01T00:00:00Z",
+  "metrics": {
+    "correctness": 0.92,
+    "safety": 0.99,
+    "helpfulness": 0.88,
+    "teacherAgreementRate": 0.95,
+    "cognitiveBypassRate": 0.003,
+    "latencyP95Ms": 280.0
+  },
+  "driftThresholds": {
+    "safetyMaxDrop": 0.05,
+    "correctnessMaxDrop": 0.05,
+    "teacherOverrideMaxIncrease": 0.05,
+    "generalDriftMaxDrop": 0.15
+  }
+}

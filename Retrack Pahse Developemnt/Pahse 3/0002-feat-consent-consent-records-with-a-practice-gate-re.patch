@@ -1,0 +1,569 @@
+From 2ed75ef6c57339c6d13a32eb9322028f427eb5b2 Mon Sep 17 00:00:00 2001
+From: t <t@t>
+Date: Wed, 14 Oct 2026 03:02:39 +0000
+Subject: [PATCH 2/3] feat(consent): consent records with a practice gate,
+ revocation, and withdraw-and-erase with a coverage guardrail test (+12 tests)
+
+---
+ backend/prisma/schema.prisma                  |  19 ++++
+ backend/src/app.module.ts                     |   2 +
+ backend/src/consent/consent.controller.ts     |  42 +++++++
+ backend/src/consent/consent.module.ts         |  13 +++
+ backend/src/consent/consent.service.spec.ts   | 100 +++++++++++++++++
+ backend/src/consent/consent.service.ts        | 106 ++++++++++++++++++
+ backend/src/consent/dto/consent.dto.ts        |  14 +++
+ backend/src/consent/erasure-map.spec.ts       |  28 +++++
+ backend/src/consent/erasure-map.ts            |  45 ++++++++
+ .../src/practice/practice.behavior.spec.ts    |  21 +++-
+ backend/src/practice/practice.controller.ts   |   2 +-
+ backend/src/practice/practice.module.ts       |   3 +-
+ backend/src/practice/practice.service.ts      |   6 +-
+ 13 files changed, 395 insertions(+), 6 deletions(-)
+ create mode 100644 backend/src/consent/consent.controller.ts
+ create mode 100644 backend/src/consent/consent.module.ts
+ create mode 100644 backend/src/consent/consent.service.spec.ts
+ create mode 100644 backend/src/consent/consent.service.ts
+ create mode 100644 backend/src/consent/dto/consent.dto.ts
+ create mode 100644 backend/src/consent/erasure-map.spec.ts
+ create mode 100644 backend/src/consent/erasure-map.ts
+
+diff --git a/backend/prisma/schema.prisma b/backend/prisma/schema.prisma
+index 0e7a281..fa672bf 100644
+--- a/backend/prisma/schema.prisma
++++ b/backend/prisma/schema.prisma
+@@ -905,3 +905,22 @@ model ContentAssignment {
+ }
+ 
+ 
++
++// --- Pilot consent (Phase 3) ---
++// Kept without a foreign key to User so the proof of consent/withdrawal survives erasure of the student's data.
++model ConsentRecord {
++  id               String    @id @default(uuid())
++  studentId        String
++  guardianName     String
++  guardianRelation String    // e.g. mother, father, legal guardian
++  formVersion      String    // which consent form text was signed, e.g. "pilot-v1"
++  signedAt         DateTime
++  recordedById     String    // teacher/admin who recorded the signed form
++  notes            String?
++  createdAt        DateTime  @default(now())
++  revokedAt        DateTime?
++  revokedById      String?
++  erasedAt         DateTime?
++
++  @@index([studentId])
++}
+diff --git a/backend/src/app.module.ts b/backend/src/app.module.ts
+index 4d4ac6c..742d444 100644
+--- a/backend/src/app.module.ts
++++ b/backend/src/app.module.ts
+@@ -37,6 +37,7 @@ import { ClassroomModule } from './classroom/classroom.module';
+ import { FeedbackModule } from './feedback/feedback.module';
+ import { LearningLoopModule } from './learning-loop/learning-loop.module';
+ import { TeacherOpsModule } from './teacher-ops/teacher-ops.module';
++import { ConsentModule } from './consent/consent.module';
+ 
+ @Module({
+   imports: [
+@@ -75,6 +76,7 @@ import { TeacherOpsModule } from './teacher-ops/teacher-ops.module';
+     FeedbackModule,
+     LearningLoopModule,
+     TeacherOpsModule,
++    ConsentModule,
+   ],
+   controllers: [AppController],
+   providers: [AppService],
+diff --git a/backend/src/consent/consent.controller.ts b/backend/src/consent/consent.controller.ts
+new file mode 100644
+index 0000000..92dcfaf
+--- /dev/null
++++ b/backend/src/consent/consent.controller.ts
+@@ -0,0 +1,42 @@
++import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
++import { JwtAuthGuard } from '../auth/jwt-auth.guard';
++import { RolesGuard } from '../auth/roles.guard';
++import { Roles } from '../auth/roles.decorator';
++import { Role } from '../auth/role.enum';
++import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
++import { ConsentService } from './consent.service';
++import { EraseDto, RecordConsentDto } from './dto/consent.dto';
++
++@Controller('consent')
++@UseGuards(JwtAuthGuard, RolesGuard)
++export class ConsentController {
++  constructor(private readonly consent: ConsentService, private readonly scope: ScopeAuthorizationService) {}
++
++  @Post()
++  @Roles(Role.TEACHER, Role.ADMIN)
++  async record(@Req() req: any, @Body() dto: RecordConsentDto) {
++    await this.scope.assertTeacherStudentScope(req.user.id, dto.studentId);
++    return this.consent.record(req.user.id, { ...dto, signedAt: new Date(dto.signedAt) });
++  }
++
++  @Get('student/:studentId')
++  @Roles(Role.TEACHER, Role.ADMIN)
++  async list(@Req() req: any, @Param('studentId') studentId: string) {
++    await this.scope.assertTeacherStudentScope(req.user.id, studentId);
++    return this.consent.list(studentId);
++  }
++
++  @Post('student/:studentId/revoke')
++  @Roles(Role.TEACHER, Role.ADMIN)
++  async revoke(@Req() req: any, @Param('studentId') studentId: string) {
++    await this.scope.assertTeacherStudentScope(req.user.id, studentId);
++    return this.consent.revoke(req.user.id, studentId);
++  }
++
++  /** Irreversible. Admin only. */
++  @Post('student/:studentId/erase')
++  @Roles(Role.ADMIN)
++  erase(@Req() req: any, @Param('studentId') studentId: string, @Body() _dto: EraseDto) {
++    return this.consent.eraseStudent(req.user.id, studentId);
++  }
++}
+diff --git a/backend/src/consent/consent.module.ts b/backend/src/consent/consent.module.ts
+new file mode 100644
+index 0000000..a281190
+--- /dev/null
++++ b/backend/src/consent/consent.module.ts
+@@ -0,0 +1,13 @@
++import { Module } from '@nestjs/common';
++import { PrismaModule } from '../prisma/prisma.module';
++import { AuthModule } from '../auth/auth.module';
++import { ConsentService } from './consent.service';
++import { ConsentController } from './consent.controller';
++
++@Module({
++  imports: [PrismaModule, AuthModule],
++  providers: [ConsentService],
++  controllers: [ConsentController],
++  exports: [ConsentService],
++})
++export class ConsentModule {}
+diff --git a/backend/src/consent/consent.service.spec.ts b/backend/src/consent/consent.service.spec.ts
+new file mode 100644
+index 0000000..88573df
+--- /dev/null
++++ b/backend/src/consent/consent.service.spec.ts
+@@ -0,0 +1,100 @@
++import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
++import { ConsentService } from './consent.service';
++import { ERASED, MANUAL_CHECK, lowerFirst } from './erasure-map';
++
++/** Fake database: generic delegates keyed by lower-camel model name, recording deleteMany calls in order. */
++function makeDb(opts: { users?: any[]; counts?: Record<string, number>; consents?: any[] } = {}) {
++  const calls: string[] = [];
++  const consents: any[] = opts.consents ?? [];
++  const users: any[] = opts.users ?? [{ id: 's1', role: 'STUDENT', name: 'Asha', email: 'a@x.in', password: 'h' }];
++  const delegate = (name: string) => ({
++    count: jest.fn(async ({ where }: any) => (opts.counts?.[name] ?? 0)),
++    deleteMany: jest.fn((args: any) => { calls.push(`delete:${name}:${JSON.stringify(args.where)}`); return Promise.resolve({ count: 1 }); }),
++  });
++  const base: any = {};
++  for (const r of [...ERASED, ...MANUAL_CHECK]) base[lowerFirst(r.model)] = delegate(lowerFirst(r.model));
++  base.userAnswer = delegate('userAnswer');
++  base.user = {
++    findUnique: jest.fn(async ({ where }: any) => users.find((u) => u.id === where.id) ?? null),
++    update: jest.fn((args: any) => { calls.push(`anonymise:${args.where.id}`); Object.assign(users.find((u) => u.id === args.where.id), args.data); return Promise.resolve(); }),
++  };
++  base.consentRecord = {
++    create: jest.fn(async ({ data }: any) => { const c = { id: `c${consents.length + 1}`, revokedAt: null, ...data }; consents.push(c); return c; }),
++    findMany: jest.fn(async ({ where }: any) => consents.filter((c) => c.studentId === where.studentId && (where.revokedAt === null ? c.revokedAt === null : true))),
++    update: jest.fn(async ({ where, data }: any) => Object.assign(consents.find((c) => c.id === where.id), data)),
++    updateMany: jest.fn((args: any) => { calls.push(`consent-updateMany:${JSON.stringify(Object.keys(args.data))}`); consents.filter((c) => c.studentId === args.where.studentId).forEach((c) => Object.assign(c, args.data)); return Promise.resolve(); }),
++  };
++  base.$transaction = jest.fn(async (ops: any[]) => Promise.all(ops));
++  return { prisma: base, calls, consents, users };
++}
++
++const input = { studentId: 's1', guardianName: 'R. Kumar', guardianRelation: 'father', formVersion: 'pilot-v1', signedAt: new Date('2026-10-01'), notes: undefined };
++
++describe('ConsentService', () => {
++  afterEach(() => { delete process.env.REQUIRE_CONSENT; });
++
++  it('records consent, and the student then passes the gate', async () => {
++    const { prisma } = makeDb();
++    const svc = new ConsentService(prisma);
++    await expect(svc.assertActiveConsent('s1')).rejects.toBeInstanceOf(ForbiddenException);
++    await svc.record('teacher1', input);
++    await expect(svc.assertActiveConsent('s1')).resolves.toBeUndefined();
++  });
++
++  it('rejects consent for unknown users, non-students, and future signing dates', async () => {
++    const { prisma } = makeDb({ users: [{ id: 't1', role: 'TEACHER' }, { id: 's1', role: 'STUDENT' }] });
++    const svc = new ConsentService(prisma);
++    await expect(svc.record('x', { ...input, studentId: 'nobody' })).rejects.toBeInstanceOf(NotFoundException);
++    await expect(svc.record('x', { ...input, studentId: 't1' })).rejects.toBeInstanceOf(BadRequestException);
++    await expect(svc.record('x', { ...input, signedAt: new Date(Date.now() + 5 * 864e5) })).rejects.toBeInstanceOf(BadRequestException);
++  });
++
++  it('revocation closes the gate again', async () => {
++    const { prisma } = makeDb();
++    const svc = new ConsentService(prisma);
++    await svc.record('teacher1', input);
++    expect(await svc.revoke('teacher1', 's1')).toEqual({ revoked: 1 });
++    await expect(svc.assertActiveConsent('s1')).rejects.toBeInstanceOf(ForbiddenException);
++    await expect(svc.revoke('teacher1', 's1')).rejects.toBeInstanceOf(NotFoundException);
++  });
++
++  it('enforcement can be switched off for local development only via REQUIRE_CONSENT=false', async () => {
++    const { prisma } = makeDb();
++    const svc = new ConsentService(prisma);
++    process.env.REQUIRE_CONSENT = 'false';
++    await expect(svc.assertActiveConsent('s1')).resolves.toBeUndefined();
++  });
++});
++
++describe('ConsentService.eraseStudent', () => {
++  it('deletes answers first, then each learning table, then anonymises the account, and keeps the consent proof', async () => {
++    const { prisma, calls, consents, users } = makeDb({ consents: [{ id: 'c1', studentId: 's1', revokedAt: null }] });
++    const out = await new ConsentService(prisma).eraseStudent('admin1', 's1');
++    expect(calls[0]).toContain('delete:userAnswer');
++    const deleted = calls.filter((c) => c.startsWith('delete:')).map((c) => c.split(':')[1]);
++    expect(deleted).toEqual(['userAnswer', ...ERASED.map((r) => lowerFirst(r.model))]);
++    expect(deleted.indexOf('practiceSession')).toBeGreaterThan(deleted.indexOf('userAnswer')); // children before parents
++    expect(users[0]).toMatchObject({ name: 'Withdrawn student', password: 'ERASED', email: 'withdrawn-s1@invalid.example' });
++    expect(consents).toHaveLength(1); // proof retained
++    expect(consents[0].revokedAt).toBeInstanceOf(Date);
++    expect(consents[0].erasedAt).toBeInstanceOf(Date);
++    expect(out.deletedFrom).toContain('PracticeSession');
++    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
++  });
++
++  it('stops and deletes NOTHING when the student has data in tables the MVP does not cover', async () => {
++    const { prisma, calls } = makeDb({ counts: { engagementLog: 3, feedback: 1 } });
++    const err: any = await new ConsentService(prisma).eraseStudent('admin1', 's1').catch((e) => e);
++    expect(err).toBeInstanceOf(ConflictException);
++    expect(err.getResponse().tables).toEqual([{ model: 'EngagementLog', rows: 3 }, { model: 'Feedback', rows: 1 }]);
++    expect(calls).toHaveLength(0);
++    expect(prisma.$transaction).not.toHaveBeenCalled();
++  });
++
++  it('refuses non-students and unknown ids', async () => {
++    const { prisma } = makeDb({ users: [{ id: 't1', role: 'TEACHER' }] });
++    const svc = new ConsentService(prisma);
++    await expect(svc.eraseStudent('a', 't1')).rejects.toBeInstanceOf(BadRequestException);
++    await expect(svc.eraseStudent('a', 'zzz')).rejects.toBeInstanceOf(NotFoundException);
++  });
++});
+diff --git a/backend/src/consent/consent.service.ts b/backend/src/consent/consent.service.ts
+new file mode 100644
+index 0000000..4bf13e7
+--- /dev/null
++++ b/backend/src/consent/consent.service.ts
+@@ -0,0 +1,106 @@
++import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
++import { PrismaService } from '../prisma/prisma.service';
++import { ERASED, MANUAL_CHECK, lowerFirst } from './erasure-map';
++
++export interface ConsentInput {
++  studentId: string;
++  guardianName: string;
++  guardianRelation: string;
++  formVersion: string;
++  signedAt: Date;
++  notes?: string;
++}
++
++@Injectable()
++export class ConsentService {
++  constructor(private readonly prisma: PrismaService) {}
++
++  /** True when consent enforcement is on (default). Set REQUIRE_CONSENT=false only for local development. */
++  enforcementEnabled(): boolean {
++    return (process.env.REQUIRE_CONSENT ?? 'true').toLowerCase() !== 'false';
++  }
++
++  async record(recordedById: string, input: ConsentInput) {
++    const student = await this.prisma.user.findUnique({ where: { id: input.studentId } });
++    if (!student) throw new NotFoundException('Student not found');
++    if (student.role !== 'STUDENT') throw new BadRequestException('Consent can only be recorded for a student account.');
++    if (input.signedAt.getTime() > Date.now() + 24 * 3600 * 1000) {
++      throw new BadRequestException('The signing date cannot be in the future.');
++    }
++    return this.prisma.consentRecord.create({ data: { ...input, recordedById } });
++  }
++
++  async hasActiveConsent(studentId: string): Promise<boolean> {
++    const rows = await this.prisma.consentRecord.findMany({ where: { studentId, revokedAt: null } });
++    return rows.length > 0;
++  }
++
++  /** Throws 403 when the student has no active consent record (and enforcement is on). */
++  async assertActiveConsent(studentId: string) {
++    if (!this.enforcementEnabled()) return;
++    if (!(await this.hasActiveConsent(studentId))) {
++      throw new ForbiddenException('A parent/guardian consent record is required before this student can practise.');
++    }
++  }
++
++  list(studentId: string) {
++    return this.prisma.consentRecord.findMany({ where: { studentId }, orderBy: { createdAt: 'desc' } });
++  }
++
++  async revoke(revokedById: string, studentId: string) {
++    const active = await this.prisma.consentRecord.findMany({ where: { studentId, revokedAt: null } });
++    if (active.length === 0) throw new NotFoundException('No active consent to revoke.');
++    const now = new Date();
++    for (const r of active) {
++      await this.prisma.consentRecord.update({ where: { id: r.id }, data: { revokedAt: now, revokedById } });
++    }
++    return { revoked: active.length };
++  }
++
++  /**
++   * Withdrawal + erasure. Refuses (changing nothing) if the student has rows in tables the MVP does not use,
++   * so nothing is silently left behind. Otherwise deletes the learning data, anonymises the account,
++   * revokes consent, and keeps only the consent record as proof.
++   */
++  async eraseStudent(erasedById: string, studentId: string) {
++    const student = await this.prisma.user.findUnique({ where: { id: studentId } });
++    if (!student) throw new NotFoundException('Student not found');
++    if (student.role !== 'STUDENT') throw new BadRequestException('Only student accounts can be erased with this operation.');
++
++    const blocking: { model: string; rows: number }[] = [];
++    for (const rule of MANUAL_CHECK) {
++      const rows = await (this.prisma as any)[lowerFirst(rule.model)].count({ where: { [rule.field]: studentId } });
++      if (rows > 0) blocking.push({ model: rule.model, rows });
++    }
++    if (blocking.length > 0) {
++      throw new ConflictException({
++        message: 'Erasure stopped: this student has data in tables that need manual handling. Nothing was deleted.',
++        tables: blocking,
++      });
++    }
++
++    const now = new Date();
++    const ops: any[] = [];
++    const db = this.prisma as any;
++    // Answers hang off the student's practice sessions.
++    ops.push(db.userAnswer.deleteMany({ where: { session: { userId: studentId } } }));
++    for (const rule of ERASED) ops.push(db[lowerFirst(rule.model)].deleteMany({ where: { [rule.field]: studentId } }));
++    ops.push(
++      db.user.update({
++        where: { id: studentId },
++        data: {
++          name: 'Withdrawn student',
++          email: `withdrawn-${studentId}@invalid.example`,
++          password: 'ERASED',
++          avatarUrl: null,
++          gradeLevel: null,
++        },
++      }),
++    );
++    ops.push(db.consentRecord.updateMany({ where: { studentId, revokedAt: null }, data: { revokedAt: now, revokedById: erasedById } }));
++    ops.push(db.consentRecord.updateMany({ where: { studentId }, data: { erasedAt: now } }));
++
++    await this.prisma.$transaction(ops);
++    return { studentId, erasedAt: now.toISOString(), deletedFrom: ['UserAnswer', ...ERASED.map((r) => r.model)] };
++  }
++}
+diff --git a/backend/src/consent/dto/consent.dto.ts b/backend/src/consent/dto/consent.dto.ts
+new file mode 100644
+index 0000000..d3835a4
+--- /dev/null
++++ b/backend/src/consent/dto/consent.dto.ts
+@@ -0,0 +1,14 @@
++import { IsDateString, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
++
++export class RecordConsentDto {
++  @IsNotEmpty() @IsString() studentId: string;
++  @IsNotEmpty() @IsString() @MaxLength(200) guardianName: string;
++  @IsIn(['mother', 'father', 'legal guardian']) guardianRelation: string;
++  @IsNotEmpty() @IsString() @MaxLength(50) formVersion: string;
++  @IsDateString() signedAt: string;
++  @IsOptional() @IsString() @MaxLength(500) notes?: string;
++}
++
++export class EraseDto {
++  @IsIn(['ERASE']) confirm: string;
++}
+diff --git a/backend/src/consent/erasure-map.spec.ts b/backend/src/consent/erasure-map.spec.ts
+new file mode 100644
+index 0000000..eba4882
+--- /dev/null
++++ b/backend/src/consent/erasure-map.spec.ts
+@@ -0,0 +1,28 @@
++import { Prisma } from '@prisma/client';
++import { ERASED, MANUAL_CHECK, RETAINED, TEACHER_OWNED } from './erasure-map';
++
++/** Guardrail: any table that stores a user/student/teacher id must be classified for erasure. */
++describe('erasure map covers every table holding user ids', () => {
++  const idFields = new Set(['userId', 'studentId', 'teacherId']);
++  const holders = Prisma.dmmf.datamodel.models
++    .filter((m) => m.fields.some((f) => idFields.has(f.name)))
++    .map((m) => m.name);
++  const classified = new Set([...ERASED.map((r) => r.model), ...MANUAL_CHECK.map((r) => r.model), ...RETAINED, ...TEACHER_OWNED]);
++
++  it('has no unclassified table (add new tables to erasure-map.ts)', () => {
++    expect(holders.filter((m) => !classified.has(m))).toEqual([]);
++  });
++
++  it('only references tables that exist, using a field that exists on that table', () => {
++    for (const r of [...ERASED, ...MANUAL_CHECK]) {
++      const model = Prisma.dmmf.datamodel.models.find((m) => m.name === r.model);
++      expect(model).toBeDefined();
++      expect(model!.fields.some((f) => f.name === r.field)).toBe(true);
++    }
++  });
++
++  it('never lists a table twice', () => {
++    const all = [...ERASED.map((r) => r.model), ...MANUAL_CHECK.map((r) => r.model), ...RETAINED, ...TEACHER_OWNED];
++    expect(new Set(all).size).toBe(all.length);
++  });
++});
+diff --git a/backend/src/consent/erasure-map.ts b/backend/src/consent/erasure-map.ts
+new file mode 100644
+index 0000000..a74f014
+--- /dev/null
++++ b/backend/src/consent/erasure-map.ts
+@@ -0,0 +1,45 @@
++/**
++ * Every table that stores a student/user/teacher id must be classified here. A test reads the
++ * Prisma schema and fails if a new such table is added without being classified, so that
++ * "withdraw and erase" cannot silently miss new student data.
++ */
++export type Field = 'userId' | 'studentId';
++export interface TableRule { model: string; field: Field }
++
++/** Deleted on erasure (rows for the student). Order matters: children before parents. */
++export const ERASED: TableRule[] = [
++  { model: 'TeacherIntervention', field: 'studentId' },
++  { model: 'TeacherStudentAssignment', field: 'studentId' },
++  { model: 'TeacherClassEnrollment', field: 'studentId' },
++  { model: 'UserTopicMastery', field: 'userId' },
++  { model: 'MistakeLog', field: 'userId' },
++  { model: 'StudyGoal', field: 'userId' },
++  { model: 'UserBadge', field: 'userId' },
++  { model: 'UserStats', field: 'userId' },
++  { model: 'Notification', field: 'userId' },
++  // UserAnswer rows are deleted through the student's PracticeSessions, then the sessions themselves:
++  { model: 'PracticeSession', field: 'userId' },
++];
++
++/** Not written by the MVP flows. If any rows exist for the student, erasure STOPS and lists them for manual handling. */
++export const MANUAL_CHECK: TableRule[] = [
++  { model: 'PostVote', field: 'userId' }, { model: 'LearningSession', field: 'userId' },
++  { model: 'Subscription', field: 'userId' }, { model: 'AssessmentSession', field: 'userId' },
++  { model: 'EngagementLog', field: 'userId' }, { model: 'StudySession', field: 'userId' },
++  { model: 'CognitiveProfile', field: 'userId' }, { model: 'SkillCredential', field: 'userId' },
++  { model: 'AssessmentProject', field: 'userId' }, { model: 'UserSkillNode', field: 'userId' },
++  { model: 'UserSkillEdge', field: 'userId' }, { model: 'CognitiveStateLog', field: 'userId' },
++  { model: 'DigitalClassroomSession', field: 'studentId' }, { model: 'WorksheetSubmission', field: 'studentId' },
++  { model: 'Feedback', field: 'userId' }, { model: 'LearningEvidenceLog', field: 'userId' },
++  { model: 'PersonalizationDecision', field: 'userId' }, { model: 'PolicyGateDecision', field: 'userId' },
++  { model: 'EscalationEvent', field: 'userId' }, { model: 'LearningLoopAuditLog', field: 'userId' },
++  { model: 'ContentAssignment', field: 'studentId' },
++];
++
++/** Kept on purpose: proof of consent/withdrawal, with no link to the erased learning data. */
++export const RETAINED = ['ConsentRecord'];
++
++/** Authored by teachers (their id is a teacher id), not student data. */
++export const TEACHER_OWNED = ['GeneratedContent', 'LessonPlan', 'Worksheet', 'TeacherClass'];
++
++export const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+diff --git a/backend/src/practice/practice.behavior.spec.ts b/backend/src/practice/practice.behavior.spec.ts
+index dca8826..57f63f1 100644
+--- a/backend/src/practice/practice.behavior.spec.ts
++++ b/backend/src/practice/practice.behavior.spec.ts
+@@ -1,4 +1,4 @@
+-import { BadRequestException, ConflictException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
++import { BadRequestException, ConflictException, ForbiddenException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+ import { PracticeService } from './practice.service';
+ import { BktService } from '../learning-engine/services/bkt.service';
+ import { RlDifficultyService } from '../learning-engine/services/rl-difficulty.service';
+@@ -41,8 +41,9 @@ function build(questions: any[]) {
+   const db = makeDb(questions);
+   const ai = { generateQuiz: jest.fn() };
+   const gam = { addXp: jest.fn(), updateStreak: jest.fn() };
+-  const svc = new PracticeService(db.prisma, ai as any, gam as any, new BktService(db.prisma), new RlDifficultyService(db.prisma));
+-  return { db, ai, gam, svc };
++  const consent = { assertActiveConsent: jest.fn(async () => undefined) };
++  const svc = new PracticeService(db.prisma, ai as any, gam as any, new BktService(db.prisma), new RlDifficultyService(db.prisma), consent as any);
++  return { db, ai, gam, svc, consent };
+ }
+ 
+ describe('PracticeService - reviewed item bank flow', () => {
+@@ -110,4 +111,18 @@ describe('PracticeService - reviewed item bank flow', () => {
+     const secondIds = second.questions.map((q) => q.id);
+     expect(unseen.every((id) => secondIds.includes(id))).toBe(true); // every unseen item is served before any repeat
+   });
++
++  it('blocks a student without active consent and creates no session', async () => {
++    const { svc, consent, db } = build([bank(1, 0.5)]);
++    consent.assertActiveConsent.mockRejectedValue(new ForbiddenException());
++    await expect(svc.generateQuiz('u1', 'topic1', 'STUDENT')).rejects.toBeInstanceOf(ForbiddenException);
++    expect(db.sessions).toHaveLength(0);
++  });
++
++  it('lets a teacher or admin preview a quiz without a student consent record', async () => {
++    const { svc, consent } = build([bank(1, 0.5)]);
++    await svc.generateQuiz('t1', 'topic1', 'TEACHER');
++    await svc.generateQuiz('a1', 'topic1', 'ADMIN');
++    expect(consent.assertActiveConsent).not.toHaveBeenCalled();
++  });
+ });
+diff --git a/backend/src/practice/practice.controller.ts b/backend/src/practice/practice.controller.ts
+index 4ecfb92..7fdf27f 100644
+--- a/backend/src/practice/practice.controller.ts
++++ b/backend/src/practice/practice.controller.ts
+@@ -16,7 +16,7 @@ export class PracticeController {
+ 
+   @Post('generate')
+   async generateQuiz(@Request() req: any, @Body('topicId') topicId: string) {
+-    return this.practiceService.generateQuiz(req.user.userId, topicId);
++    return this.practiceService.generateQuiz(req.user.userId, topicId, req.user.role);
+   }
+ 
+   @Post('submit')
+diff --git a/backend/src/practice/practice.module.ts b/backend/src/practice/practice.module.ts
+index 070dd79..ac94355 100644
+--- a/backend/src/practice/practice.module.ts
++++ b/backend/src/practice/practice.module.ts
+@@ -6,9 +6,10 @@ import { AiModule } from '../ai/ai.module';
+ import { PrismaModule } from '../prisma/prisma.module';
+ import { GamificationModule } from '../gamification/gamification.module';
+ import { LearningEngineModule } from '../learning-engine/learning-engine.module';
++import { ConsentModule } from '../consent/consent.module';
+ 
+ @Module({
+-  imports: [AiModule, PrismaModule, GamificationModule, LearningEngineModule],
++  imports: [AiModule, PrismaModule, GamificationModule, LearningEngineModule, ConsentModule],
+   providers: [PracticeService],
+   controllers: [PracticeController],
+ })
+diff --git a/backend/src/practice/practice.service.ts b/backend/src/practice/practice.service.ts
+index 63976e8..2285b2d 100644
+--- a/backend/src/practice/practice.service.ts
++++ b/backend/src/practice/practice.service.ts
+@@ -12,6 +12,7 @@ import { AiService } from '../ai/ai.service';
+ import { GamificationService } from '../gamification/gamification.service';
+ import { BktService } from '../learning-engine/services/bkt.service';
+ import { RlDifficultyService } from '../learning-engine/services/rl-difficulty.service';
++import { ConsentService } from '../consent/consent.service';
+ 
+ @Injectable()
+ export class PracticeService {
+@@ -21,13 +22,16 @@ export class PracticeService {
+     private gamificationService: GamificationService,
+     private bktService: BktService,
+     private rlDifficultyService: RlDifficultyService,
++    private consentService: ConsentService,
+   ) { }
+ 
+   /**
+    * Serves a quiz. Default source is the teacher-reviewed item bank (QUESTION_SOURCE=BANK).
+    * Runtime AI generation is opt-in (QUESTION_SOURCE=AI) and never falls back to fake questions.
+    */
+-  async generateQuiz(userId: string, topicId: string) {
++  async generateQuiz(userId: string, topicId: string, role?: string) {
++    // Students need an active parent/guardian consent record; teachers/admins previewing do not.
++    if (role !== 'TEACHER' && role !== 'ADMIN') await this.consentService.assertActiveConsent(userId);
+     const topic = await this.prisma.topic.findUnique({ where: { id: topicId } });
+     if (!topic) throw new NotFoundException('Topic not found');
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,206 @@
+From 496a81e558ddc10d32b5e094befd4b60833abf8b Mon Sep 17 00:00:00 2001
+From: phase1-fixes <phase1@example.invalid>
+Date: Mon, 12 Oct 2026 04:17:03 +0000
+Subject: [PATCH 3/5] feat(teacher): difficulty override endpoint that changes
+ what the student is served next, with scope check and audit record
+
+---
+ .../teacher-ops/difficulty-override.spec.ts   | 49 +++++++++++++++++
+ .../dto/override-difficulty.dto.ts            | 13 +++++
+ .../teacher-difficulty-override.service.ts    | 52 +++++++++++++++++++
+ .../src/teacher-ops/teacher-ops.controller.ts | 14 +++++
+ backend/src/teacher-ops/teacher-ops.module.ts |  2 +
+ 5 files changed, 130 insertions(+)
+ create mode 100644 backend/src/teacher-ops/difficulty-override.spec.ts
+ create mode 100644 backend/src/teacher-ops/dto/override-difficulty.dto.ts
+ create mode 100644 backend/src/teacher-ops/services/teacher-difficulty-override.service.ts
+
+diff --git a/backend/src/teacher-ops/difficulty-override.spec.ts b/backend/src/teacher-ops/difficulty-override.spec.ts
+new file mode 100644
+index 0000000..96ffa57
+--- /dev/null
++++ b/backend/src/teacher-ops/difficulty-override.spec.ts
+@@ -0,0 +1,49 @@
++import { BadRequestException, ForbiddenException } from '@nestjs/common';
++import { TeacherDifficultyOverrideService } from './services/teacher-difficulty-override.service';
++import { RlDifficultyService } from '../learning-engine/services/rl-difficulty.service';
++
++function setup(allowed = true, existing: any = null) {
++  const state: any = { mastery: existing, interventions: [] as any[] };
++  const prisma: any = {
++    userTopicMastery: {
++      findUnique: jest.fn(async () => state.mastery),
++      update: jest.fn(async ({ data }: any) => Object.assign(state.mastery, data)),
++      create: jest.fn(async ({ data }: any) => (state.mastery = { id: 'm1', ...data })),
++    },
++    teacherIntervention: { create: jest.fn(async ({ data }: any) => { state.interventions.push(data); return data; }) },
++  };
++  const scope: any = { assertTeacherStudentScope: jest.fn(async () => { if (!allowed) throw new ForbiddenException(); return true; }) };
++  return { state, prisma, svc: new TeacherDifficultyOverrideService(prisma, scope), rl: new RlDifficultyService(prisma) };
++}
++
++describe('Teacher difficulty override', () => {
++  it('changes the value the next quiz reads, and records an audit entry', async () => {
++    const { svc, rl, state } = setup(true, { id: 'm1', userId: 's1', topicId: 't1', difficultyState: 0.8 });
++    const out = await svc.override('teacher1', 's1', 't1', 0.3, 'Student is struggling with negatives');
++    expect(out).toEqual({ studentId: 's1', topicId: 't1', previous: 0.8, current: 0.3 });
++    expect(await rl.getOptimalDifficulty('s1', 't1')).toBe(0.3);
++    expect(state.interventions).toHaveLength(1);
++    expect(state.interventions[0]).toMatchObject({ teacherId: 'teacher1', studentId: 's1', action: 'OVERRIDE', status: 'RESOLVED' });
++    expect(JSON.parse(state.interventions[0].overrideDetails)).toMatchObject({ type: 'DIFFICULTY', previous: 0.8, forced: 0.3 });
++  });
++
++  it('creates a mastery record when the student has none yet', async () => {
++    const { svc, prisma } = setup(true, null);
++    const out = await svc.override('teacher1', 's1', 't1', 0.4, 'Starting easier');
++    expect(out.previous).toBe(0.5);
++    expect(prisma.userTopicMastery.create).toHaveBeenCalled();
++  });
++
++  it('refuses a teacher outside the student scope and writes nothing', async () => {
++    const { svc, prisma } = setup(false);
++    await expect(svc.override('teacher2', 's1', 't1', 0.4, 'x')).rejects.toBeInstanceOf(ForbiddenException);
++    expect(prisma.teacherIntervention.create).not.toHaveBeenCalled();
++  });
++
++  it('rejects out-of-range values and missing reasons', async () => {
++    const { svc } = setup();
++    await expect(svc.override('t', 's', 'x', 1.5, 'r')).rejects.toBeInstanceOf(BadRequestException);
++    await expect(svc.override('t', 's', 'x', 0.05, 'r')).rejects.toBeInstanceOf(BadRequestException);
++    await expect(svc.override('t', 's', 'x', 0.5, '  ')).rejects.toBeInstanceOf(BadRequestException);
++  });
++});
+diff --git a/backend/src/teacher-ops/dto/override-difficulty.dto.ts b/backend/src/teacher-ops/dto/override-difficulty.dto.ts
+new file mode 100644
+index 0000000..d21a2d6
+--- /dev/null
++++ b/backend/src/teacher-ops/dto/override-difficulty.dto.ts
+@@ -0,0 +1,13 @@
++import { IsNotEmpty, IsNumber, IsString, Max, MaxLength, Min } from 'class-validator';
++
++export class OverrideDifficultyDto {
++  @IsNumber()
++  @Min(0.1)
++  @Max(1.0)
++  value: number;
++
++  @IsNotEmpty()
++  @IsString()
++  @MaxLength(500)
++  reason: string;
++}
+diff --git a/backend/src/teacher-ops/services/teacher-difficulty-override.service.ts b/backend/src/teacher-ops/services/teacher-difficulty-override.service.ts
+new file mode 100644
+index 0000000..1df3fa8
+--- /dev/null
++++ b/backend/src/teacher-ops/services/teacher-difficulty-override.service.ts
+@@ -0,0 +1,52 @@
++import { BadRequestException, Injectable } from '@nestjs/common';
++import { PrismaService } from '../../prisma/prisma.service';
++import { ScopeAuthorizationService } from '../../auth/services/scope-authorization.service';
++
++/**
++ * Lets a teacher set a student's target difficulty for a topic. The next quiz served to
++ * the student reads this value, so the override is visible to the student. Every override
++ * is recorded as a TeacherIntervention for audit. Later answers adjust the value again.
++ */
++@Injectable()
++export class TeacherDifficultyOverrideService {
++  constructor(
++    private readonly prisma: PrismaService,
++    private readonly scopeAuth: ScopeAuthorizationService,
++  ) {}
++
++  async override(teacherId: string, studentId: string, topicId: string, value: number, reason: string) {
++    if (!(value >= 0.1 && value <= 1.0)) {
++      throw new BadRequestException('Difficulty must be between 0.1 and 1.0.');
++    }
++    if (!reason || !reason.trim()) {
++      throw new BadRequestException('A reason is required.');
++    }
++    await this.scopeAuth.assertTeacherStudentScope(teacherId, studentId);
++
++    const existing = await this.prisma.userTopicMastery.findUnique({
++      where: { userId_topicId: { userId: studentId, topicId } },
++    });
++    const previous = existing ? existing.difficultyState : 0.5;
++
++    if (existing) {
++      await this.prisma.userTopicMastery.update({ where: { id: existing.id }, data: { difficultyState: value } });
++    } else {
++      await this.prisma.userTopicMastery.create({
++        data: { userId: studentId, topicId, masteryProbability: 0.1, difficultyState: value },
++      });
++    }
++
++    await this.prisma.teacherIntervention.create({
++      data: {
++        teacherId,
++        studentId,
++        action: 'OVERRIDE',
++        overrideDetails: JSON.stringify({ type: 'DIFFICULTY', topicId, previous, forced: value }),
++        feedback: reason.trim(),
++        status: 'RESOLVED',
++      },
++    });
++
++    return { studentId, topicId, previous, current: value };
++  }
++}
+diff --git a/backend/src/teacher-ops/teacher-ops.controller.ts b/backend/src/teacher-ops/teacher-ops.controller.ts
+index f96944c..c4bdb0a 100644
+--- a/backend/src/teacher-ops/teacher-ops.controller.ts
++++ b/backend/src/teacher-ops/teacher-ops.controller.ts
+@@ -27,6 +27,8 @@ import { OverrideRecommendationDto } from './dto/override-recommendation.dto';
+ import { CreateClassDto } from './dto/create-class.dto';
+ import { EnrollStudentDto } from './dto/enroll-student.dto';
+ import { AssignContentDto } from './dto/assign-content.dto';
++import { OverrideDifficultyDto } from './dto/override-difficulty.dto';
++import { TeacherDifficultyOverrideService } from './services/teacher-difficulty-override.service';
+ 
+ @Controller('teacher')
+ @UseGuards(JwtAuthGuard, RolesGuard)
+@@ -41,8 +43,20 @@ export class TeacherOpsController {
+     private readonly analyticsService: TeacherAnalyticsOpsService,
+     private readonly scopeAuth: ScopeAuthorizationService,
+     private readonly prisma: PrismaService,
++    private readonly difficultyOverride: TeacherDifficultyOverrideService,
+   ) {}
+ 
++  /** Set a student's target difficulty for a topic (teacher override). */
++  @Post('students/:studentId/topics/:topicId/difficulty')
++  async overrideDifficulty(
++    @Req() req: any,
++    @Param('studentId') studentId: string,
++    @Param('topicId') topicId: string,
++    @Body() dto: OverrideDifficultyDto,
++  ) {
++    return this.difficultyOverride.override(req.user.id, studentId, topicId, dto.value, dto.reason);
++  }
++
+   /**
+    * Teacher Home / Dashboard Overview
+    */
+diff --git a/backend/src/teacher-ops/teacher-ops.module.ts b/backend/src/teacher-ops/teacher-ops.module.ts
+index 269138e..423df8e 100644
+--- a/backend/src/teacher-ops/teacher-ops.module.ts
++++ b/backend/src/teacher-ops/teacher-ops.module.ts
+@@ -9,6 +9,7 @@ import { TeacherRecommendationService } from './services/teacher-recommendation.
+ import { TeacherInterventionOpsService } from './services/teacher-intervention-ops.service';
+ import { TeacherContentOpsService } from './services/teacher-content-ops.service';
+ import { TeacherAnalyticsOpsService } from './services/teacher-analytics-ops.service';
++import { TeacherDifficultyOverrideService } from './services/teacher-difficulty-override.service';
+ 
+ @Module({
+   imports: [PrismaModule, AuthModule, LearningLoopModule],
+@@ -20,6 +21,7 @@ import { TeacherAnalyticsOpsService } from './services/teacher-analytics-ops.ser
+     TeacherInterventionOpsService,
+     TeacherContentOpsService,
+     TeacherAnalyticsOpsService,
++    TeacherDifficultyOverrideService,
+   ],
+   exports: [
+     TeacherDashboardService,
+-- 
+2.43.0
+

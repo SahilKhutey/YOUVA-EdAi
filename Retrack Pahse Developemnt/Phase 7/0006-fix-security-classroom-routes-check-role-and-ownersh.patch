@@ -1,0 +1,505 @@
+From 6e60bbab0c638200f29c8a45c0773a99192e9737 Mon Sep 17 00:00:00 2001
+From: phase7-fixes <phase7@example.invalid>
+Date: Sat, 17 Oct 2026 09:17:54 +0000
+Subject: [PATCH 6/9] fix(security): classroom routes check role and ownership;
+ students never get the answer key; sessions visible only to participants,
+ names only; worksheet submissions validated (+11 tests)
+
+---
+ backend/src/classroom/access.ts               |  14 ++
+ .../src/classroom/classroom-access.spec.ts    | 142 ++++++++++++++++++
+ .../classroom/classroom-session.service.ts    |  37 +++++
+ backend/src/classroom/classroom.controller.ts |  58 +++----
+ backend/src/classroom/classroom.module.ts     |   6 +-
+ backend/src/classroom/lesson-plan.service.ts  |  13 +-
+ backend/src/classroom/worksheet.service.ts    |  42 +++++-
+ 7 files changed, 272 insertions(+), 40 deletions(-)
+ create mode 100644 backend/src/classroom/access.ts
+ create mode 100644 backend/src/classroom/classroom-access.spec.ts
+ create mode 100644 backend/src/classroom/classroom-session.service.ts
+
+diff --git a/backend/src/classroom/access.ts b/backend/src/classroom/access.ts
+new file mode 100644
+index 0000000..5395f2d
+--- /dev/null
++++ b/backend/src/classroom/access.ts
+@@ -0,0 +1,14 @@
++import { ForbiddenException } from '@nestjs/common';
++
++export interface Actor { id: string; role: string }
++
++export const isAdmin = (a: Actor) => a.role === 'ADMIN';
++
++/** Teacher-owned items: the owner (or an admin) can see and change them; everyone else only sees PUBLISHED ones. */
++export function canRead(ownerId: string, status: string | null | undefined, actor: Actor): boolean {
++  return ownerId === actor.id || isAdmin(actor) || status === 'PUBLISHED';
++}
++
++export function assertOwnerOrAdmin(ownerId: string, actor: Actor) {
++  if (ownerId !== actor.id && !isAdmin(actor)) throw new ForbiddenException('You do not own this item.');
++}
+diff --git a/backend/src/classroom/classroom-access.spec.ts b/backend/src/classroom/classroom-access.spec.ts
+new file mode 100644
+index 0000000..fef6f9a
+--- /dev/null
++++ b/backend/src/classroom/classroom-access.spec.ts
+@@ -0,0 +1,142 @@
++import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
++import { LessonPlanService } from './lesson-plan.service';
++import { WorksheetService } from './worksheet.service';
++import { ClassroomSessionService } from './classroom-session.service';
++
++const teacher = { id: 't1', role: 'TEACHER' };
++const otherTeacher = { id: 't2', role: 'TEACHER' };
++const student = { id: 's1', role: 'STUDENT' };
++const admin = { id: 'a1', role: 'ADMIN' };
++
++describe('lesson plan access', () => {
++  const plans: any = { draft: { id: 'draft', teacherId: 't1', status: 'DRAFT', steps: [] }, live: { id: 'live', teacherId: 't1', status: 'PUBLISHED', steps: [] } };
++  const prisma: any = { lessonPlan: {
++    findUnique: jest.fn(async ({ where }: any) => plans[where.id] ?? null),
++    update: jest.fn(async ({ where, data }: any) => Object.assign(plans[where.id], data)),
++  } };
++  const svc = new LessonPlanService(prisma, {} as any);
++
++  it('shows a draft only to its owner or an admin, and a published plan to anyone logged in', async () => {
++    await expect(svc.getLessonPlanById('draft', teacher)).resolves.toBeTruthy();
++    await expect(svc.getLessonPlanById('draft', admin)).resolves.toBeTruthy();
++    await expect(svc.getLessonPlanById('draft', student)).rejects.toBeInstanceOf(NotFoundException);
++    await expect(svc.getLessonPlanById('draft', otherTeacher)).rejects.toBeInstanceOf(NotFoundException);
++    await expect(svc.getLessonPlanById('live', student)).resolves.toBeTruthy();
++  });
++
++  it('lets only the owner or an admin publish', async () => {
++    await expect(svc.publishLessonPlan('draft', student)).rejects.toBeInstanceOf(ForbiddenException);
++    await expect(svc.publishLessonPlan('draft', otherTeacher)).rejects.toBeInstanceOf(ForbiddenException);
++    expect(prisma.lessonPlan.update).not.toHaveBeenCalled();
++    await svc.publishLessonPlan('draft', teacher);
++    expect(plans.draft.status).toBe('PUBLISHED');
++    await expect(svc.publishLessonPlan('missing', teacher)).rejects.toBeInstanceOf(NotFoundException);
++  });
++});
++
++describe('worksheet access and submission', () => {
++  const q = (id: string, extra: any = {}) => ({ id, content: `Q${id}`, type: 'MCQ', points: 1, order: 1, correctAnswer: 'A', explanation: 'because', ...extra });
++  const mk = (status: string) => ({ id: 'w1', teacherId: 't1', status, questions: [q('q1'), q('q2')] });
++  function setup(status = 'PUBLISHED') {
++    const ws = mk(status);
++    const submissions: any[] = [];
++    const ai = { generateText: jest.fn(async () => '{"isCorrect":true,"feedback":"ok"}') };
++    const prisma: any = {
++      worksheet: { findUnique: jest.fn(async () => ws), update: jest.fn() },
++      worksheetSubmission: {
++        create: jest.fn(async ({ data }: any) => { const s = { id: 'sub1', studentId: data.studentId, worksheetId: data.worksheetId, worksheet: ws, answers: data.answers.create.map((a: any, i: number) => ({ id: `a${i}`, ...a, question: ws.questions.find((x) => x.id === a.questionId) })) }; submissions.push(s); return s; }),
++        update: jest.fn(async ({ data }: any) => ({ id: 'sub1', ...data })),
++        findUnique: jest.fn(async () => submissions[0] ?? { id: 'sub1', studentId: 's1', worksheet: ws, answers: [] }),
++      },
++      worksheetSubmissionAnswer: { update: jest.fn(async () => ({})) },
++    };
++    return { svc: new WorksheetService(prisma, ai as any), prisma, ai };
++  }
++
++  it('hides the answer key from students but not from the owning teacher', async () => {
++    const { svc } = setup();
++    const asStudent: any = await svc.getWorksheetById('w1', student);
++    expect(asStudent.questions[0]).not.toHaveProperty('correctAnswer');
++    expect(asStudent.questions[0]).not.toHaveProperty('explanation');
++    const asTeacher: any = await svc.getWorksheetById('w1', teacher);
++    expect(asTeacher.questions[0].correctAnswer).toBe('A');
++  });
++
++  it('does not show an unpublished worksheet to a student', async () => {
++    const { svc } = setup('DRAFT');
++    await expect(svc.getWorksheetById('w1', student)).rejects.toBeInstanceOf(NotFoundException);
++    await expect(svc.getWorksheetById('w1', teacher)).resolves.toBeTruthy();
++  });
++
++  it('rejects submissions to unpublished worksheets, foreign questions, duplicates and empty answers', async () => {
++    const draft = setup('DRAFT');
++    await expect(draft.svc.submitWorksheet('s1', 'w1', { answers: [{ questionId: 'q1', studentAnswer: 'A' }] })).rejects.toBeInstanceOf(NotFoundException);
++    const { svc, prisma } = setup();
++    await expect(svc.submitWorksheet('s1', 'w1', { answers: [{ questionId: 'other', studentAnswer: 'A' }] })).rejects.toBeInstanceOf(BadRequestException);
++    await expect(svc.submitWorksheet('s1', 'w1', { answers: [{ questionId: 'q1', studentAnswer: 'A' }, { questionId: 'q1', studentAnswer: 'B' }] })).rejects.toBeInstanceOf(BadRequestException);
++    await expect(svc.submitWorksheet('s1', 'w1', { answers: [] })).rejects.toBeInstanceOf(BadRequestException);
++    expect(prisma.worksheetSubmission.create).not.toHaveBeenCalled();
++  });
++
++  it('grades multiple choice without the AI, and holds free-text answers for the teacher unless AI is enabled', async () => {
++    delete process.env.ENABLE_AI_FEATURES;
++    const { svc, prisma, ai } = setup();
++    prisma.worksheet.findUnique = jest.fn(async () => ({ ...mk('PUBLISHED'), questions: [q('q1'), q('q2', { type: 'SHORT_ANSWER' })] }));
++    const out: any = await svc.submitWorksheet('s1', 'w1', { answers: [{ questionId: 'q1', studentAnswer: 'A' }, { questionId: 'q2', studentAnswer: 'my own words' }] });
++    expect(ai.generateText).not.toHaveBeenCalled();
++    expect(out.score).toBe(50);
++  });
++
++  it('shows a submission only to its student, the worksheet\'s teacher, or an admin', async () => {
++    const { svc } = setup();
++    await expect(svc.getSubmission('sub1', student)).resolves.toBeTruthy();
++    await expect(svc.getSubmission('sub1', teacher)).resolves.toBeTruthy();
++    await expect(svc.getSubmission('sub1', admin)).resolves.toBeTruthy();
++    await expect(svc.getSubmission('sub1', { id: 's2', role: 'STUDENT' })).rejects.toBeInstanceOf(NotFoundException);
++    await expect(svc.getSubmission('sub1', otherTeacher)).rejects.toBeInstanceOf(NotFoundException);
++  });
++});
++
++describe('classroom sessions', () => {
++  function setup() {
++    const session: any = { id: 'sess1', teacherId: 't1', studentId: 's1', lessonPlan: null, student: { id: 's1', name: 'Asha' }, teacher: { id: 't1', name: 'Ms Rao' } };
++    const prisma: any = {
++      lessonPlan: { findUnique: jest.fn(async () => ({ id: 'lp', teacherId: 't2', status: 'DRAFT' })) },
++      digitalClassroomSession: { create: jest.fn(async ({ data }: any) => ({ id: 'new', ...data })), findUnique: jest.fn(async () => session) },
++    };
++    const scope: any = { assertTeacherStudentScope: jest.fn(async (_t: string, s: string) => { if (s !== 's1') throw new ForbiddenException(); }) };
++    return { prisma, scope, svc: new ClassroomSessionService(prisma, scope) };
++  }
++
++  it('lets a teacher start a session only with a student in their scope, and writes nothing otherwise', async () => {
++    const { svc, prisma } = setup();
++    await expect(svc.start(teacher, { studentId: 'someone-else' })).rejects.toBeInstanceOf(ForbiddenException);
++    expect(prisma.digitalClassroomSession.create).not.toHaveBeenCalled();
++    const ok: any = await svc.start(teacher, { studentId: 's1' });
++    expect(ok).toMatchObject({ teacherId: 't1', studentId: 's1', status: 'ACTIVE' });
++  });
++
++  it('lets admins skip the scope check, and refuses another teacher\'s unpublished lesson plan', async () => {
++    const { svc, scope } = setup();
++    await svc.start(admin, { studentId: 'anyone' });
++    expect(scope.assertTeacherStudentScope).not.toHaveBeenCalled();
++    await expect(svc.start(teacher, { studentId: 's1', lessonPlanId: 'lp' })).rejects.toBeInstanceOf(NotFoundException);
++  });
++
++  it('students cannot start sessions naming other students (they are not even in scope)', async () => {
++    const { svc } = setup();
++    await expect(svc.start(student, { studentId: 's2' })).rejects.toBeInstanceOf(ForbiddenException);
++  });
++
++  it('shows a session only to its two participants or an admin, and returns names only', async () => {
++    const { svc, prisma } = setup();
++    await expect(svc.get('sess1', teacher)).resolves.toBeTruthy();
++    await expect(svc.get('sess1', student)).resolves.toBeTruthy();
++    await expect(svc.get('sess1', admin)).resolves.toBeTruthy();
++    await expect(svc.get('sess1', { id: 's2', role: 'STUDENT' })).rejects.toBeInstanceOf(NotFoundException);
++    await expect(svc.get('sess1', otherTeacher)).rejects.toBeInstanceOf(NotFoundException);
++    const include = prisma.digitalClassroomSession.findUnique.mock.calls[0][0].include;
++    expect(include.student).toEqual({ select: { id: true, name: true } });
++    expect(include.teacher).toEqual({ select: { id: true, name: true } });
++  });
++});
+diff --git a/backend/src/classroom/classroom-session.service.ts b/backend/src/classroom/classroom-session.service.ts
+new file mode 100644
+index 0000000..8d80a6e
+--- /dev/null
++++ b/backend/src/classroom/classroom-session.service.ts
+@@ -0,0 +1,37 @@
++import { Injectable, NotFoundException } from '@nestjs/common';
++import { PrismaService } from '../prisma/prisma.service';
++import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
++import { Actor, canRead, isAdmin } from './access';
++
++@Injectable()
++export class ClassroomSessionService {
++  constructor(private readonly prisma: PrismaService, private readonly scope: ScopeAuthorizationService) {}
++
++  /** A teacher can start a session only with a student in their own class or assignment (admins can with anyone). */
++  async start(actor: Actor, body: { lessonPlanId?: string; studentId: string }) {
++    if (!isAdmin(actor)) await this.scope.assertTeacherStudentScope(actor.id, body.studentId);
++    if (body.lessonPlanId) {
++      const plan = await this.prisma.lessonPlan.findUnique({ where: { id: body.lessonPlanId } });
++      if (!plan || !canRead(plan.teacherId, plan.status, actor)) throw new NotFoundException('Lesson plan not found');
++    }
++    return this.prisma.digitalClassroomSession.create({
++      data: { teacherId: actor.id, studentId: body.studentId, lessonPlanId: body.lessonPlanId, status: 'ACTIVE', startedAt: new Date() },
++    });
++  }
++
++  /** Only the two participants (or an admin) can open a session. Names only: never full user records. */
++  async get(id: string, actor: Actor) {
++    const session = await this.prisma.digitalClassroomSession.findUnique({
++      where: { id },
++      include: {
++        lessonPlan: { include: { steps: { orderBy: { order: 'asc' } } } },
++        student: { select: { id: true, name: true } },
++        teacher: { select: { id: true, name: true } },
++      },
++    });
++    if (!session || !(session.teacherId === actor.id || session.studentId === actor.id || isAdmin(actor))) {
++      throw new NotFoundException('Session not found');
++    }
++    return session;
++  }
++}
+diff --git a/backend/src/classroom/classroom.controller.ts b/backend/src/classroom/classroom.controller.ts
+index 3ac7f6e..fd04fb1 100644
+--- a/backend/src/classroom/classroom.controller.ts
++++ b/backend/src/classroom/classroom.controller.ts
+@@ -1,60 +1,71 @@
+ import { Controller, Post, Body, Req, UseGuards, Put, Param, Get } from '@nestjs/common';
+ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
++import { RolesGuard } from '../auth/roles.guard';
++import { Roles } from '../auth/roles.decorator';
++import { Role } from '../auth/role.enum';
+ import { LessonPlanService } from './lesson-plan.service';
+ import { WorksheetService } from './worksheet.service';
+-import { PrismaService } from '../prisma/prisma.service';
++import { ClassroomSessionService } from './classroom-session.service';
++
++const actor = (req: any) => ({ id: req.user.id, role: req.user.role });
+ 
+ @Controller('classroom')
+-@UseGuards(JwtAuthGuard)
++@UseGuards(JwtAuthGuard, RolesGuard)
+ export class ClassroomController {
+     constructor(
+         private lessonPlanService: LessonPlanService,
+         private worksheetService: WorksheetService,
+-        private prisma: PrismaService
++        private sessions: ClassroomSessionService,
+     ) { }
+ 
+-    // --- LESSON PLANS ---
++    // --- LESSON PLANS (teachers create and publish; others can read published plans) ---
+ 
++    @Roles(Role.TEACHER, Role.ADMIN)
+     @Post('lesson-plan/generate')
+     async generateLessonPlan(@Req() req: any, @Body() body: any) {
+         return this.lessonPlanService.generateLessonPlan(req.user.id, body);
+     }
+ 
++    @Roles(Role.TEACHER, Role.ADMIN)
+     @Get('lesson-plan')
+     async getLessonPlans(@Req() req: any) {
+         return this.lessonPlanService.getLessonPlans(req.user.id);
+     }
+ 
+     @Get('lesson-plan/:id')
+-    async getLessonPlan(@Param('id') id: string) {
+-        return this.lessonPlanService.getLessonPlanById(id);
++    async getLessonPlan(@Req() req: any, @Param('id') id: string) {
++        return this.lessonPlanService.getLessonPlanById(id, actor(req));
+     }
+ 
++    @Roles(Role.TEACHER, Role.ADMIN)
+     @Put('lesson-plan/:id/publish')
+-    async publishLessonPlan(@Param('id') id: string) {
+-        return this.lessonPlanService.publishLessonPlan(id);
++    async publishLessonPlan(@Req() req: any, @Param('id') id: string) {
++        return this.lessonPlanService.publishLessonPlan(id, actor(req));
+     }
+ 
+     // --- WORKSHEETS ---
+ 
++    @Roles(Role.TEACHER, Role.ADMIN)
+     @Post('worksheet/generate')
+     async generateWorksheet(@Req() req: any, @Body() body: any) {
+         return this.worksheetService.generateWorksheet(req.user.id, body);
+     }
+ 
++    @Roles(Role.TEACHER, Role.ADMIN)
+     @Get('worksheet')
+     async getWorksheets(@Req() req: any) {
+         return this.worksheetService.getWorksheets(req.user.id);
+     }
+ 
+     @Get('worksheet/:id')
+-    async getWorksheet(@Param('id') id: string) {
+-        return this.worksheetService.getWorksheetById(id);
++    async getWorksheet(@Req() req: any, @Param('id') id: string) {
++        return this.worksheetService.getWorksheetById(id, actor(req));
+     }
+ 
++    @Roles(Role.TEACHER, Role.ADMIN)
+     @Put('worksheet/:id/publish')
+-    async publishWorksheet(@Param('id') id: string) {
+-        return this.worksheetService.publishWorksheet(id);
++    async publishWorksheet(@Req() req: any, @Param('id') id: string) {
++        return this.worksheetService.publishWorksheet(id, actor(req));
+     }
+ 
+     @Post('worksheet/:id/submit')
+@@ -63,29 +74,20 @@ export class ClassroomController {
+     }
+ 
+     @Get('worksheet/submission/:id')
+-    async getSubmission(@Param('id') id: string) {
+-        return this.worksheetService.getSubmission(id);
++    async getSubmission(@Req() req: any, @Param('id') id: string) {
++        return this.worksheetService.getSubmission(id, actor(req));
+     }
+ 
+     // --- SESSIONS ---
++
++    @Roles(Role.TEACHER, Role.ADMIN)
+     @Post('session/start')
+     async startSession(@Req() req: any, @Body() body: { lessonPlanId?: string, studentId: string }) {
+-        return this.prisma.digitalClassroomSession.create({
+-            data: {
+-                teacherId: req.user.id,
+-                studentId: body.studentId,
+-                lessonPlanId: body.lessonPlanId,
+-                status: 'ACTIVE',
+-                startedAt: new Date(),
+-            }
+-        });
++        return this.sessions.start(actor(req), body);
+     }
+ 
+     @Get('session/:id')
+-    async getSession(@Param('id') id: string) {
+-        return this.prisma.digitalClassroomSession.findUnique({
+-            where: { id },
+-            include: { lessonPlan: { include: { steps: { orderBy: { order: 'asc' } } } }, student: true, teacher: true }
+-        });
++    async getSession(@Req() req: any, @Param('id') id: string) {
++        return this.sessions.get(id, actor(req));
+     }
+ }
+diff --git a/backend/src/classroom/classroom.module.ts b/backend/src/classroom/classroom.module.ts
+index b104522..eec6f87 100644
+--- a/backend/src/classroom/classroom.module.ts
++++ b/backend/src/classroom/classroom.module.ts
+@@ -5,11 +5,13 @@ import { WorksheetService } from './worksheet.service';
+ import { ClassroomGateway } from './classroom.gateway';
+ import { PrismaModule } from '../prisma/prisma.module';
+ import { AiModule } from '../ai/ai.module';
++import { AuthModule } from '../auth/auth.module';
++import { ClassroomSessionService } from './classroom-session.service';
+ 
+ @Module({
+-    imports: [PrismaModule, AiModule],
++    imports: [PrismaModule, AiModule, AuthModule],
+     controllers: [ClassroomController],
+-    providers: [LessonPlanService, WorksheetService, ClassroomGateway],
++    providers: [LessonPlanService, WorksheetService, ClassroomSessionService, ClassroomGateway],
+     exports: [LessonPlanService, WorksheetService, ClassroomGateway],
+ })
+ export class ClassroomModule { }
+diff --git a/backend/src/classroom/lesson-plan.service.ts b/backend/src/classroom/lesson-plan.service.ts
+index a757145..b2d2368 100644
+--- a/backend/src/classroom/lesson-plan.service.ts
++++ b/backend/src/classroom/lesson-plan.service.ts
+@@ -1,4 +1,5 @@
+ import { Injectable, NotFoundException } from '@nestjs/common';
++import { Actor, assertOwnerOrAdmin, canRead } from './access';
+ import { PrismaService } from '../prisma/prisma.service';
+ import { AiService } from '../ai/ai.service';
+ 
+@@ -75,14 +76,20 @@ Supported types: INTRODUCTION, EXPLANATION, EXAMPLE, GUIDED_PRACTICE, WORKSHEET,
+         });
+     }
+ 
+-    async getLessonPlanById(id: string) {
+-        return this.prisma.lessonPlan.findUnique({
++    /** Owner/admin can read any of their own plans; everyone else only sees published ones. */
++    async getLessonPlanById(id: string, actor: Actor) {
++        const plan = await this.prisma.lessonPlan.findUnique({
+             where: { id },
+             include: { steps: { orderBy: { order: 'asc' } } }
+         });
++        if (!plan || !canRead(plan.teacherId, plan.status, actor)) throw new NotFoundException('Lesson plan not found');
++        return plan;
+     }
+ 
+-    async publishLessonPlan(id: string) {
++    async publishLessonPlan(id: string, actor: Actor) {
++        const plan = await this.prisma.lessonPlan.findUnique({ where: { id } });
++        if (!plan) throw new NotFoundException('Lesson plan not found');
++        assertOwnerOrAdmin(plan.teacherId, actor);
+         return this.prisma.lessonPlan.update({
+             where: { id },
+             data: { status: 'PUBLISHED' }
+diff --git a/backend/src/classroom/worksheet.service.ts b/backend/src/classroom/worksheet.service.ts
+index f3a0c30..869be9f 100644
+--- a/backend/src/classroom/worksheet.service.ts
++++ b/backend/src/classroom/worksheet.service.ts
+@@ -1,4 +1,5 @@
+-import { Injectable } from '@nestjs/common';
++import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
++import { Actor, assertOwnerOrAdmin, canRead, isAdmin } from './access';
+ import { PrismaService } from '../prisma/prisma.service';
+ import { AiService } from '../ai/ai.service';
+ 
+@@ -77,14 +78,21 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
+         });
+     }
+ 
+-    async getWorksheetById(id: string) {
+-        return this.prisma.worksheet.findUnique({
++    /** Owner/admin see the full worksheet. Others only see published ones, without the answer key. */
++    async getWorksheetById(id: string, actor: Actor) {
++        const ws = await this.prisma.worksheet.findUnique({
+             where: { id },
+             include: { questions: { orderBy: { order: 'asc' } } }
+         });
++        if (!ws || !canRead(ws.teacherId, ws.status, actor)) throw new NotFoundException('Worksheet not found');
++        if (ws.teacherId === actor.id || isAdmin(actor)) return ws;
++        return { ...ws, questions: ws.questions.map(({ correctAnswer, explanation, ...safe }) => safe) };
+     }
+ 
+-    async publishWorksheet(id: string) {
++    async publishWorksheet(id: string, actor: Actor) {
++        const ws = await this.prisma.worksheet.findUnique({ where: { id } });
++        if (!ws) throw new NotFoundException('Worksheet not found');
++        assertOwnerOrAdmin(ws.teacherId, actor);
+         return this.prisma.worksheet.update({
+             where: { id },
+             data: { status: 'PUBLISHED' }
+@@ -92,6 +100,18 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
+     }
+ 
+     async submitWorksheet(studentId: string, worksheetId: string, payload: { answers: { questionId: string, studentAnswer: string }[] }) {
++        // 0. Only published worksheets can be submitted, and only for questions that belong to them, once each.
++        const worksheet = await this.prisma.worksheet.findUnique({ where: { id: worksheetId }, include: { questions: true } });
++        if (!worksheet || worksheet.status !== 'PUBLISHED') throw new NotFoundException('Worksheet not found');
++        if (!Array.isArray(payload?.answers) || payload.answers.length === 0) throw new BadRequestException('At least one answer is required.');
++        const allowed = new Set(worksheet.questions.map((q) => q.id));
++        const seen = new Set<string>();
++        for (const a of payload.answers) {
++            if (!allowed.has(a.questionId)) throw new BadRequestException('An answer refers to a question that is not on this worksheet.');
++            if (seen.has(a.questionId)) throw new BadRequestException('Duplicate answer for the same question.');
++            seen.add(a.questionId);
++        }
++
+         // 1. Create submission
+         const submission = await this.prisma.worksheetSubmission.create({
+             data: {
+@@ -119,6 +139,9 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
+ 
+             if (q.type === 'MCQ') {
+                 isCorrect = ans.studentAnswer === q.correctAnswer;
++            } else if ((process.env.ENABLE_AI_FEATURES ?? 'false').toLowerCase() !== 'true') {
++                // Free-text answers are not sent to an AI unless ENABLE_AI_FEATURES=true; they wait for the teacher.
++                ans.feedback = 'Awaiting teacher review';
+             } else {
+                 // For SHORT_ANSWER, PROBLEM_SOLVING etc, use AI to evaluate
+                 const prompt = `Evaluate the student's answer for this question. Question: "${q.content}". Correct Answer/Context: "${q.correctAnswer || q.explanation}". Student Answer: "${ans.studentAnswer}". Output ONLY JSON: { "isCorrect": true/false, "feedback": "brief reasoning" }`;
+@@ -143,7 +166,7 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
+             });
+         }
+ 
+-        const score = (earnedPoints / totalPoints) * 100;
++        const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
+         return this.prisma.worksheetSubmission.update({
+             where: { id: submission.id },
+             data: { score, status: 'GRADED' },
+@@ -151,10 +174,15 @@ Output standard JSON formatting ONLY, no markdown ticks. Supported Types in outp
+         });
+     }
+ 
+-    async getSubmission(submissionId: string) {
+-        return this.prisma.worksheetSubmission.findUnique({
++    /** The student who submitted it, the teacher who owns the worksheet, or an admin. */
++    async getSubmission(submissionId: string, actor: Actor) {
++        const sub = await this.prisma.worksheetSubmission.findUnique({
+             where: { id: submissionId },
+             include: { answers: { include: { question: true } }, worksheet: true }
+         });
++        if (!sub || !(sub.studentId === actor.id || sub.worksheet.teacherId === actor.id || isAdmin(actor))) {
++            throw new NotFoundException('Submission not found');
++        }
++        return sub;
+     }
+ }
+-- 
+2.43.0
+

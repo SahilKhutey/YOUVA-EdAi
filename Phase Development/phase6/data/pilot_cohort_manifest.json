@@ -1,0 +1,149 @@
+{
+  "pilotId": "PILOT-DPS-JR-2026-03",
+  "tier": "KINDERGARTEN_JUNIOR",
+  "ageBand": "4-6 years",
+  "institution": {
+    "name": "Delhi Public School Early Years",
+    "campus": "Vasant Vihar Campus",
+    "city": "New Delhi"
+  },
+  "startDate": "2026-09-04",
+  "endDate": "2026-09-10",
+  "facilitators": [
+    {
+      "facilitatorId": "FAC-DPS-01",
+      "name": "Mrs. Shalini Mehra",
+      "role": "Head of Foundational Years",
+      "earlyChildhoodCertified": true
+    },
+    {
+      "facilitatorId": "FAC-DPS-02",
+      "name": "Mrs. Deepa Kulkarni",
+      "role": "Pre-Primary Specialist",
+      "earlyChildhoodCertified": true
+    }
+  ],
+  "cohortSize": 15,
+  "students": [
+    {
+      "childToken": "anon_10a2b3c4d5e6",
+      "ageYears": 4.5,
+      "parentToken": "parent_88a1b2c3d4",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:00:00Z",
+      "copilotPairingKey": "pair_jr_001_8a7c"
+    },
+    {
+      "childToken": "anon_20b3c4d5e6a1",
+      "ageYears": 5.0,
+      "parentToken": "parent_77b2c3d4e5",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:05:00Z",
+      "copilotPairingKey": "pair_jr_002_9b8d"
+    },
+    {
+      "childToken": "anon_30c4d5e6a1b2",
+      "ageYears": 5.2,
+      "parentToken": "parent_66c3d4e5f6",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:10:00Z",
+      "copilotPairingKey": "pair_jr_003_0c9e"
+    },
+    {
+      "childToken": "anon_40d5e6a1b2c3",
+      "ageYears": 4.8,
+      "parentToken": "parent_55d4e5f6a1",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:15:00Z",
+      "copilotPairingKey": "pair_jr_004_1d0f"
+    },
+    {
+      "childToken": "anon_50e6a1b2c3d4",
+      "ageYears": 5.5,
+      "parentToken": "parent_44e5f6a1b2",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:20:00Z",
+      "copilotPairingKey": "pair_jr_005_2e1a"
+    },
+    {
+      "childToken": "anon_60f6a1b2c3d4",
+      "ageYears": 4.6,
+      "parentToken": "parent_33f6a1b2c3",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:25:00Z",
+      "copilotPairingKey": "pair_jr_006_3f2b"
+    },
+    {
+      "childToken": "anon_70a1b2c3d4e5",
+      "ageYears": 5.1,
+      "parentToken": "parent_22a1b2c3d4",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:30:00Z",
+      "copilotPairingKey": "pair_jr_007_4a3c"
+    },
+    {
+      "childToken": "anon_80b2c3d4e5f6",
+      "ageYears": 4.9,
+      "parentToken": "parent_11b2c3d4e5",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:35:00Z",
+      "copilotPairingKey": "pair_jr_008_5b4d"
+    },
+    {
+      "childToken": "anon_90c3d4e5f6a1",
+      "ageYears": 5.3,
+      "parentToken": "parent_00c3d4e5f6",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:40:00Z",
+      "copilotPairingKey": "pair_jr_009_6c5e"
+    },
+    {
+      "childToken": "anon_01d4e5f6a1b2",
+      "ageYears": 4.7,
+      "parentToken": "parent_99d4e5f6a1",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:45:00Z",
+      "copilotPairingKey": "pair_jr_010_7d6f"
+    },
+    {
+      "childToken": "anon_11e5f6a1b2c3",
+      "ageYears": 5.4,
+      "parentToken": "parent_88e5f6a1b2",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:50:00Z",
+      "copilotPairingKey": "pair_jr_011_8e7a"
+    },
+    {
+      "childToken": "anon_21f6a1b2c3d4",
+      "ageYears": 5.0,
+      "parentToken": "parent_77f6a1b2c3",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T09:55:00Z",
+      "copilotPairingKey": "pair_jr_012_9f8b"
+    },
+    {
+      "childToken": "anon_31a1b2c3d4e5",
+      "ageYears": 4.8,
+      "parentToken": "parent_66a1b2c3d4",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T10:00:00Z",
+      "copilotPairingKey": "pair_jr_013_0a9c"
+    },
+    {
+      "childToken": "anon_41b2c3d4e5f6",
+      "ageYears": 5.2,
+      "parentToken": "parent_55b2c3d4e5",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T10:05:00Z",
+      "copilotPairingKey": "pair_jr_014_1b0d"
+    },
+    {
+      "childToken": "anon_51c3d4e5f6a1",
+      "ageYears": 5.6,
+      "parentToken": "parent_44c3d4e5f6",
+      "consentStatus": "VERIFIED",
+      "consentVerifiedAt": "2026-09-03T10:10:00Z",
+      "copilotPairingKey": "pair_jr_015_2c1e"
+    }
+  ]
+}

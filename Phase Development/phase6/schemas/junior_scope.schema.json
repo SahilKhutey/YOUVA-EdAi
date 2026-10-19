@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JuniorTierScopeLockSchema",
+  "type": "object",
+  "required": [
+    "scopeVersion",
+    "tier",
+    "ageBand",
+    "grades",
+    "domain",
+    "competencyCodes",
+    "dpdpCompliance",
+    "technicalConstraints",
+    "parentCoPilotPolicy",
+    "signoffs"
+  ],
+  "properties": {
+    "scopeVersion": { "type": "string" },
+    "tier": { "type": "string", "enum": ["KINDERGARTEN_JUNIOR"] },
+    "ageBand": { "type": "string" },
+    "grades": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "domain": { "type": "string" },
+    "competencyCodes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "dpdpCompliance": { "type": "object" },
+    "technicalConstraints": {
+      "type": "object",
+      "required": ["maxSessionMinutes", "maxWordsPerPrompt", "maxFleschKincaidGrade", "prohibitOpenEndedAi"],
+      "properties": {
+        "maxSessionMinutes": { "type": "integer", "maximum": 15 },
+        "maxWordsPerPrompt": { "type": "integer", "maximum": 10 },
+        "maxFleschKincaidGrade": { "type": "number", "maximum": 1.5 },
+        "prohibitOpenEndedAi": { "type": "boolean", "enum": [true] }
+      }
+    },
+    "parentCoPilotPolicy": { "type": "object" },
+    "signoffs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["role", "name", "organization", "decision", "date"],
+        "properties": {
+          "role": { "type": "string" },
+          "name": { "type": "string" },
+          "organization": { "type": "string" },
+          "decision": { "type": "string", "enum": ["APPROVED", "REJECTED"] },
+          "date": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

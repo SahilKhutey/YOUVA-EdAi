@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "title": "YOUVA EdAI Institutional Governance Recurring Review Scheduler",
+  "reviewClasses": [
+    {
+      "id": "model_drift_bias_audit",
+      "name": "Model Drift, Pedagogical Accuracy & Safety Drift Quarterly Audit",
+      "frequency": "quarterly",
+      "maxIntervalDays": 90,
+      "ownerRole": "AI Safety Officer",
+      "lastConducted": "2026-07-01",
+      "nextDue": "2026-10-01",
+      "status": "scheduled",
+      "escalationPathHours": 24,
+      "regulatoryRequirement": "EU AI Act High-Risk EdTech & ISO/IEC 42001"
+    },
+    {
+      "id": "child_safety_policy_review",
+      "name": "Child Safeguarding, Content Boundary & PII Filtering Bi-Monthly Review",
+      "frequency": "bi-monthly",
+      "maxIntervalDays": 60,
+      "ownerRole": "Child Safety & Safeguarding Lead",
+      "lastConducted": "2026-08-01",
+      "nextDue": "2026-10-01",
+      "status": "scheduled",
+      "escalationPathHours": 12,
+      "regulatoryRequirement": "COPPA / DPDP Act s.9 / UK AADC"
+    },
+    {
+      "id": "penetration_testing_security_audit",
+      "name": "Third-Party Penetration Testing & Vulnerability Assessment",
+      "frequency": "bi-annual",
+      "maxIntervalDays": 180,
+      "ownerRole": "Chief Information Security Officer",
+      "lastConducted": "2026-05-15",
+      "nextDue": "2026-11-15",
+      "status": "scheduled",
+      "escalationPathHours": 24,
+      "regulatoryRequirement": "SOC 2 Type II / ISO 27001 A.12.6"
+    },
+    {
+      "id": "curriculum_alignment_review",
+      "name": "Pedagogical Standard, Syllabus Accuracy & Question Bank Audit",
+      "frequency": "annual",
+      "maxIntervalDays": 365,
+      "ownerRole": "Chief Curriculum Specialist",
+      "lastConducted": "2026-03-01",
+      "nextDue": "2027-03-01",
+      "status": "scheduled",
+      "escalationPathHours": 48,
+      "regulatoryRequirement": "State Curriculum Alignment & 1EdTech Standards"
+    },
+    {
+      "id": "sla_incident_retrospective",
+      "name": "Service Level Agreement (SLA) & Reliability Monthly Retrospective",
+      "frequency": "monthly",
+      "maxIntervalDays": 30,
+      "ownerRole": "Platform Reliability Lead",
+      "lastConducted": "2026-08-15",
+      "nextDue": "2026-09-15",
+      "status": "scheduled",
+      "escalationPathHours": 12,
+      "regulatoryRequirement": "Institutional SLA Contractual Commitments (99.9% Uptime)"
+    },
+    {
+      "id": "audit_log_cryptographic_verification",
+      "name": "HMAC / Hash-Chain Cryptographic Integrity & Ledger Tamper Verification",
+      "frequency": "weekly",
+      "maxIntervalDays": 7,
+      "ownerRole": "Compliance Engineering Lead",
+      "lastConducted": "2026-09-07",
+      "nextDue": "2026-09-14",
+      "status": "scheduled",
+      "escalationPathHours": 6,
+      "regulatoryRequirement": "Tamper-Evident Immutable Audit Log Standard"
+    },
+    {
+      "id": "institutional_compliance_recertification",
+      "name": "Multi-Jurisdiction Regulatory Matrix & Institutional Recertification",
+      "frequency": "annual",
+      "maxIntervalDays": 365,
+      "ownerRole": "Legal & Compliance Counsel",
+      "lastConducted": "2026-08-01",
+      "nextDue": "2027-08-01",
+      "status": "scheduled",
+      "escalationPathHours": 48,
+      "regulatoryRequirement": "DPDP / FERPA / COPPA Legal Recertification"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+From 8084f0bb15252f1d1a2b96144344e820588d05b8 Mon Sep 17 00:00:00 2001
+From: phase0-fixes <phase0@example.invalid>
+Date: Sun, 11 Oct 2026 14:24:39 +0000
+Subject: [PATCH 4/5] docs(quarantine): move generated pilot/go-no-go documents
+ out of active docs; mark as not evidence
+
+---
+ .../unverified-generated}/GO_NO_GO_DECISION_RECORD.md         | 0
+ .../unverified-generated}/PILOT_EVALUATION_REPORT.md          | 0
+ quarantine/unverified-generated/README.md                     | 4 ++++
+ 3 files changed, 4 insertions(+)
+ rename {docs/phase3 => quarantine/unverified-generated}/GO_NO_GO_DECISION_RECORD.md (100%)
+ rename {docs/phase3 => quarantine/unverified-generated}/PILOT_EVALUATION_REPORT.md (100%)
+ create mode 100644 quarantine/unverified-generated/README.md
+
+diff --git a/docs/phase3/GO_NO_GO_DECISION_RECORD.md b/quarantine/unverified-generated/GO_NO_GO_DECISION_RECORD.md
+similarity index 100%
+rename from docs/phase3/GO_NO_GO_DECISION_RECORD.md
+rename to quarantine/unverified-generated/GO_NO_GO_DECISION_RECORD.md
+diff --git a/docs/phase3/PILOT_EVALUATION_REPORT.md b/quarantine/unverified-generated/PILOT_EVALUATION_REPORT.md
+similarity index 100%
+rename from docs/phase3/PILOT_EVALUATION_REPORT.md
+rename to quarantine/unverified-generated/PILOT_EVALUATION_REPORT.md
+diff --git a/quarantine/unverified-generated/README.md b/quarantine/unverified-generated/README.md
+new file mode 100644
+index 0000000..2a75db1
+--- /dev/null
++++ b/quarantine/unverified-generated/README.md
+@@ -0,0 +1,4 @@
++# QUARANTINED - NOT EVIDENCE
++These documents were machine-generated. They describe a pilot, evaluator, school and results that
++no record in this project corroborates. Do NOT cite, share, or rely on them. Kept only for audit trail.
++Real evidence must come from a real pilot and be traceable to real data (see docs/TRUTH_BASELINE.md).
+-- 
+2.43.0
+

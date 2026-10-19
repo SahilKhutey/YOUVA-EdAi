@@ -1,0 +1,104 @@
+From dc55b26b375a04e22b234070aa8cb898a6415c8a Mon Sep 17 00:00:00 2001
+From: phase4-fixes <phase4@example.invalid>
+Date: Wed, 14 Oct 2026 03:07:03 +0000
+Subject: [PATCH 3/4] feat(consent): parent data-access export for a student
+ (+2 tests)
+
+---
+ backend/src/consent/consent.controller.ts   |  8 ++++++
+ backend/src/consent/consent.service.spec.ts | 23 +++++++++++++++++
+ backend/src/consent/consent.service.ts      | 28 +++++++++++++++++++++
+ 3 files changed, 59 insertions(+)
+
+diff --git a/backend/src/consent/consent.controller.ts b/backend/src/consent/consent.controller.ts
+index 92dcfaf..2556dbb 100644
+--- a/backend/src/consent/consent.controller.ts
++++ b/backend/src/consent/consent.controller.ts
+@@ -26,6 +26,14 @@ export class ConsentController {
+     return this.consent.list(studentId);
+   }
+ 
++  /** Parent's right to see the data: everything stored about the student. */
++  @Get('student/:studentId/export')
++  @Roles(Role.TEACHER, Role.ADMIN)
++  async export(@Req() req: any, @Param('studentId') studentId: string) {
++    await this.scope.assertTeacherStudentScope(req.user.id, studentId);
++    return this.consent.exportStudent(studentId);
++  }
++
+   @Post('student/:studentId/revoke')
+   @Roles(Role.TEACHER, Role.ADMIN)
+   async revoke(@Req() req: any, @Param('studentId') studentId: string) {
+diff --git a/backend/src/consent/consent.service.spec.ts b/backend/src/consent/consent.service.spec.ts
+index 88573df..a1603a4 100644
+--- a/backend/src/consent/consent.service.spec.ts
++++ b/backend/src/consent/consent.service.spec.ts
+@@ -98,3 +98,26 @@ describe('ConsentService.eraseStudent', () => {
+     await expect(svc.eraseStudent('a', 'zzz')).rejects.toBeInstanceOf(NotFoundException);
+   });
+ });
++
++describe('ConsentService.exportStudent', () => {
++  it('returns the student\'s own data, with question text, and no data from other students', async () => {
++    const { prisma } = makeDb({ consents: [{ id: 'c1', studentId: 's1', guardianName: 'R. Kumar', guardianRelation: 'father', formVersion: 'pilot-v1', signedAt: new Date('2026-10-01'), revokedAt: null, erasedAt: null, createdAt: new Date() }] });
++    prisma.practiceSession = { findMany: jest.fn(async ({ where }: any) => [{ startTime: new Date('2026-10-02'), endTime: new Date('2026-10-02'), score: 60, durationSeconds: 200, userId: where.userId, answers: [{ answer: '7', isCorrect: true, question: { content: 'Solve: x + 5 = 12', correctAnswer: '7' } }] }]) };
++    prisma.userTopicMastery = { findMany: jest.fn(async () => [{ topicId: 't1', masteryProbability: 0.28, difficultyState: 0.5 }]) };
++    prisma.userStats = { findUnique: jest.fn(async () => ({ totalXp: 20, currentLevel: 1, currentStreak: 1 })) };
++    prisma.teacherIntervention = { findMany: jest.fn(async () => [{ createdAt: new Date('2026-10-03'), action: 'OVERRIDE', feedback: 'Struggling with negatives' }]) };
++    const out: any = await new ConsentService(prisma).exportStudent('s1');
++    expect(prisma.practiceSession.findMany.mock.calls[0][0].where).toEqual({ userId: 's1' });
++    expect(out.account).toMatchObject({ name: 'Asha', email: 'a@x.in' });
++    expect(out.account).not.toHaveProperty('password');
++    expect(out.sessions[0].answers[0]).toEqual({ question: 'Solve: x + 5 = 12', studentAnswer: '7', correct: true, correctAnswer: '7' });
++    expect(out.teacherNotes[0].note).toBe('Struggling with negatives');
++    expect(out.consentRecords[0]).toMatchObject({ guardianName: 'R. Kumar', formVersion: 'pilot-v1' });
++  });
++  it('refuses non-students and unknown ids', async () => {
++    const { prisma } = makeDb({ users: [{ id: 't1', role: 'TEACHER' }] });
++    const svc = new ConsentService(prisma);
++    await expect(svc.exportStudent('t1')).rejects.toBeInstanceOf(BadRequestException);
++    await expect(svc.exportStudent('nope')).rejects.toBeInstanceOf(NotFoundException);
++  });
++});
+diff --git a/backend/src/consent/consent.service.ts b/backend/src/consent/consent.service.ts
+index 4bf13e7..1b45775 100644
+--- a/backend/src/consent/consent.service.ts
++++ b/backend/src/consent/consent.service.ts
+@@ -47,6 +47,34 @@ export class ConsentService {
+     return this.prisma.consentRecord.findMany({ where: { studentId }, orderBy: { createdAt: 'desc' } });
+   }
+ 
++  /** Everything stored about a student, for a parent's request to see it. */
++  async exportStudent(studentId: string) {
++    const student = await this.prisma.user.findUnique({ where: { id: studentId } });
++    if (!student) throw new NotFoundException('Student not found');
++    if (student.role !== 'STUDENT') throw new BadRequestException('Only student accounts can be exported with this operation.');
++    const sessions = await this.prisma.practiceSession.findMany({
++      where: { userId: studentId },
++      orderBy: { startTime: 'asc' },
++      include: { answers: { include: { question: true } } },
++    });
++    const mastery = await this.prisma.userTopicMastery.findMany({ where: { userId: studentId } });
++    const stats = await this.prisma.userStats.findUnique({ where: { userId: studentId } });
++    const interventions = await this.prisma.teacherIntervention.findMany({ where: { studentId } });
++    const consents = await this.list(studentId);
++    return {
++      exportedAt: new Date().toISOString(),
++      account: { name: student.name, email: student.email, createdAt: student.createdAt },
++      sessions: sessions.map((s) => ({
++        startedAt: s.startTime, finishedAt: s.endTime, scorePercent: s.score, durationSeconds: s.durationSeconds,
++        answers: s.answers.map((a) => ({ question: a.question.content, studentAnswer: a.answer, correct: a.isCorrect, correctAnswer: a.question.correctAnswer })),
++      })),
++      topicProgress: mastery.map((m) => ({ topicId: m.topicId, masteryProbability: m.masteryProbability, targetDifficulty: m.difficultyState })),
++      points: stats ? { totalXp: stats.totalXp, level: stats.currentLevel, streak: stats.currentStreak } : null,
++      teacherNotes: interventions.map((i) => ({ at: i.createdAt, action: i.action, note: i.feedback })),
++      consentRecords: consents.map((c) => ({ guardianName: c.guardianName, relation: c.guardianRelation, formVersion: c.formVersion, signedAt: c.signedAt, revokedAt: c.revokedAt, erasedAt: c.erasedAt })),
++    };
++  }
++
+   async revoke(revokedById: string, studentId: string) {
+     const active = await this.prisma.consentRecord.findMany({ where: { studentId, revokedAt: null } });
+     if (active.length === 0) throw new NotFoundException('No active consent to revoke.');
+-- 
+2.43.0
+

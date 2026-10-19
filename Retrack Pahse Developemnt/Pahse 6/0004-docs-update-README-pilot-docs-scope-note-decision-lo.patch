@@ -1,0 +1,127 @@
+From 99e9a35af459bd11b98967defac246f0b2026a1f Mon Sep 17 00:00:00 2001
+From: phase6-fixes <phase6@example.invalid>
+Date: Thu, 15 Oct 2026 08:51:39 +0000
+Subject: [PATCH 4/4] docs: update README, pilot docs, scope note, decision log
+ (D-007, D-008) and baseline for Phase 6
+
+---
+ MVP_SCOPE.md                  |  1 +
+ README.md                     |  8 +++++---
+ docs/DECISIONS.md             | 10 ++++++++++
+ docs/TRUTH_BASELINE.md        |  9 +++++++--
+ docs/pilot/DATA_HANDLING.md   |  2 +-
+ docs/pilot/SAFETY_PROTOCOL.md |  3 ++-
+ 6 files changed, 26 insertions(+), 7 deletions(-)
+
+diff --git a/MVP_SCOPE.md b/MVP_SCOPE.md
+index 8aa58f4..4c4184a 100644
+--- a/MVP_SCOPE.md
++++ b/MVP_SCOPE.md
+@@ -7,6 +7,7 @@ learning-engine (mastery + difficulty), practice, assessment, learning-loop, tea
+ ## Present in the code, not needed by the pilot path
+ The existing UI also calls forum, scheduling, goals, announcements, credentials and an AI mentor. These are not needed for the pilot (login, topic, quiz, results, teacher view) and have not been reviewed for it. Do not extend them; supervising adults should point students to the practice page only.
+ No frontend code calls the teacher override, consent, or learning-loop endpoints: they have no UI yet.
++The Learn page is built around AI chat, so it does not work while `ENABLE_AI_FEATURES` is off (the default). Keep pilot students on the Practice page.
+ 
+ ## Rule for adding anything
+ Needs a written reason tied to something observed with a real student or teacher, a typecheck, and a passing test.
+diff --git a/README.md b/README.md
+index d6a5eef..0af8ed6 100644
+--- a/README.md
++++ b/README.md
+@@ -11,10 +11,10 @@ An early-stage prototype of an adaptive practice tool for school students, built
+ Run the checks yourself: `cd backend && npx tsc --noEmit && npx jest --testPathIgnorePatterns=e2e`.
+ 
+ ## What it does not do
+-No distress or content detection (a supervising adult is required), no teacher override screen (it is an API call), no consent screen (entered through the API), and no measured learning outcomes. The mastery update is a simple rule, not a full Bayesian model. Several other modules exist in the code (forum, scheduling, credentials, AI mentor, and more) that are **not part of the pilot** and have not been reviewed for it.
++No distress or content detection (a supervising adult is required), no login brute-force protection or rate limiting, no teacher override screen (it is an API call), no consent screen (entered through the API), and no measured learning outcomes. The mastery update is a simple rule, not a full Bayesian model. Several other modules exist in the code (forum, scheduling, credentials, AI mentor, and more) that are **not part of the pilot** and have not been reviewed for it.
+ 
+ ## Stack
+-Backend: NestJS 11, Prisma 5 with PostgreSQL. Frontend: Next.js 16, React 19, Tailwind 4. Quiz questions never come from an AI unless `QUESTION_SOURCE=AI`. Other modules (AI mentor, content generation) call Google Gemini when used; they are outside the pilot, so do not use them with pilot students.
++Backend: NestJS 11, Prisma 5 with PostgreSQL. Frontend: Next.js 16, React 19, Tailwind 4. Quiz questions never come from an AI unless `QUESTION_SOURCE=AI`. The AI mentor and learning-chat endpoints, where a student's typed or spoken text reaches Google Gemini, are **switched off by default** (`ENABLE_AI_FEATURES`). Other modules (content generation, revision, assessment) can also call Gemini and are outside the pilot.
+ 
+ ## Run locally
+ ```bash
+@@ -38,7 +38,9 @@ NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
+ | `JWT_SECRET` | Required. Long random string used to sign login tokens |
+ | `QUESTION_SOURCE` | `BANK` (default): only teacher-reviewed items. `AI`: generate at runtime (not for pilots) |
+ | `REQUIRE_CONSENT` | Default on. Set `false` only on a local development database |
+-| `GEMINI_API_KEY` | Only needed when `QUESTION_SOURCE=AI` |
++| `ENABLE_AI_FEATURES` | Default off. `true` lets student free text and voice reach the AI mentor. Keep off for pilots |
++| `NEXT_PUBLIC_ENABLE_AI_MENTOR` | Frontend. Default off. `true` shows the AI mentor sidebar on practice and learn pages |
++| `GEMINI_API_KEY` | Only needed for AI features or `QUESTION_SOURCE=AI` |
+ 
+ ## Add questions
+ Write items in the format of `backend/content/item-bank/one-step-equations.SAMPLE.json` (the sample is an unreviewed draft), then `npm run import:items -- <file>`. The importer refuses items that are not marked reviewed by a named person.
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+index b1acb8a..521c408 100644
+--- a/docs/DECISIONS.md
++++ b/docs/DECISIONS.md
+@@ -28,3 +28,13 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
+ - Context: earlier generated documents described a pilot and an evaluator that no record supports.
+ - Decision: CI runs `scripts/check-claims.ts`; sign-off, review and pilot claims require `[evidence: <existing file>]` on the same line.
+ - Evidence: `backend/src/governance/claims-check.ts` and tests.
++
++## D-007: Student-facing AI chat is off by default, enforced on the server
++- Context: the practice page embedded an AI mentor that sends typed and spoken text to Google Gemini (and, in Chrome, browser speech recognition typically sends audio to a cloud service). This contradicted the pilot premise of reviewed questions with no free text.
++- Decision: `ENABLE_AI_FEATURES` (backend, default off) guards the AI mentor, learning chat/start, and `/ai/generate`; `NEXT_PUBLIC_ENABLE_AI_MENTOR` (frontend, default off) hides the sidebar. The server check matters because a hidden button does not stop a direct API call.
++- Evidence: `backend/src/common/guards/ai-features.guard.ts` and its tests; `frontend/lib/practice-errors.test.mjs`.
++
++## D-008: Endpoints that were open to the internet now require login
++- Context: `POST /ai/generate` forwarded any prompt to a paid AI API with no login; `POST /edge-sync/flush` let anyone write learning and cognitive-state rows for any user id; `GET /edge-sync/curriculum/:topicId` returned every question with its correct answer.
++- Decision: login required on both controllers; sync accepts only the caller's own user id; the answer-bearing curriculum pack is teacher/admin only.
++- Evidence: `backend/src/edge-sync/edge-sync.spec.ts`, `backend/src/common/guards/ai-features.guard.spec.ts`. Still open: no rate limiting or login brute-force protection anywhere.
+diff --git a/docs/TRUTH_BASELINE.md b/docs/TRUTH_BASELINE.md
+index bd0098d..848506e 100644
+--- a/docs/TRUTH_BASELINE.md
++++ b/docs/TRUTH_BASELINE.md
+@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ |---|---|
+ | Files tracked | 381 (was 1,425 on main) |
+ | Backend TypeScript errors | 0 (was 29 at base) |
+-| Unit test suites | 56 passed of 56 (excluding prisma.service.spec, which needs a DB engine) |
+-| Unit tests | 142 passed, 0 failed |
++| Unit test suites | 58 passed of 58 (excluding prisma.service.spec, which needs a DB engine) |
++| Unit tests | 149 passed, 0 failed |
+ | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
+ | Schema models / migrations | 53 / 4 |
+ 
+@@ -47,3 +47,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ - Frontend: `tsc --noEmit` reports 0 errors. A production build could not be completed in the sandbox (Google Fonts download blocked); the CI workflow will run it.
+ - Route usage (static grep of `api.*` calls): the existing UI calls forum, scheduling, goals, announcements, credentials, AI mentor and more; it does not call the teacher override, consent, or learning-loop endpoints. Notifications and feedback use `fetch` and are not counted by that grep.
+ - NOT verified: the CI workflow has not run on GitHub; real Postgres; real pilot data.
++
++## Phase 6 additions (measured)
++- Found by reading the code: the practice page embedded a voice/text AI sidebar; `/ai/generate` required no login; `/edge-sync/*` required no login, accepted writes for any user id, and returned the correct answers for a whole topic. All fixed with tests (7 tests).
++- Frontend: practice page now shows plain-language errors (consent missing, no questions, already submitted, no connection) instead of a blank page; 4 Node tests for the message helper and AI switch (`npm test` in `frontend/`); `tsc` 0 errors.
++- Still open: migrations vs PostgreSQL schema (Prisma's schema engine could not be downloaded in the sandbox, so no baseline was generated); no rate limiting or login brute-force protection; production frontend build not completed in the sandbox.
+diff --git a/docs/pilot/DATA_HANDLING.md b/docs/pilot/DATA_HANDLING.md
+index c50e25d..6dfa757 100644
+--- a/docs/pilot/DATA_HANDLING.md
++++ b/docs/pilot/DATA_HANDLING.md
+@@ -2,7 +2,7 @@
+ *Not legal advice. Confirm with a lawyer who knows Indian data-protection law before the pilot.*
+ 
+ ## What the system stores for a pilot student
+-Account (name, email, hashed password); practice sessions and answers; per-topic mastery and target difficulty; points/streak/badges; notifications; teacher override notes; the consent record. Everything is in the Postgres database. In the practice flow with `QUESTION_SOURCE=BANK`, no student data is sent to an AI provider. Other modules (AI mentor, content generation) call Google Gemini when used and could send what a student types, so do not use them with pilot students.
++Account (name, email, hashed password); practice sessions and answers; per-topic mastery and target difficulty; points/streak/badges; notifications; teacher override notes; the consent record. Everything is in the Postgres database. In the practice flow with `QUESTION_SOURCE=BANK`, no student data is sent to an AI provider. The AI mentor and learning-chat endpoints are switched off by default (`ENABLE_AI_FEATURES`); if someone turns them on, what a student types or says goes to Google Gemini, and in Chrome the browser's speech recognition typically sends audio to a cloud service run by the browser vendor. Do not enable them for a pilot. Content generation, revision and assessment modules can also call Gemini with topic content; they are not part of the pilot.
+ 
+ ## What the frontend loads from third parties
+ No analytics or tracking scripts were found in the frontend code. It embeds YouTube videos (use `youtube-nocookie.com` or remove embeds for the pilot) and sample audio from soundhelix.com. The login token is kept in the browser's localStorage.
+diff --git a/docs/pilot/SAFETY_PROTOCOL.md b/docs/pilot/SAFETY_PROTOCOL.md
+index af36e36..42f66e8 100644
+--- a/docs/pilot/SAFETY_PROTOCOL.md
++++ b/docs/pilot/SAFETY_PROTOCOL.md
+@@ -6,7 +6,8 @@
+ 2. Supervising adult named for this session: ______________. A backup contact is reachable: ______________.
+ 3. Only reviewed questions are in use (`QUESTION_SOURCE=BANK`). The AI question mode is OFF for the pilot.
+ 4. The supervising adult has read this page.
+-5. Students use the practice page only. The AI mentor, forum and other sections are not part of the pilot; do not open them with students.
++5. Students use the practice page only. The forum and other sections are not part of the pilot; do not open them with students.
++6. The AI mentor is off: confirm `ENABLE_AI_FEATURES` is not `true` on the server and that no AI sidebar appears on the practice page. If a sidebar appears, stop and fix the setting before the session.
+ 
+ ## During a session
+ - The supervising adult is in the room (or on the call with camera on) the whole time.
+-- 
+2.43.0
+

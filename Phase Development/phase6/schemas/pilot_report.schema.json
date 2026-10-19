@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JuniorPilotReportSchema",
+  "type": "object",
+  "required": [
+    "reportId",
+    "evaluationDate",
+    "pilotId",
+    "tier",
+    "verdict",
+    "criteriaResults",
+    "safetySummary",
+    "signoffs"
+  ],
+  "properties": {
+    "reportId": { "type": "string" },
+    "evaluationDate": { "type": "string" },
+    "pilotId": { "type": "string" },
+    "tier": { "type": "string", "enum": ["KINDERGARTEN_JUNIOR"] },
+    "verdict": { "type": "string", "enum": ["GO_TO_PHASE_7", "NO_GO_REMEDIATE"] },
+    "criteriaResults": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["criterionId", "name", "target", "actual", "status"],
+        "properties": {
+          "criterionId": { "type": "string" },
+          "name": { "type": "string" },
+          "target": { "type": "string" },
+          "actual": { "type": "string" },
+          "status": { "type": "string", "enum": ["PASSED", "FAILED"] }
+        }
+      }
+    },
+    "safetySummary": {
+      "type": "object",
+      "required": ["distressTriggersDetected", "screenTimeEnforcementRate", "parentCopilotActiveRate"],
+      "properties": {
+        "distressTriggersDetected": { "type": "integer", "maximum": 0 },
+        "screenTimeEnforcementRate": { "type": "number", "minimum": 1.0 },
+        "parentCopilotActiveRate": { "type": "number", "minimum": 1.0 }
+      }
+    },
+    "signoffs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["role", "name", "organization", "decision", "date"],
+        "properties": {
+          "role": { "type": "string" },
+          "name": { "type": "string" },
+          "organization": { "type": "string" },
+          "decision": { "type": "string", "enum": ["APPROVED", "REJECTED"] },
+          "date": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

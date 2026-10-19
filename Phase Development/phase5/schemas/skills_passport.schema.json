@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "W3CVerifiableCredentialSchema",
+  "type": "object",
+  "required": [
+    "@context",
+    "id",
+    "type",
+    "issuer",
+    "validFrom",
+    "credentialSubject",
+    "teacherAuthorization",
+    "proof"
+  ],
+  "properties": {
+    "@context": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 2
+    },
+    "id": { "type": "string" },
+    "type": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 2
+    },
+    "issuer": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" }
+      }
+    },
+    "validFrom": { "type": "string" },
+    "credentialSubject": {
+      "type": "object",
+      "required": ["id", "type", "achievement", "verificationTokenHash", "evidence"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "achievement": {
+          "type": "object",
+          "required": ["id", "name", "description", "competencyCode"],
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "competencyCode": { "type": "string" },
+            "criteria": { "type": "string" }
+          }
+        },
+        "verificationTokenHash": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{64}$"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["type", "competency", "metrics"],
+            "properties": {
+              "type": { "type": "string" },
+              "competency": { "type": "string" },
+              "metrics": {
+                "type": "object",
+                "required": ["questionsAnswered", "timeOnTaskMinutes", "independentAccuracy", "finalBktMastery"],
+                "properties": {
+                  "questionsAnswered": { "type": "integer", "minimum": 1 },
+                  "timeOnTaskMinutes": { "type": "number", "minimum": 0 },
+                  "independentAccuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+                  "finalBktMastery": { "type": "number", "minimum": 0, "maximum": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "teacherAuthorization": {
+      "type": "object",
+      "required": ["teacherId", "teacherRole", "decision", "authorizedAt", "signature"],
+      "properties": {
+        "teacherId": { "type": "string" },
+        "teacherRole": { "type": "string" },
+        "decision": { "type": "string", "enum": ["APPROVED"] },
+        "authorizedAt": { "type": "string" },
+        "signature": { "type": "string" }
+      }
+    },
+    "proof": {
+      "type": "object",
+      "required": ["type", "created", "verificationMethod", "proofPurpose", "proofValue"],
+      "properties": {
+        "type": { "type": "string" },
+        "created": { "type": "string" },
+        "verificationMethod": { "type": "string" },
+        "proofPurpose": { "type": "string" },
+        "proofValue": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}
