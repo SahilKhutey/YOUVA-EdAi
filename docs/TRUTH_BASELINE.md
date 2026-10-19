@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 |---|---|
 | Files tracked | 381 (was 1,425 on main) |
 | Backend TypeScript errors | 0 (was 29 at base) |
-| Unit test suites | 66 passed of 66 (excluding prisma.service.spec, which needs a DB engine) |
-| Unit tests | 191 passed, 0 failed |
+| Unit test suites | 70 passed of 70 (excluding prisma.service.spec, which needs a DB engine) |
+| Unit tests | 210 passed, 0 failed |
 | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
 | Schema models / migrations | 53 / 4 |
 
@@ -64,3 +64,11 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 - Two mutation checks (removing the gateway membership check; removing the publish owner check) each made a test fail.
 - Also fixed: the `learning-loop` audit-trail route let any teacher read any student's trail; teachers now need the student in their scope (1 test).
 - Still open: notifications, scheduler and learning-session id routes were read and are scoped to the caller, but forum and the other login-only routes were not each read; AI-graded free text can be manipulated by the student's wording; global validation does not strip unknown fields; no security-headers middleware.
+
+## Phase 8 additions (measured)
+- `npm audit` (production dependencies): backend 26 to 2 (moderate), frontend 30 to 10 (none critical) after non-breaking fixes, `bcrypt` 6 and Next.js 16.4.2. Remaining frontend highs come from the PWA plugin's build-time tooling.
+- Secrets scan of the tree and branch history: nothing found (see D-022).
+- Render blueprint: fixed an API URL / route prefix mismatch that would have 404'd every call from a deployed frontend, removed `--accept-data-loss`, added pilot-safe settings; guarded by a test (5 tests).
+- Security headers, CORS fallback and API prefix tested over HTTP (7 tests); teacher analytics and learning-loop scoping (7 tests).
+- Not verified: the Next.js 16.4.2 production build (blocked in the sandbox); `prisma db push` against a real database; a deployed Render environment.
+- Still open: migration baseline for PostgreSQL; forum and other login-only routes not each read; account lockout; token kept in `localStorage`; global validation does not strip unknown fields.

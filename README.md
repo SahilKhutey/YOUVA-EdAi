@@ -6,7 +6,7 @@ An early-stage prototype of an adaptive practice tool for school students, built
 - A student logs in, picks a topic, and takes a short multiple-choice quiz drawn from a **teacher-reviewed question bank**. After each answer the system updates a simple mastery estimate and a target difficulty, and the next quiz favours unseen questions near that difficulty.
 - A teacher can see student results and can set a student's target difficulty for a topic, with a recorded reason.
 - A student cannot start a quiz without an active parent/guardian consent record. A guardian can withdraw consent, and an admin can erase the student's practice data.
-- Pilot report numbers can be generated from the database. Logins are rate limited (20 per minute per address).
+- Pilot report numbers can be generated from the database. Logins are rate limited (20 per minute per address), and responses carry standard security headers.
 
 Run the checks yourself: `cd backend && npx tsc --noEmit && npx jest --testPathIgnorePatterns=e2e`.
 
@@ -45,7 +45,9 @@ NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
 | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (for example your frontend's URL). Default: `http://localhost:3000` only |
 | `TRUST_PROXY_HOPS` | Number of reverse proxies in front of the server (0 to 3). Set `1` on Render or behind nginx, or rate limiting will treat everyone as one user |
 | `ENABLE_SHARED_BOARD` | Default off. The shared whiteboard uses one room for every user, so it stays off for pilots; when on, a login token is still required |
-| `ENABLE_SWAGGER` | API docs are served at `/api` outside production; set `true` to serve them in production |
+| `API_PREFIX` | Optional URL prefix for every route, for example `api`. `render.yaml` sets `api` because the deployed frontend calls `https://<backend>/api/...`. Locally leave unset and set `NEXT_PUBLIC_API_URL` without `/api` |
+| `FRONTEND_URL` | Used as the allowed browser origin when `CORS_ORIGINS` is not set |
+| `ENABLE_SWAGGER` | API docs are served at `/docs` outside production; set `true` to serve them in production |
 | `STRIPE_WEBHOOK_SECRET` | Billing webhook is disabled unless this is set |
 
 ## Add questions

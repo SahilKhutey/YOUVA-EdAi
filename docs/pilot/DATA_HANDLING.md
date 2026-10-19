@@ -30,3 +30,8 @@ Delete all pilot data at the end of the pilot ([END DATE]) unless parents agree 
 
 ## Backups
 If backups exist, erased data persists there until the backup rotates out. State the backup retention period to parents, or turn backups off for the pilot database.
+
+## Hosting limits to plan around (Render free tier; verify current terms at render.com/docs/free)
+- A free Render Postgres database expires 30 days after creation (with a 14-day grace period to upgrade, after which the data is deleted) and has no backups. A pilot longer than a few weeks needs a paid database, or the report numbers and data must be exported before the expiry date.
+- A free web service spins down after about 15 minutes without traffic and takes roughly a minute to wake. Open the app a few minutes before a supervised session, or use a plan that stays on.
+- `render.yaml` deploys the schema with `prisma db push` and no longer passes `--accept-data-loss`, so a schema change that would delete data fails the deploy. Once real student data exists, change schema through migrations.
