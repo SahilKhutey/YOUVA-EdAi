@@ -1,0 +1,121 @@
+From 89f613f42104f2e81fc607e932c86e6ce47574b3 Mon Sep 17 00:00:00 2001
+From: phase8-fixes <phase8@example.invalid>
+Date: Mon, 19 Oct 2026 10:06:03 +0000
+Subject: [PATCH 5/5] docs: README settings, hosting limits, decisions D-018 to
+ D-022, baseline for Phase 8
+
+---
+ README.md                   |  6 ++++--
+ backend/.env.example        |  2 ++
+ docs/DECISIONS.md           | 22 ++++++++++++++++++++++
+ docs/TRUTH_BASELINE.md      | 12 ++++++++++--
+ docs/pilot/DATA_HANDLING.md |  5 +++++
+ 5 files changed, 43 insertions(+), 4 deletions(-)
+
+diff --git a/README.md b/README.md
+index 5d5030a..1c6ddc8 100644
+--- a/README.md
++++ b/README.md
+@@ -6,7 +6,7 @@ An early-stage prototype of an adaptive practice tool for school students, built
+ - A student logs in, picks a topic, and takes a short multiple-choice quiz drawn from a **teacher-reviewed question bank**. After each answer the system updates a simple mastery estimate and a target difficulty, and the next quiz favours unseen questions near that difficulty.
+ - A teacher can see student results and can set a student's target difficulty for a topic, with a recorded reason.
+ - A student cannot start a quiz without an active parent/guardian consent record. A guardian can withdraw consent, and an admin can erase the student's practice data.
+-- Pilot report numbers can be generated from the database. Logins are rate limited (20 per minute per address).
++- Pilot report numbers can be generated from the database. Logins are rate limited (20 per minute per address), and responses carry standard security headers.
+ 
+ Run the checks yourself: `cd backend && npx tsc --noEmit && npx jest --testPathIgnorePatterns=e2e`.
+ 
+@@ -45,7 +45,9 @@ NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
+ | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (for example your frontend's URL). Default: `http://localhost:3000` only |
+ | `TRUST_PROXY_HOPS` | Number of reverse proxies in front of the server (0 to 3). Set `1` on Render or behind nginx, or rate limiting will treat everyone as one user |
+ | `ENABLE_SHARED_BOARD` | Default off. The shared whiteboard uses one room for every user, so it stays off for pilots; when on, a login token is still required |
+-| `ENABLE_SWAGGER` | API docs are served at `/api` outside production; set `true` to serve them in production |
++| `API_PREFIX` | Optional URL prefix for every route, for example `api`. `render.yaml` sets `api` because the deployed frontend calls `https://<backend>/api/...`. Locally leave unset and set `NEXT_PUBLIC_API_URL` without `/api` |
++| `FRONTEND_URL` | Used as the allowed browser origin when `CORS_ORIGINS` is not set |
++| `ENABLE_SWAGGER` | API docs are served at `/docs` outside production; set `true` to serve them in production |
+ | `STRIPE_WEBHOOK_SECRET` | Billing webhook is disabled unless this is set |
+ 
+ ## Add questions
+diff --git a/backend/.env.example b/backend/.env.example
+index 8f90959..ab2300d 100644
+--- a/backend/.env.example
++++ b/backend/.env.example
+@@ -11,3 +11,5 @@ TRUST_PROXY_HOPS="0" # set 1 behind a reverse proxy (Render, nginx) so rate limi
+ # ENABLE_SWAGGER="true" # API docs are off in production unless set
+ # STRIPE_WEBHOOK_SECRET="" # billing webhook is disabled unless set
+ ENABLE_SHARED_BOARD="false" # the shared whiteboard puts all users in one room; keep off for pilots
++# API_PREFIX="api" # only if the frontend calls /api/...; render.yaml sets it
++# FRONTEND_URL="" # fallback for CORS_ORIGINS
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+index 1fabe41..377b9a4 100644
+--- a/docs/DECISIONS.md
++++ b/docs/DECISIONS.md
+@@ -80,3 +80,25 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
+ - Context: the route blocked other students but let any teacher read any student's trail.
+ - Decision: teachers need the student in their class or assignment (admins unchanged).
+ - Evidence: `backend/src/learning-loop/learning-loop.controller.spec.ts`.
++
++## D-018: Dependency security fixes
++- Context: `npm audit` on production dependencies reported 26 vulnerabilities in the backend (2 critical, 18 high) and 30 in the frontend (including a critical in Next.js), at the time of the check (the advisory database changes daily).
++- Decision: apply non-breaking fixes in both; upgrade `bcrypt` to 6 (clears the install-time tooling chain; hash format unchanged); upgrade Next.js 16.1.6 to 16.4.2 (same major) as its own commit so it can be dropped. Result: backend 2 moderate, frontend 10 (0 critical; 6 high from the PWA plugin's build tooling, where the suggested fix is a downgrade because 10.2.9 is already the latest).
++- Evidence: backend type check and all tests pass after the upgrades and hashing round-trips; frontend type check passes. The frontend production build could not be completed in the sandbox (Google Fonts blocked), so the Next.js upgrade needs a real build before you rely on it.
++
++## D-019: Security headers, API prefix and origin fallback live in one tested function
++- Decision: `configureApp` (used by the real server and by tests) sets helmet headers, CORS from `CORS_ORIGINS` or `FRONTEND_URL`, validation, trust-proxy and an optional `API_PREFIX`; invalid settings stop startup. API docs moved to `/docs`.
++- Evidence: `backend/src/security/configure-app.spec.ts` (mutation-checked: removing the headers, and removing the prefix, each failed a test).
++
++## D-020: The deployment blueprint matches the code and keeps pilot settings
++- Context: `render.yaml` set the frontend API URL to end in `/api` while the backend served routes at the root, so every call from a deployed frontend would have returned 404; it also deployed with `--accept-data-loss`, lacked the pilot-safe settings, and set `FRONTEND_URL` while the CORS code read another name.
++- Decision: `API_PREFIX=api` to match the frontend; no `--accept-data-loss`; pilot-safe settings added; a test guards these.
++- Evidence: `backend/src/security/render-config.spec.ts` (mutation-checked).
++
++## D-021: Teacher views are limited to the teacher's own students
++- Context: the teacher analytics student list, cohort overview, student detail and CSV export returned every student in the system to any teacher; teachers could also read any student's learning-loop context and gate status, and resolve any student's safety escalation.
++- Decision: use the existing scope check (class, assignment, session or worksheet link; admins see all). A teacher with no students sees an empty list, so students must be enrolled in a class (Phase 3 Step 3.5).
++- Evidence: `backend/src/teacher-analytics/scope.spec.ts`, `backend/src/learning-loop/scope.spec.ts` (mutation-checked on the student detail check).
++
++## D-022: Secrets scan
++- Result: no secret-like strings in the current tree or in the history of this branch beyond regex fixtures in a test; no `.env` file was ever committed (only `.env.example`). Scan patterns cover cloud, payment, chat and git-hosting tokens, private keys and connection strings with passwords. A scan cannot prove absence: still rotate any key that has ever been pasted anywhere else.
+diff --git a/docs/TRUTH_BASELINE.md b/docs/TRUTH_BASELINE.md
+index 562e739..7c68f27 100644
+--- a/docs/TRUTH_BASELINE.md
++++ b/docs/TRUTH_BASELINE.md
+@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ |---|---|
+ | Files tracked | 381 (was 1,425 on main) |
+ | Backend TypeScript errors | 0 (was 29 at base) |
+-| Unit test suites | 66 passed of 66 (excluding prisma.service.spec, which needs a DB engine) |
+-| Unit tests | 191 passed, 0 failed |
++| Unit test suites | 70 passed of 70 (excluding prisma.service.spec, which needs a DB engine) |
++| Unit tests | 210 passed, 0 failed |
+ | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
+ | Schema models / migrations | 53 / 4 |
+ 
+@@ -64,3 +64,11 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ - Two mutation checks (removing the gateway membership check; removing the publish owner check) each made a test fail.
+ - Also fixed: the `learning-loop` audit-trail route let any teacher read any student's trail; teachers now need the student in their scope (1 test).
+ - Still open: notifications, scheduler and learning-session id routes were read and are scoped to the caller, but forum and the other login-only routes were not each read; AI-graded free text can be manipulated by the student's wording; global validation does not strip unknown fields; no security-headers middleware.
++
++## Phase 8 additions (measured)
++- `npm audit` (production dependencies): backend 26 to 2 (moderate), frontend 30 to 10 (none critical) after non-breaking fixes, `bcrypt` 6 and Next.js 16.4.2. Remaining frontend highs come from the PWA plugin's build-time tooling.
++- Secrets scan of the tree and branch history: nothing found (see D-022).
++- Render blueprint: fixed an API URL / route prefix mismatch that would have 404'd every call from a deployed frontend, removed `--accept-data-loss`, added pilot-safe settings; guarded by a test (5 tests).
++- Security headers, CORS fallback and API prefix tested over HTTP (7 tests); teacher analytics and learning-loop scoping (7 tests).
++- Not verified: the Next.js 16.4.2 production build (blocked in the sandbox); `prisma db push` against a real database; a deployed Render environment.
++- Still open: migration baseline for PostgreSQL; forum and other login-only routes not each read; account lockout; token kept in `localStorage`; global validation does not strip unknown fields.
+diff --git a/docs/pilot/DATA_HANDLING.md b/docs/pilot/DATA_HANDLING.md
+index 6dfa757..cb4663c 100644
+--- a/docs/pilot/DATA_HANDLING.md
++++ b/docs/pilot/DATA_HANDLING.md
+@@ -30,3 +30,8 @@ Delete all pilot data at the end of the pilot ([END DATE]) unless parents agree
+ 
+ ## Backups
+ If backups exist, erased data persists there until the backup rotates out. State the backup retention period to parents, or turn backups off for the pilot database.
++
++## Hosting limits to plan around (Render free tier; verify current terms at render.com/docs/free)
++- A free Render Postgres database expires 30 days after creation (with a 14-day grace period to upgrade, after which the data is deleted) and has no backups. A pilot longer than a few weeks needs a paid database, or the report numbers and data must be exported before the expiry date.
++- A free web service spins down after about 15 minutes without traffic and takes roughly a minute to wake. Open the app a few minutes before a supervised session, or use a plan that stays on.
++- `render.yaml` deploys the schema with `prisma db push` and no longer passes `--accept-data-loss`, so a schema change that would delete data fails the deploy. Once real student data exists, change schema through migrations.
+-- 
+2.43.0
+

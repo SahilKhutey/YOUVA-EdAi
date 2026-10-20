@@ -1,0 +1,329 @@
+From f9e63fa989950b59b653f2107cb7f748618934d1 Mon Sep 17 00:00:00 2001
+From: phase8-fixes <phase8@example.invalid>
+Date: Mon, 19 Oct 2026 10:06:02 +0000
+Subject: [PATCH 4/5] fix(security): teacher analytics, learning-loop
+ context/gate and escalation resolution limited to the teacher's own students
+ (+7 tests)
+
+---
+ .../escalation-state-machine.service.ts       |  7 ++
+ .../learning-loop/learning-loop.controller.ts | 12 +++-
+ backend/src/learning-loop/scope.spec.ts       | 40 +++++++++++
+ backend/src/teacher-analytics/scope.spec.ts   | 68 +++++++++++++++++++
+ .../teacher-analytics.controller.ts           | 22 +++---
+ .../teacher-analytics.module.ts               |  3 +-
+ .../teacher-analytics.service.ts              | 15 ++--
+ 7 files changed, 149 insertions(+), 18 deletions(-)
+ create mode 100644 backend/src/learning-loop/scope.spec.ts
+ create mode 100644 backend/src/teacher-analytics/scope.spec.ts
+
+diff --git a/backend/src/learning-loop/escalation/escalation-state-machine.service.ts b/backend/src/learning-loop/escalation/escalation-state-machine.service.ts
+index 72ea9fe..8d4dece 100644
+--- a/backend/src/learning-loop/escalation/escalation-state-machine.service.ts
++++ b/backend/src/learning-loop/escalation/escalation-state-machine.service.ts
+@@ -54,6 +54,13 @@ export class EscalationStateMachineService {
+    * Transitions an escalation event's state.
+    * STRICT POLICY: AI or STUDENT actors can NEVER resolve an escalation!
+    */
++  /** The student an escalation belongs to (used to check a teacher's scope before they act on it). */
++  async getEscalationStudentId(escalationId: string): Promise<string> {
++    const escalation = await this.prisma.escalationEvent.findUnique({ where: { id: escalationId } });
++    if (!escalation) throw new NotFoundException(`Escalation with ID ${escalationId} not found.`);
++    return escalation.userId;
++  }
++
+   async transitionState(
+     escalationId: string,
+     targetStatus: EscalationStatus,
+diff --git a/backend/src/learning-loop/learning-loop.controller.ts b/backend/src/learning-loop/learning-loop.controller.ts
+index 0ef73a4..7cb0062 100644
+--- a/backend/src/learning-loop/learning-loop.controller.ts
++++ b/backend/src/learning-loop/learning-loop.controller.ts
+@@ -42,9 +42,9 @@ export class LearningLoopController {
+   @Post('context')
+   @HttpCode(HttpStatus.OK)
+   async getContext(@Req() req: any, @Body() body: { topicId: string; studentId?: string }) {
+-    const studentId = body.studentId && (req.user.role === Role.TEACHER || req.user.role === Role.ADMIN)
+-      ? body.studentId
+-      : req.user.id;
++    const staff = req.user.role === Role.TEACHER || req.user.role === Role.ADMIN;
++    const studentId = body.studentId && staff ? body.studentId : req.user.id;
++    if (studentId !== req.user.id) await this.scopeAuth.assertTeacherStudentScope(req.user.id, studentId);
+ 
+     return this.learningLoopService.getContext(studentId, body.topicId);
+   }
+@@ -81,6 +81,9 @@ export class LearningLoopController {
+     if (req.user.role === Role.STUDENT && req.user.id !== studentId) {
+       throw new ForbiddenException('Access denied: Cannot query policy gate for another student.');
+     }
++    if (req.user.role === Role.TEACHER) {
++      await this.scopeAuth.assertTeacherStudentScope(req.user.id, studentId);
++    }
+ 
+     const topicId = body?.topicId || 'default-topic';
+     return this.learningLoopService.getGateStatus(studentId, topicId);
+@@ -116,6 +119,9 @@ export class LearningLoopController {
+     @Param('id') escalationId: string,
+     @Body() dto: ResolveEscalationDto,
+   ) {
++    // A teacher can resolve an escalation only for a student in their own scope.
++    const studentId = await this.escalationStateMachine.getEscalationStudentId(escalationId);
++    await this.scopeAuth.assertTeacherStudentScope(req.user.id, studentId);
+     return this.escalationStateMachine.transitionState(
+       escalationId,
+       dto.status,
+diff --git a/backend/src/learning-loop/scope.spec.ts b/backend/src/learning-loop/scope.spec.ts
+new file mode 100644
+index 0000000..583c30b
+--- /dev/null
++++ b/backend/src/learning-loop/scope.spec.ts
+@@ -0,0 +1,40 @@
++import { ForbiddenException } from '@nestjs/common';
++import { LearningLoopController } from './learning-loop.controller';
++
++describe('learning loop teacher actions are limited to the teacher\'s own students', () => {
++  function setup() {
++    const loop: any = { getContext: jest.fn(async () => ({})), getGateStatus: jest.fn(async () => ({})) };
++    const machine: any = { getEscalationStudentId: jest.fn(async () => 's-other'), transitionState: jest.fn(async () => ({})) };
++    const scope: any = { assertTeacherStudentScope: jest.fn(async (_t: string, s: string) => { if (s === 's-other') throw new ForbiddenException(); return true; }) };
++    const ctrl = new LearningLoopController(loop, {} as any, machine, {} as any, scope);
++    return { ctrl, loop, machine, scope };
++  }
++  const teacher = { user: { id: 't1', role: 'TEACHER' } };
++  const student = { user: { id: 's1', role: 'STUDENT' } };
++
++  it('context: a student always gets their own; a teacher naming a student needs scope', async () => {
++    const { ctrl, loop, scope } = setup();
++    await ctrl.getContext(student, { topicId: 'x', studentId: 'someone-else' } as any);
++    expect(loop.getContext).toHaveBeenCalledWith('s1', 'x');
++    expect(scope.assertTeacherStudentScope).not.toHaveBeenCalled();
++    await ctrl.getContext(teacher, { topicId: 'x', studentId: 's1' } as any);
++    expect(scope.assertTeacherStudentScope).toHaveBeenCalledWith('t1', 's1');
++    await expect(ctrl.getContext(teacher, { topicId: 'x', studentId: 's-other' } as any)).rejects.toBeInstanceOf(ForbiddenException);
++  });
++
++  it('gate: a teacher needs the student in scope', async () => {
++    const { ctrl, loop } = setup();
++    await ctrl.getGateStatus(teacher, 's1', { topicId: 't' });
++    await expect(ctrl.getGateStatus(teacher, 's-other', { topicId: 't' })).rejects.toBeInstanceOf(ForbiddenException);
++    expect(loop.getGateStatus).toHaveBeenCalledTimes(1);
++  });
++
++  it('resolving an escalation: a teacher cannot resolve one for a student outside their scope', async () => {
++    const { ctrl, machine } = setup();
++    await expect(ctrl.resolveEscalation(teacher, 'esc1', { status: 'RESOLVED', resolutionNotes: 'done' } as any)).rejects.toBeInstanceOf(ForbiddenException);
++    expect(machine.transitionState).not.toHaveBeenCalled();
++    machine.getEscalationStudentId.mockResolvedValueOnce('s1');
++    await ctrl.resolveEscalation(teacher, 'esc1', { status: 'RESOLVED', resolutionNotes: 'done' } as any);
++    expect(machine.transitionState).toHaveBeenCalledTimes(1);
++  });
++});
+diff --git a/backend/src/teacher-analytics/scope.spec.ts b/backend/src/teacher-analytics/scope.spec.ts
+new file mode 100644
+index 0000000..8dd1171
+--- /dev/null
++++ b/backend/src/teacher-analytics/scope.spec.ts
+@@ -0,0 +1,68 @@
++import { ForbiddenException } from '@nestjs/common';
++import { TeacherAnalyticsController } from './teacher-analytics.controller';
++import { TeacherAnalyticsService } from './teacher-analytics.service';
++
++const req = (id = 't1', role = 'TEACHER') => ({ user: { id, userId: id, role } });
++
++describe('teacher analytics are limited to the teacher\'s own students', () => {
++  function setup(scoped: string[] = ['s1', 's2']) {
++    const service: any = {
++      getCohortOverview: jest.fn(async () => ({})), getAllStudents: jest.fn(async () => []),
++      getStudentDetail: jest.fn(async () => ({})), exportStudentsCsv: jest.fn(async () => 'a,b'),
++    };
++    const scope: any = {
++      getScopedStudentIds: jest.fn(async () => scoped),
++      assertTeacherStudentScope: jest.fn(async (_t: string, s: string) => { if (!scoped.includes(s)) throw new ForbiddenException(); return true; }),
++    };
++    return { service, scope, ctrl: new TeacherAnalyticsController(service, scope) };
++  }
++
++  it('passes only the scoped student ids to the cohort overview, the list and the CSV export', async () => {
++    const { ctrl, service, scope } = setup(['s1', 's2']);
++    await ctrl.getCohortOverview(req());
++    await ctrl.getAllStudents(req());
++    const res: any = { set: jest.fn(), send: jest.fn() };
++    await ctrl.exportCsv(req(), res);
++    expect(scope.getScopedStudentIds).toHaveBeenCalledWith('t1');
++    expect(service.getCohortOverview).toHaveBeenCalledWith(['s1', 's2']);
++    expect(service.getAllStudents).toHaveBeenCalledWith(['s1', 's2']);
++    expect(service.exportStudentsCsv).toHaveBeenCalledWith(['s1', 's2']);
++  });
++
++  it('refuses a student detail outside the teacher\'s scope and never queries it', async () => {
++    const { ctrl, service } = setup(['s1']);
++    await expect(ctrl.getStudentDetail(req(), 's9')).rejects.toBeInstanceOf(ForbiddenException);
++    expect(service.getStudentDetail).not.toHaveBeenCalled();
++    await ctrl.getStudentDetail(req(), 's1');
++    expect(service.getStudentDetail).toHaveBeenCalledWith('s1');
++  });
++
++  it('the service restricts every query it runs to the given ids', async () => {
++    const calls: any = {};
++    const prisma: any = {
++      subject: { findMany: jest.fn(async () => []) },
++      userTopicMastery: { findMany: jest.fn(async (a: any) => { calls.mastery = a.where; return []; }) },
++      engagementLog: { findMany: jest.fn(async (a: any) => { calls.engagement = a.where; return []; }) },
++      user: {
++        count: jest.fn(async (a: any) => { (calls.counts ||= []).push(a.where); return 0; }),
++        findMany: jest.fn(async (a: any) => { calls.students = a.where; return []; }),
++      },
++    };
++    const svc = new TeacherAnalyticsService(prisma);
++    await svc.getCohortOverview(['s1']);
++    await svc.getAllStudents(['s1']);
++    expect(calls.mastery).toEqual({ userId: { in: ['s1'] } });
++    expect(calls.engagement).toEqual({ userId: { in: ['s1'] } });
++    expect(calls.counts.every((w: any) => w.id.in[0] === 's1')).toBe(true);
++    expect(calls.students).toEqual({ role: 'STUDENT', id: { in: ['s1'] } });
++  });
++
++  it('a teacher with no students sees an empty cohort, not everyone', async () => {
++    const calls: any[] = [];
++    const prisma: any = {
++      user: { findMany: jest.fn(async (a: any) => { calls.push(a.where); return []; }) },
++    };
++    await new TeacherAnalyticsService(prisma).getAllStudents([]);
++    expect(calls[0]).toEqual({ role: 'STUDENT', id: { in: [] } });
++  });
++});
+diff --git a/backend/src/teacher-analytics/teacher-analytics.controller.ts b/backend/src/teacher-analytics/teacher-analytics.controller.ts
+index fdc6317..4b907f2 100644
+--- a/backend/src/teacher-analytics/teacher-analytics.controller.ts
++++ b/backend/src/teacher-analytics/teacher-analytics.controller.ts
+@@ -12,25 +12,31 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+ import { RolesGuard } from '../auth/roles.guard';
+ import { Roles } from '../auth/roles.decorator';
+ import { Role } from '../auth/role.enum';
++import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
+ 
+ @Controller('teacher-analytics')
+ @UseGuards(JwtAuthGuard, RolesGuard)
+ @Roles(Role.TEACHER, Role.ADMIN)
+ export class TeacherAnalyticsController {
+-    constructor(private readonly service: TeacherAnalyticsService) { }
++    constructor(
++        private readonly service: TeacherAnalyticsService,
++        private readonly scope: ScopeAuthorizationService,
++    ) { }
+ 
++    // Teachers see only students in their own classes or assignments; admins see everyone.
+     @Get('cohort')
+-    getCohortOverview() {
+-        return this.service.getCohortOverview();
++    async getCohortOverview(@Request() req: any) {
++        return this.service.getCohortOverview(await this.scope.getScopedStudentIds(req.user.id));
+     }
+ 
+     @Get('students')
+-    getAllStudents() {
+-        return this.service.getAllStudents();
++    async getAllStudents(@Request() req: any) {
++        return this.service.getAllStudents(await this.scope.getScopedStudentIds(req.user.id));
+     }
+ 
+     @Get('student/:studentId')
+-    getStudentDetail(@Param('studentId') studentId: string) {
++    async getStudentDetail(@Request() req: any, @Param('studentId') studentId: string) {
++        await this.scope.assertTeacherStudentScope(req.user.id, studentId);
+         return this.service.getStudentDetail(studentId);
+     }
+ 
+@@ -45,8 +51,8 @@ export class TeacherAnalyticsController {
+     }
+ 
+     @Get('export-csv')
+-    async exportCsv(@Res() res: Response) {
+-        const csv = await this.service.exportStudentsCsv();
++    async exportCsv(@Request() req: any, @Res() res: Response) {
++        const csv = await this.service.exportStudentsCsv(await this.scope.getScopedStudentIds(req.user.id));
+         const filename = `students-${new Date().toISOString().slice(0, 10)}.csv`;
+         res.set({
+             'Content-Type': 'text/csv; charset=utf-8',
+diff --git a/backend/src/teacher-analytics/teacher-analytics.module.ts b/backend/src/teacher-analytics/teacher-analytics.module.ts
+index 1cfd421..cb884b4 100644
+--- a/backend/src/teacher-analytics/teacher-analytics.module.ts
++++ b/backend/src/teacher-analytics/teacher-analytics.module.ts
+@@ -1,10 +1,11 @@
++import { AuthModule } from '../auth/auth.module';
+ import { Module } from '@nestjs/common';
+ import { TeacherAnalyticsService } from './teacher-analytics.service';
+ import { TeacherAnalyticsController } from './teacher-analytics.controller';
+ import { PrismaModule } from '../prisma/prisma.module';
+ 
+ @Module({
+-    imports: [PrismaModule],
++    imports: [PrismaModule, AuthModule],
+     controllers: [TeacherAnalyticsController],
+     providers: [TeacherAnalyticsService],
+ })
+diff --git a/backend/src/teacher-analytics/teacher-analytics.service.ts b/backend/src/teacher-analytics/teacher-analytics.service.ts
+index a97396c..1585d4c 100644
+--- a/backend/src/teacher-analytics/teacher-analytics.service.ts
++++ b/backend/src/teacher-analytics/teacher-analytics.service.ts
+@@ -11,16 +11,18 @@ export class TeacherAnalyticsService {
+      * - Avg engagement score per subject
+      * - Total active students (those with at least one PracticeSession)
+      */
+-    async getCohortOverview() {
++    async getCohortOverview(studentIds: string[]) {
+         const subjects = await this.prisma.subject.findMany({
+             include: { topics: true },
+         });
+ 
+         const allMastery = await this.prisma.userTopicMastery.findMany({
++            where: { userId: { in: studentIds } },
+             include: { topic: { include: { subject: true } } },
+         });
+ 
+         const allEngagement = await this.prisma.engagementLog.findMany({
++            where: { userId: { in: studentIds } },
+             include: { topic: { include: { subject: true } } },
+         });
+ 
+@@ -51,12 +53,13 @@ export class TeacherAnalyticsService {
+         const activeStudentCount = await this.prisma.user.count({
+             where: {
+                 role: 'STUDENT',
++                id: { in: studentIds },
+                 practiceSessions: { some: {} },
+             },
+         });
+ 
+         const totalStudentCount = await this.prisma.user.count({
+-            where: { role: 'STUDENT' },
++            where: { role: 'STUDENT', id: { in: studentIds } },
+         });
+ 
+         return {
+@@ -71,9 +74,9 @@ export class TeacherAnalyticsService {
+      * Returns a list of all STUDENT users with their gamification stats
+      * attached, for the class roster table.
+      */
+-    async getAllStudents() {
++    async getAllStudents(studentIds: string[]) {
+         const students = await this.prisma.user.findMany({
+-            where: { role: 'STUDENT' },
++            where: { role: 'STUDENT', id: { in: studentIds } },
+             select: {
+                 id: true,
+                 name: true,
+@@ -227,8 +230,8 @@ export class TeacherAnalyticsService {
+     /**
+      * Serialises all student stats to a RFC-4180 CSV string.
+      */
+-    async exportStudentsCsv(): Promise<string> {
+-        const rows = await this.getAllStudents();
++    async exportStudentsCsv(studentIds: string[]): Promise<string> {
++        const rows = await this.getAllStudents(studentIds);
+ 
+         const headers = [
+             'Name',
+-- 
+2.43.0
+

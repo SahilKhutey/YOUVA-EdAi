@@ -1,0 +1,388 @@
+From f070b39660cd40a08a9b0772e01a2d3080decf2b Mon Sep 17 00:00:00 2001
+From: phase8-fixes <phase8@example.invalid>
+Date: Mon, 19 Oct 2026 10:06:02 +0000
+Subject: [PATCH 3/5] fix(deploy): security headers, CORS fallback to
+ FRONTEND_URL, API_PREFIX, docs at /docs; render.yaml matches the code and no
+ longer allows data loss (+12 tests)
+
+---
+ backend/src/board/board.gateway.ts         |  4 +-
+ backend/src/classroom/classroom.gateway.ts |  4 +-
+ backend/src/main.ts                        | 20 ++-----
+ backend/src/security/configure-app.spec.ts | 63 ++++++++++++++++++++++
+ backend/src/security/configure-app.ts      | 27 ++++++++++
+ backend/src/security/http-config.spec.ts   | 23 +++++++-
+ backend/src/security/http-config.ts        | 31 +++++++++--
+ backend/src/security/render-config.spec.ts | 38 +++++++++++++
+ render.yaml                                | 28 +++++++++-
+ 9 files changed, 213 insertions(+), 25 deletions(-)
+ create mode 100644 backend/src/security/configure-app.spec.ts
+ create mode 100644 backend/src/security/configure-app.ts
+ create mode 100644 backend/src/security/render-config.spec.ts
+
+diff --git a/backend/src/board/board.gateway.ts b/backend/src/board/board.gateway.ts
+index 8c14b93..282a43d 100644
+--- a/backend/src/board/board.gateway.ts
++++ b/backend/src/board/board.gateway.ts
+@@ -11,7 +11,7 @@ import { Server, Socket } from 'socket.io';
+ import { Logger } from '@nestjs/common';
+ import { JwtService } from '@nestjs/jwt';
+ import { authenticateSocket } from '../security/socket-auth';
+-import { corsOrigins } from '../security/http-config';
++import { allowedOrigins } from '../security/http-config';
+ 
+ /**
+  * Shared whiteboard. OFF unless ENABLE_SHARED_BOARD=true, because the frontend uses one hardcoded room
+@@ -19,7 +19,7 @@ import { corsOrigins } from '../security/http-config';
+  * a valid login token is required.
+  */
+ @WebSocketGateway({
+-  cors: { origin: corsOrigins(process.env.CORS_ORIGINS), credentials: true },
++  cors: { origin: allowedOrigins(), credentials: true },
+   namespace: 'board',
+ })
+ export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
+diff --git a/backend/src/classroom/classroom.gateway.ts b/backend/src/classroom/classroom.gateway.ts
+index b779ab9..55d363d 100644
+--- a/backend/src/classroom/classroom.gateway.ts
++++ b/backend/src/classroom/classroom.gateway.ts
+@@ -11,14 +11,14 @@ import { Server, Socket } from 'socket.io';
+ import { JwtService } from '@nestjs/jwt';
+ import { PrismaService } from '../prisma/prisma.service';
+ import { authenticateSocket } from '../security/socket-auth';
+-import { corsOrigins } from '../security/http-config';
++import { allowedOrigins } from '../security/http-config';
+ 
+ /**
+  * Live 1-on-1 classroom: whiteboard, lesson steps and video-call signalling.
+  * A connection must carry a valid login token, and a client can only join, send to, or hear from a session
+  * that it is a participant of (the session's teacher, its student, or an admin).
+  */
+-@WebSocketGateway({ cors: { origin: corsOrigins(process.env.CORS_ORIGINS), credentials: true } })
++@WebSocketGateway({ cors: { origin: allowedOrigins(), credentials: true } })
+ export class ClassroomGateway implements OnGatewayConnection, OnGatewayDisconnect {
+     @WebSocketServer()
+     server: Server;
+diff --git a/backend/src/main.ts b/backend/src/main.ts
+index de7b5ac..b4516b9 100644
+--- a/backend/src/main.ts
++++ b/backend/src/main.ts
+@@ -1,24 +1,13 @@
+ import { NestFactory } from '@nestjs/core';
+ import { NestExpressApplication } from '@nestjs/platform-express';
+ import { AppModule } from './app.module';
+-import { ValidationPipe } from '@nestjs/common';
+ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+-import { corsOrigins, swaggerEnabled, trustProxyHops } from './security/http-config';
++import { swaggerEnabled } from './security/http-config';
++import { configureApp } from './security/configure-app';
+ 
+ async function bootstrap() {
+   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+-
+-  // Behind a reverse proxy (Render, nginx) every request looks like it comes from the proxy unless this is set,
+-  // which would make rate limiting treat the whole school as one user. Set TRUST_PROXY_HOPS=1 there.
+-  const hops = trustProxyHops(process.env.TRUST_PROXY_HOPS);
+-  if (hops > 0) app.set('trust proxy', hops);
+-
+-  app.enableCors({
+-    origin: corsOrigins(process.env.CORS_ORIGINS),
+-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+-    credentials: true,
+-  });
+-  app.useGlobalPipes(new ValidationPipe());
++  configureApp(app);
+ 
+   if (swaggerEnabled(process.env.NODE_ENV, process.env.ENABLE_SWAGGER)) {
+     const config = new DocumentBuilder()
+@@ -28,7 +17,8 @@ async function bootstrap() {
+       .addBearerAuth()
+       .build();
+     const document = SwaggerModule.createDocument(app, config);
+-    SwaggerModule.setup('api', app, document);
++    // Served at /docs so it never collides with an API prefix of "api".
++    SwaggerModule.setup('docs', app, document);
+   }
+ 
+   await app.listen(process.env.PORT ?? 3000);
+diff --git a/backend/src/security/configure-app.spec.ts b/backend/src/security/configure-app.spec.ts
+new file mode 100644
+index 0000000..28ce4de
+--- /dev/null
++++ b/backend/src/security/configure-app.spec.ts
+@@ -0,0 +1,63 @@
++import { Controller, Get, INestApplication, Post } from '@nestjs/common';
++import { NestExpressApplication } from '@nestjs/platform-express';
++import { Test } from '@nestjs/testing';
++import request from 'supertest';
++import { configureApp } from './configure-app';
++
++@Controller('ping')
++class PingController {
++  @Get() ping() { return { ok: true }; }
++  @Post() create() { return { created: true }; }
++}
++
++async function build(env: NodeJS.ProcessEnv): Promise<INestApplication> {
++  const moduleRef = await Test.createTestingModule({ controllers: [PingController] }).compile();
++  const app = moduleRef.createNestApplication<NestExpressApplication>();
++  const saved = { c: process.env.CORS_ORIGINS, f: process.env.FRONTEND_URL };
++  process.env.CORS_ORIGINS = env.CORS_ORIGINS ?? ''; process.env.FRONTEND_URL = env.FRONTEND_URL ?? '';
++  configureApp(app, env);
++  if (saved.c === undefined) delete process.env.CORS_ORIGINS; else process.env.CORS_ORIGINS = saved.c;
++  if (saved.f === undefined) delete process.env.FRONTEND_URL; else process.env.FRONTEND_URL = saved.f;
++  await app.init();
++  return app;
++}
++
++describe('configureApp (what the real server uses)', () => {
++  it('sends security headers and hides the framework banner', async () => {
++    const app = await build({});
++    const res = await request(app.getHttpServer()).get('/ping');
++    expect(res.status).toBe(200);
++    expect(res.headers['x-content-type-options']).toBe('nosniff');
++    expect(res.headers['x-frame-options']).toBeDefined();
++    expect(res.headers['strict-transport-security']).toBeDefined();
++    expect(res.headers['x-powered-by']).toBeUndefined();
++    await app.close();
++  });
++
++  it('allows only the configured browser origin (FRONTEND_URL when CORS_ORIGINS is unset)', async () => {
++    const app = await build({ FRONTEND_URL: 'https://app.example.org' });
++    const ok = await request(app.getHttpServer()).get('/ping').set('Origin', 'https://app.example.org');
++    const bad = await request(app.getHttpServer()).get('/ping').set('Origin', 'https://evil.example.com');
++    expect(ok.headers['access-control-allow-origin']).toBe('https://app.example.org');
++    expect(bad.headers['access-control-allow-origin']).toBeUndefined();
++    const pre = await request(app.getHttpServer()).options('/ping').set('Origin', 'https://app.example.org').set('Access-Control-Request-Method', 'POST');
++    expect(pre.headers['access-control-allow-methods']).toMatch(/POST/);
++    await app.close();
++  });
++
++  it('serves routes at the root by default and under /api when API_PREFIX=api (what render.yaml needs)', async () => {
++    const root = await build({});
++    expect((await request(root.getHttpServer()).get('/ping')).status).toBe(200);
++    expect((await request(root.getHttpServer()).get('/api/ping')).status).toBe(404);
++    await root.close();
++    const prefixed = await build({ API_PREFIX: 'api' });
++    expect((await request(prefixed.getHttpServer()).get('/api/ping')).status).toBe(200);
++    expect((await request(prefixed.getHttpServer()).get('/ping')).status).toBe(404);
++    await prefixed.close();
++  });
++
++  it('refuses to start with an invalid setting instead of silently running unprotected', async () => {
++    await expect(build({ TRUST_PROXY_HOPS: '9' })).rejects.toThrow(/TRUST_PROXY_HOPS/);
++    await expect(build({ API_PREFIX: 'a/b' })).rejects.toThrow(/API_PREFIX/);
++  });
++});
+diff --git a/backend/src/security/configure-app.ts b/backend/src/security/configure-app.ts
+new file mode 100644
+index 0000000..bbea13b
+--- /dev/null
++++ b/backend/src/security/configure-app.ts
+@@ -0,0 +1,27 @@
++import { ValidationPipe } from '@nestjs/common';
++import { NestExpressApplication } from '@nestjs/platform-express';
++import helmet from 'helmet';
++import { allowedOrigins, apiPrefix, trustProxyHops } from './http-config';
++
++/**
++ * Settings applied to the real server and to tests, so what is tested is what runs.
++ * Headers: helmet's defaults except the content-security-policy (this server returns JSON, and the policy
++ * would only get in the way of the API docs page), with resources allowed to be read cross-origin by CORS clients.
++ */
++export function configureApp(app: NestExpressApplication, env: NodeJS.ProcessEnv = process.env) {
++  // Behind a reverse proxy every request looks like it comes from the proxy unless this is set,
++  // which would make rate limiting treat a whole school as one user. Set TRUST_PROXY_HOPS=1 there.
++  const hops = trustProxyHops(env.TRUST_PROXY_HOPS);
++  if (hops > 0) app.set('trust proxy', hops);
++
++  app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
++  app.enableCors({
++    origin: allowedOrigins(),
++    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
++    credentials: true,
++  });
++  app.useGlobalPipes(new ValidationPipe());
++
++  const prefix = apiPrefix(env.API_PREFIX);
++  if (prefix) app.setGlobalPrefix(prefix);
++}
+diff --git a/backend/src/security/http-config.spec.ts b/backend/src/security/http-config.spec.ts
+index 276bf62..5648155 100644
+--- a/backend/src/security/http-config.spec.ts
++++ b/backend/src/security/http-config.spec.ts
+@@ -1,4 +1,4 @@
+-import { corsOrigins, swaggerEnabled, trustProxyHops } from './http-config';
++import { allowedOrigins, apiPrefix, corsOrigins, swaggerEnabled, trustProxyHops } from './http-config';
+ 
+ describe('deployment settings', () => {
+   it('trust proxy defaults to 0 and accepts 0 to 3 hops only', () => {
+@@ -21,4 +21,25 @@ describe('deployment settings', () => {
+     expect(swaggerEnabled(undefined, undefined)).toBe(true);
+     expect(swaggerEnabled('development', 'false')).toBe(true);
+   });
++
++  it('falls back to FRONTEND_URL when CORS_ORIGINS is not set, and CORS_ORIGINS wins when both are set', () => {
++    expect(corsOrigins(undefined, 'https://app.example.org/')).toEqual(['https://app.example.org']);
++    expect(corsOrigins('https://a.example.org', 'https://app.example.org')).toEqual(['https://a.example.org']);
++    expect(corsOrigins('', '')).toEqual(['http://localhost:3000']);
++    expect(() => corsOrigins(undefined, '*')).toThrow(/not allowed/);
++  });
++
++  it('allowedOrigins reads both settings from the real environment', () => {
++    const old = { c: process.env.CORS_ORIGINS, f: process.env.FRONTEND_URL };
++    delete process.env.CORS_ORIGINS; process.env.FRONTEND_URL = 'https://render-front.example.org';
++    expect(allowedOrigins()).toEqual(['https://render-front.example.org']);
++    if (old.c === undefined) delete process.env.CORS_ORIGINS; else process.env.CORS_ORIGINS = old.c;
++    if (old.f === undefined) delete process.env.FRONTEND_URL; else process.env.FRONTEND_URL = old.f;
++  });
++
++  it('the API prefix is empty by default, trimmed, and letters/digits/hyphens only', () => {
++    expect(apiPrefix(undefined)).toBe('');
++    expect(apiPrefix(' /api/ ')).toBe('api');
++    for (const bad of ['a/b', 'a b', 'api?x', '../x']) expect(() => apiPrefix(bad)).toThrow(/API_PREFIX/);
++  });
+ });
+diff --git a/backend/src/security/http-config.ts b/backend/src/security/http-config.ts
+index 259ef6b..ef715e7 100644
+--- a/backend/src/security/http-config.ts
++++ b/backend/src/security/http-config.ts
+@@ -10,11 +10,34 @@ export function trustProxyHops(env: string | undefined): number {
+   return n;
+ }
+ 
+-/** Browser origins allowed to call the API. Comma-separated; defaults to local development only. */
+-export function corsOrigins(env: string | undefined): string[] {
+-  const list = (env ?? '').split(',').map((o) => o.trim().replace(/\/+$/, '')).filter(Boolean);
++/**
++ * Browser origins allowed to call the API. `CORS_ORIGINS` (comma-separated) wins; otherwise `FRONTEND_URL`
++ * (already set by render.yaml) is used; otherwise local development only.
++ */
++export function corsOrigins(env: string | undefined, frontendUrl?: string): string[] {
++  const clean = (v: string | undefined) => (v ?? '').split(',').map((o) => o.trim().replace(/\/+$/, '')).filter(Boolean);
++  const list = clean(env);
+   if (list.includes('*')) throw new Error('CORS_ORIGINS must list exact origins; "*" is not allowed.');
+-  return list.length ? list : ['http://localhost:3000'];
++  if (list.length) return list;
++  const fallback = clean(frontendUrl);
++  if (fallback.includes('*')) throw new Error('FRONTEND_URL must be an exact origin; "*" is not allowed.');
++  return fallback.length ? fallback : ['http://localhost:3000'];
++}
++
++/** The origins to use, read from the real environment. */
++export function allowedOrigins(): string[] {
++  return corsOrigins(process.env.CORS_ORIGINS, process.env.FRONTEND_URL);
++}
++
++/**
++ * Optional URL prefix for every HTTP route (for example "api"). The frontend in render.yaml calls
++ * https://backend/api/..., so set API_PREFIX=api there. Empty means routes are served at the root.
++ */
++export function apiPrefix(env: string | undefined): string {
++  const v = (env ?? '').trim().replace(/^\/+|\/+$/g, '');
++  if (v === '') return '';
++  if (!/^[A-Za-z0-9-]+$/.test(v)) throw new Error('API_PREFIX may contain only letters, digits and hyphens.');
++  return v;
+ }
+ 
+ /** API docs are served only outside production unless explicitly enabled. */
+diff --git a/backend/src/security/render-config.spec.ts b/backend/src/security/render-config.spec.ts
+new file mode 100644
+index 0000000..e6a2656
+--- /dev/null
++++ b/backend/src/security/render-config.spec.ts
+@@ -0,0 +1,38 @@
++import * as fs from 'fs';
++import * as path from 'path';
++
++/** Guards the deployment blueprint against the mistakes found in review. It reads render.yaml as text. */
++const raw = fs.readFileSync(path.join(__dirname, '../../../render.yaml'), 'utf8');
++// Comments explain the settings and may mention the flags they forbid; only real configuration lines are checked.
++const yaml = raw.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n');
++const value = (key: string) => yaml.match(new RegExp(`- key: ${key}\\s*\\n\\s*value:\\s*"?([^"\\n]+)"?`))?.[1].trim();
++
++describe('render.yaml', () => {
++  it('never deploys a schema change that could delete data', () => {
++    expect(yaml).not.toMatch(/--accept-data-loss/);
++  });
++
++  it('serves the API under the same prefix the frontend calls', () => {
++    const apiUrl = value('NEXT_PUBLIC_API_URL')!;
++    const frontendPath = new URL(apiUrl).pathname.replace(/^\/|\/$/g, '');
++    expect(value('API_PREFIX')).toBe(frontendPath);
++  });
++
++  it('lets only the frontend origin call the API', () => {
++    expect(value('CORS_ORIGINS')).toBe(value('FRONTEND_URL'));
++  });
++
++  it('keeps pilot-safe settings: no public sign-up, bank questions only, AI and shared board off, one proxy hop', () => {
++    expect(value('ALLOW_PUBLIC_REGISTRATION')).toBe('false');
++    expect(value('QUESTION_SOURCE')).toBe('BANK');
++    expect(value('ENABLE_AI_FEATURES')).toBe('false');
++    expect(value('ENABLE_SHARED_BOARD')).toBe('false');
++    expect(value('NEXT_PUBLIC_ENABLE_AI_MENTOR')).toBe('false');
++    expect(value('TRUST_PROXY_HOPS')).toBe('1');
++    expect(value('NODE_ENV')).toBe('production');
++  });
++
++  it('generates the JWT secret instead of hardcoding one', () => {
++    expect(yaml).toMatch(/- key: JWT_SECRET\s*\n\s*generateValue: true/);
++  });
++});
+diff --git a/render.yaml b/render.yaml
+index 2f345a2..bd95fd3 100644
+--- a/render.yaml
++++ b/render.yaml
+@@ -13,13 +13,18 @@ services:
+         value: "https://youva-edai-backend.onrender.com"
+       - key: NEXT_PUBLIC_FRONTEND_URL
+         value: "https://youva-edai-frontend.onrender.com"
++      # The AI mentor sidebar is off for pilots (see docs/DECISIONS.md D-007). Baked in at build time.
++      - key: NEXT_PUBLIC_ENABLE_AI_MENTOR
++        value: "false"
+ 
+   - type: web
+     name: youva-edai-backend
+     env: node
+     rootDir: backend
+     plan: free
+-    buildCommand: npm install --include=dev && npx prisma generate && npx prisma db push --accept-data-loss && npm run build
++    # `db push` WITHOUT --accept-data-loss: a schema change that would delete data now fails the deploy instead of
++    # silently dropping it. Once real student data exists, move to migrations (see MVP_SCOPE.md).
++    buildCommand: npm install --include=dev && npx prisma generate && npx prisma db push && npm run build
+     startCommand: npm run start:prod
+     envVars:
+       - key: DATABASE_URL
+@@ -34,7 +39,28 @@ services:
+         value: "3001"
+       - key: GEMINI_API_KEY
+         sync: false
++      - key: NODE_ENV
++        value: production
++      # The frontend above calls https://<backend>/api/..., so the backend serves routes under /api.
++      - key: API_PREFIX
++        value: api
++      - key: CORS_ORIGINS
++        value: "https://youva-edai-frontend.onrender.com"
++      # One reverse proxy sits in front of the server; needed so rate limiting sees each user's real address.
++      - key: TRUST_PROXY_HOPS
++        value: "1"
++      - key: ALLOW_PUBLIC_REGISTRATION
++        value: "false"
++      - key: QUESTION_SOURCE
++        value: BANK
++      - key: ENABLE_AI_FEATURES
++        value: "false"
++      - key: ENABLE_SHARED_BOARD
++        value: "false"
+ 
+ databases:
+   - name: youva-edai-db
++    # A FREE Render Postgres database expires 30 days after creation (14-day grace period to upgrade, then the data
++    # is deleted) and has no backups. Use a paid plan for any pilot that runs longer than a few weeks, or export
++    # the pilot report numbers and data before the expiry date. Check render.com/docs/free for current terms.
+     plan: free
+-- 
+2.43.0
+
