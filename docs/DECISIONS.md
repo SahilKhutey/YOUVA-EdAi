@@ -102,3 +102,24 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
 
 ## D-022: Secrets scan
 - Result: no secret-like strings in the current tree or in the history of this branch beyond regex fixtures in a test; no `.env` file was ever committed (only `.env.example`). Scan patterns cover cloud, payment, chat and git-hosting tokens, private keys and connection strings with passwords. A scan cannot prove absence: still rotate any key that has ever been pasted anywhere else.
+
+
+## D-023: PostgreSQL migration baseline
+- Context: `prisma/migrations` contained obsolete SQLite-dialect migrations with `migration_lock.toml` set to `sqlite`, which prevented `prisma migrate deploy` on PostgreSQL databases.
+- Decision: generated a clean initial PostgreSQL baseline migration (`20261020000000_init_postgresql_baseline`) using `prisma migrate diff` matching `schema.prisma`, updated `migration_lock.toml` to `postgresql`, and archived legacy SQLite migration folders.
+- Evidence: `npx prisma validate` passes.
+
+## D-024: Global unknown field stripping via ValidationPipe whitelist
+- Context: requests containing extraneous or unexpected fields could bypass DTO definitions if controllers did not explicitly strip them.
+- Decision: enabled `whitelist: true` and `transform: true` in the application's global `ValidationPipe` inside `configureApp`.
+- Evidence: `backend/src/security/configure-app.spec.ts` test verifying unknown fields are stripped on submission.
+
+## D-025: Account lockout protection against credential brute-force
+- Context: per-IP rate limiting protected endpoints generally, but targeted brute-force attacks against a specific user email across distributed IPs were not locked out.
+- Decision: implemented account lockout in `AuthService` (5 consecutive failed attempts lock the targeted email for 15 minutes; cleared upon valid authentication).
+- Evidence: `backend/src/auth/auth.service.spec.ts` and `backend/src/auth/auth.http.spec.ts`.
+
+## D-026: Forum input validation and foreign key integrity
+- Context: forum endpoints lacked structured class-validator DTOs and did not check if the referenced topic exists before inserting posts, allowing unhandled 500 errors on invalid foreign keys.
+- Decision: introduced `CreatePostDto` and `CreateReplyDto` with string length bounds, added topic existence validation, and mapped `req.user.id || req.user.userId`.
+- Evidence: `backend/src/forum/forum.spec.ts` (7 tests).

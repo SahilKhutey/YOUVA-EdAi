@@ -13,6 +13,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../auth/role.enum';
+import { CreatePostDto } from './dto/create-post.dto';
+import { CreateReplyDto } from './dto/create-reply.dto';
 
 @Controller('forum')
 @UseGuards(JwtAuthGuard)
@@ -41,9 +43,10 @@ export class ForumController {
     @Post('post')
     createPost(
         @Request() req: any,
-        @Body() body: { topicId: string; title: string; body: string },
+        @Body() body: CreatePostDto,
     ) {
-        return this.service.createPost(req.user.userId, body.topicId, body.title, body.body);
+        const userId = req.user.id || req.user.userId;
+        return this.service.createPost(userId, body.topicId, body.title, body.body);
     }
 
     // Reply to a post
@@ -51,15 +54,17 @@ export class ForumController {
     createReply(
         @Param('postId') postId: string,
         @Request() req: any,
-        @Body() body: { body: string },
+        @Body() body: CreateReplyDto,
     ) {
-        return this.service.createReply(req.user.userId, postId, body.body);
+        const userId = req.user.id || req.user.userId;
+        return this.service.createReply(userId, postId, body.body);
     }
 
     // Upvote toggle
     @Patch('post/:id/upvote')
     toggleUpvote(@Param('id') id: string, @Request() req: any) {
-        return this.service.toggleUpvote(req.user.userId, id);
+        const userId = req.user.id || req.user.userId;
+        return this.service.toggleUpvote(userId, id);
     }
 
     // Pin/unpin (TEACHER/ADMIN only)

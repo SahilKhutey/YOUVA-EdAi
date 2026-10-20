@@ -67,6 +67,9 @@ export class ForumService {
         title: string,
         body: string,
     ) {
+        const topic = await this.prisma.topic.findUnique({ where: { id: topicId } });
+        if (!topic) throw new NotFoundException('Topic not found');
+
         const post = await this.prisma.discussionPost.create({
             data: { topicId, authorId: userId, title, body },
             include: { author: { select: { id: true, name: true, role: true } } },

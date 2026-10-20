@@ -20,7 +20,7 @@ export function configureApp(app: NestExpressApplication, env: NodeJS.ProcessEnv
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const prefix = apiPrefix(env.API_PREFIX);
   if (prefix) app.setGlobalPrefix(prefix);

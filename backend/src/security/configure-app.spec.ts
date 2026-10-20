@@ -1,13 +1,19 @@
-import { Controller, Get, INestApplication, Post } from '@nestjs/common';
+import { Body, Controller, Get, INestApplication, Post } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
+import { IsString } from 'class-validator';
 import request from 'supertest';
 import { configureApp } from './configure-app';
+
+class PingDto {
+  @IsString()
+  msg: string;
+}
 
 @Controller('ping')
 class PingController {
   @Get() ping() { return { ok: true }; }
-  @Post() create() { return { created: true }; }
+  @Post() create(@Body() body: PingDto) { return { received: body }; }
 }
 
 async function build(env: NodeJS.ProcessEnv): Promise<INestApplication> {
@@ -59,5 +65,14 @@ describe('configureApp (what the real server uses)', () => {
   it('refuses to start with an invalid setting instead of silently running unprotected', async () => {
     await expect(build({ TRUST_PROXY_HOPS: '9' })).rejects.toThrow(/TRUST_PROXY_HOPS/);
     await expect(build({ API_PREFIX: 'a/b' })).rejects.toThrow(/API_PREFIX/);
+  });
+
+  it('strips unknown body fields via global validation pipe whitelist', async () => {
+    const app = await build({});
+    const res = await request(app.getHttpServer()).post('/ping').send({ msg: 'hello', maliciousExtraField: 'bad' });
+    expect(res.status).toBe(201);
+    expect(res.body.received).toEqual({ msg: 'hello' });
+    expect(res.body.received.maliciousExtraField).toBeUndefined();
+    await app.close();
   });
 });
