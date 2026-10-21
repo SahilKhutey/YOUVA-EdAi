@@ -19,7 +19,9 @@ export function practiceSubmitMessage(status) {
   return "Something went wrong submitting your answers. Please tell your teacher.";
 }
 
-/** The AI mentor sidebar is shown only when NEXT_PUBLIC_ENABLE_AI_MENTOR is exactly "true" (any case). */
+import { isOn } from "./features.mjs";
+
+/** The AI mentor (sidebar and floating chat widget) is shown only when NEXT_PUBLIC_ENABLE_AI_MENTOR is exactly "true". */
 export function aiMentorEnabled(flag) {
-  return String(flag ?? "").toLowerCase() === "true";
+  return isOn(flag);
 }

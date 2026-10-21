@@ -15,9 +15,10 @@ import { Roles } from '../auth/roles.decorator';
 import { Role } from '../auth/role.enum';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
+import { ForumFeatureGuard } from '../common/guards/feature-flag.guard';
 
 @Controller('forum')
-@UseGuards(JwtAuthGuard)
+@UseGuards(ForumFeatureGuard, JwtAuthGuard)
 export class ForumController {
     constructor(private readonly service: ForumService) { }
 

@@ -6,6 +6,7 @@ import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import MobileDrawer from "./MobileDrawer";
 import StudyBuddyWidget from "./StudyBuddyWidget";
+import { aiMentorEnabled } from "@/lib/practice-errors.mjs";
 import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
@@ -67,7 +68,8 @@ export default function MainLayout({
       </div>
 
       {/* Study Buddy floating widget */}
-      <StudyBuddyWidget />
+      {/* Off unless NEXT_PUBLIC_ENABLE_AI_MENTOR=true: it sends what a student types to an AI. */}
+      {aiMentorEnabled(process.env.NEXT_PUBLIC_ENABLE_AI_MENTOR) && <StudyBuddyWidget />}
     </div>
   );
 }

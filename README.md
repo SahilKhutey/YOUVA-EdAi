@@ -44,6 +44,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
 | `ALLOW_PUBLIC_REGISTRATION` | Default `true` (creates student accounts only). `false` closes public sign-up; create accounts with `npm run create:user` |
 | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (for example your frontend's URL). Default: `http://localhost:3000` only |
 | `TRUST_PROXY_HOPS` | Number of reverse proxies in front of the server (0 to 3). Set `1` on Render or behind nginx, or rate limiting will treat everyone as one user |
+| `ENABLE_FORUM` | Default off. The forum shows every logged-in student every post and author name. Set `true` only if that is intended. The frontend link is shown only when `NEXT_PUBLIC_ENABLE_FORUM=true` |
 | `ENABLE_SHARED_BOARD` | Default off. The shared whiteboard uses one room for every user, so it stays off for pilots; when on, a login token is still required |
 | `API_PREFIX` | Optional URL prefix for every route, for example `api`. `render.yaml` sets `api` because the deployed frontend calls `https://<backend>/api/...`. Locally leave unset and set `NEXT_PUBLIC_API_URL` without `/api` |
 | `FRONTEND_URL` | Used as the allowed browser origin when `CORS_ORIGINS` is not set |

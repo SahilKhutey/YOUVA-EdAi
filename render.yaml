@@ -16,6 +16,9 @@ services:
       # The AI mentor sidebar is off for pilots (see docs/DECISIONS.md D-007). Baked in at build time.
       - key: NEXT_PUBLIC_ENABLE_AI_MENTOR
         value: "false"
+      # The discussion forum lets every logged-in student see every post and author name; off for pilots.
+      - key: NEXT_PUBLIC_ENABLE_FORUM
+        value: "false"
 
   - type: web
     name: youva-edai-backend
@@ -56,6 +59,8 @@ services:
       - key: ENABLE_AI_FEATURES
         value: "false"
       - key: ENABLE_SHARED_BOARD
+        value: "false"
+      - key: ENABLE_FORUM
         value: "false"
 
 databases:

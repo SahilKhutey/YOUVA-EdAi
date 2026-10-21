@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { securityHeaders } from "./lib/security-headers.mjs";
 // @ts-ignore
 import withPWAInit from "@ducanh2912/next-pwa";
 
@@ -16,6 +17,9 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   turbopack: {},
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
 };
 
 export default withPWA(nextConfig);

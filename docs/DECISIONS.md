@@ -123,3 +123,25 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
 - Context: forum endpoints lacked structured class-validator DTOs and did not check if the referenced topic exists before inserting posts, allowing unhandled 500 errors on invalid foreign keys.
 - Decision: introduced `CreatePostDto` and `CreateReplyDto` with string length bounds, added topic existence validation, and mapped `req.user.id || req.user.userId`.
 - Evidence: `backend/src/forum/forum.spec.ts` (7 tests).
+
+## D-027: The leaderboard shows classmates only, by display name
+- Context: it returned the top 50 users system-wide, including each person's email address (when no name was set), user id, and teachers and admins, to any logged-in student.
+- Decision: students see themselves and students who share a class; teachers see their own students; admins see all students. Only display names; no emails or ids; a student without a name shows as "Student".
+- Evidence: `backend/src/gamification/leaderboard.spec.ts` (mutation-checked: selecting the email again made a test fail).
+
+## D-028: The discussion forum is off by default
+- Context: every logged-in student could read every post and every author's name across the whole system, which is peer contact the pilot is designed to avoid.
+- Decision: `ENABLE_FORUM` (backend) and `NEXT_PUBLIC_ENABLE_FORUM` (frontend link) default off; `render.yaml` sets both to false.
+- Evidence: `backend/src/forum/forum-flag.spec.ts`; the route test checks every forum route carries the guard.
+
+## D-029: Chat text is escaped before display, and the floating AI widget is gated
+- Context: the "study buddy" widget on every page inserted chat text as raw HTML, so a message or AI reply containing a tag with a script handler would run in a page that holds the login token. It also showed an AI chat bubble everywhere, though the AI endpoints are off.
+- Decision: escape `& < > " '` first, then format bold and italic; show the widget only when `NEXT_PUBLIC_ENABLE_AI_MENTOR=true`.
+- Evidence: `frontend/lib/safety.test.mjs` (mutation-checked: removing the escaping failed two tests).
+
+## D-030: Page security headers, without a content-security-policy
+- Decision: `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, and a `Permissions-Policy` that keeps camera and microphone for this site (the live classroom needs them) and turns geolocation off. A content-security-policy is deliberately not set: it needs testing in a real browser against the video call and the PWA.
+- Evidence: `frontend/lib/safety.test.mjs` (tests the header list; the headers are served by `next.config.ts`, which I could not run in a real build here).
+
+## D-031: Route review completed for login-only routes with id-like inputs
+- Result: see `docs/ROUTE_REVIEW.md`. Open: routes that use only the caller's own identity and take no id-like input were not read line by line.

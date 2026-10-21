@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { renderChatMarkdown } from "@/lib/chat-text.mjs";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/axios";
 import {
@@ -33,7 +34,7 @@ function MessageBubble({ msg }: { msg: Message }) {
         <div
             className={cn(
                 "flex gap-2.5 items-end",
-                isUser ? "justify-end" : "justify-start",
+                isUser ? "flex-row-reverse" : "flex-row",
             )}
         >
             {!isUser && (
@@ -48,11 +49,8 @@ function MessageBubble({ msg }: { msg: Message }) {
                         ? "bg-primary text-primary-foreground rounded-br-sm"
                         : "bg-muted text-foreground rounded-bl-sm",
                 )}
-                dangerouslySetInnerHTML={{
-                    __html: msg.content
-                        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                        .replace(/\*(.*?)\*/g, "<em>$1</em>"),
-                }}
+                // Escaped before formatting: chat text must never be able to inject a tag.
+                dangerouslySetInnerHTML={{ __html: renderChatMarkdown(msg.content) }}
             />
         </div>
     );

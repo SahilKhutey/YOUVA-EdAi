@@ -54,6 +54,9 @@ describe('route coverage', () => {
     ]) {
       expect(find(m, p)?.roles).toEqual(staff);
     }
+    // seeding the badge catalogue is an admin action; the forum is behind its own switch
+    expect(find('POST', '/gamification/seed-badges')?.roles).toEqual(['ADMIN']);
+    for (const r of routes.filter((x) => x.path.startsWith('/forum'))) expect(r.guards).toContain('ForumFeatureGuard');
     // the AI-sending evaluation route also needs the AI switch
     expect(find('POST', '/assessment-intelligence/evaluate/:id')?.guards).toContain('AiFeaturesGuard');
   });

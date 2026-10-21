@@ -14,9 +14,9 @@ async function main() {
     .compile();
   const routes = collectRoutes(moduleRef.get(ModulesContainer));
   console.log(`# Route inventory (generated, ${routes.length} routes)\n`);
-  console.log('Read from decorator metadata. "Login" = JwtAuthGuard present. Ownership checks inside handlers are NOT shown here.\n');
-  console.log('| Method | Path | Login | Roles | Controller |\n|---|---|---|---|---|');
-  for (const r of routes) console.log(`| ${r.method} | ${r.path} | ${r.authenticated ? 'yes' : '**NO**'} | ${r.roles.join(', ') || '-'} | ${r.controller} |`);
+  console.log('Read from decorator metadata. "Login" = JwtAuthGuard present. "Knows caller" = the handler receives the request object, so it can tell who is calling; a login-only route that does not can only be safe if it serves the same public data to everyone. Ownership checks inside handlers are NOT shown here.\n');
+  console.log('| Method | Path | Login | Roles | Knows caller | Controller |\n|---|---|---|---|---|---|');
+  for (const r of routes) console.log(`| ${r.method} | ${r.path} | ${r.authenticated ? 'yes' : '**NO**'} | ${r.roles.join(', ') || '-'} | ${r.usesRequest ? 'yes' : 'no'} | ${r.controller} |`);
   await moduleRef.close();
 }
 main().catch((e) => { console.error(e); process.exit(1); });

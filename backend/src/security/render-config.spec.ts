@@ -27,6 +27,8 @@ describe('render.yaml', () => {
     expect(value('QUESTION_SOURCE')).toBe('BANK');
     expect(value('ENABLE_AI_FEATURES')).toBe('false');
     expect(value('ENABLE_SHARED_BOARD')).toBe('false');
+    expect(value('ENABLE_FORUM')).toBe('false');
+    expect(value('NEXT_PUBLIC_ENABLE_FORUM')).toBe('false');
     expect(value('NEXT_PUBLIC_ENABLE_AI_MENTOR')).toBe('false');
     expect(value('TRUST_PROXY_HOPS')).toBe('1');
     expect(value('NODE_ENV')).toBe('production');

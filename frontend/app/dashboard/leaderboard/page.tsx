@@ -9,7 +9,6 @@ import MainLayout from '@/app/components/MainLayout';
 
 interface LeaderboardEntry {
     rank: number;
-    userId: string;
     name: string;
     totalXp: number;
     currentLevel: number;
@@ -166,7 +165,7 @@ export default function LeaderboardPage() {
                         <div className="divide-y divide-border">
                             {remaining.map((entry) => (
                                 <div
-                                    key={entry.userId}
+                                    key={entry.rank}
                                     className={cn(
                                         "group flex items-center gap-4 sm:gap-6 p-4 sm:p-5 hover:bg-muted/40 transition-colors",
                                         entry.isCurrentUser && "bg-primary/5"

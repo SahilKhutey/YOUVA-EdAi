@@ -7,7 +7,8 @@
 3. Only reviewed questions are in use (`QUESTION_SOURCE=BANK`). The AI question mode is OFF for the pilot.
 4. The supervising adult has read this page.
 5. Students use the practice page only. The forum and other sections are not part of the pilot; do not open them with students.
-6. The AI mentor is off: confirm `ENABLE_AI_FEATURES` is not `true` on the server and that no AI sidebar appears on the practice page. If a sidebar appears, stop and fix the setting before the session.
+6. The discussion forum is off (`ENABLE_FORUM` not `true`) and the Discussion link does not appear. The leaderboard shows only classmates, by display name; tell students not to use their full names or emails as display names.
+7. The AI mentor is off: confirm `ENABLE_AI_FEATURES` is not `true` on the server and that no AI sidebar appears on the practice page. If a sidebar appears, stop and fix the setting before the session.
 
 ## During a session
 - The supervising adult is in the room (or on the call with camera on) the whole time.

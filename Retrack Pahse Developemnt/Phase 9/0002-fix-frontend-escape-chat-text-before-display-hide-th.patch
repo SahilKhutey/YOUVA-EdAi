@@ -1,0 +1,267 @@
+From d68c178012e2f235894ff0c2298c8c5fe5fabfad Mon Sep 17 00:00:00 2001
+From: phase9-fixes <phase9@example.invalid>
+Date: Tue, 20 Oct 2026 14:17:10 +0000
+Subject: [PATCH 2/4] fix(frontend): escape chat text before display, hide the
+ floating AI widget and forum link unless enabled, drop ids from the
+ leaderboard page, add page security headers (+4 tests)
+
+---
+ frontend/app/components/MainLayout.tsx       |  4 +-
+ frontend/app/components/Sidebar.tsx          |  5 +-
+ frontend/app/components/StudyBuddyWidget.tsx |  8 ++--
+ frontend/app/dashboard/leaderboard/page.tsx  |  3 +-
+ frontend/lib/chat-text.mjs                   | 19 ++++++++
+ frontend/lib/features.mjs                    |  9 ++++
+ frontend/lib/practice-errors.mjs             |  6 ++-
+ frontend/lib/safety.test.mjs                 | 49 ++++++++++++++++++++
+ frontend/lib/security-headers.mjs            | 11 +++++
+ frontend/next.config.ts                      |  4 ++
+ 10 files changed, 107 insertions(+), 11 deletions(-)
+ create mode 100644 frontend/lib/chat-text.mjs
+ create mode 100644 frontend/lib/features.mjs
+ create mode 100644 frontend/lib/safety.test.mjs
+ create mode 100644 frontend/lib/security-headers.mjs
+
+diff --git a/frontend/app/components/MainLayout.tsx b/frontend/app/components/MainLayout.tsx
+index 0da06a8..b31bcd1 100644
+--- a/frontend/app/components/MainLayout.tsx
++++ b/frontend/app/components/MainLayout.tsx
+@@ -6,6 +6,7 @@ import Navbar from "./Navbar";
+ import Sidebar from "./Sidebar";
+ import MobileDrawer from "./MobileDrawer";
+ import StudyBuddyWidget from "./StudyBuddyWidget";
++import { aiMentorEnabled } from "@/lib/practice-errors.mjs";
+ import { cn } from "@/lib/utils";
+ 
+ interface MainLayoutProps {
+@@ -67,7 +68,8 @@ export default function MainLayout({
+       </div>
+ 
+       {/* Study Buddy floating widget */}
+-      <StudyBuddyWidget />
++      {/* Off unless NEXT_PUBLIC_ENABLE_AI_MENTOR=true: it sends what a student types to an AI. */}
++      {aiMentorEnabled(process.env.NEXT_PUBLIC_ENABLE_AI_MENTOR) && <StudyBuddyWidget />}
+     </div>
+   );
+ }
+diff --git a/frontend/app/components/Sidebar.tsx b/frontend/app/components/Sidebar.tsx
+index 57ffca5..1a68b0a 100644
+--- a/frontend/app/components/Sidebar.tsx
++++ b/frontend/app/components/Sidebar.tsx
+@@ -1,6 +1,7 @@
+ "use client";
+ 
+ import Link from "next/link";
++import { forumEnabled } from "@/lib/features.mjs";
+ import { usePathname } from "next/navigation";
+ import {
+   LayoutDashboard,
+@@ -39,7 +40,9 @@ const studentNavItems = [
+   { name: "Mock Tests", icon: FileText, href: "/dashboard/mock-tests" },
+   { name: "Project Assessment", icon: Briefcase, href: "/dashboard/assessment/project" },
+   { name: "Credential Wallet", icon: ShieldCheck, href: "/dashboard/credentials" },
+-  { name: "Discussion", icon: MessageSquare, href: "/dashboard/discussion" },
++  ...(forumEnabled(process.env.NEXT_PUBLIC_ENABLE_FORUM)
++    ? [{ name: "Discussion", icon: MessageSquare, href: "/dashboard/discussion" }]
++    : []),
+   { name: "Leaderboard", icon: Trophy, href: "/dashboard/leaderboard" },
+   { name: "Schedule", icon: Calendar, href: "/dashboard/schedule" },
+   { name: "Goals", icon: Target, href: "/dashboard/goals" },
+diff --git a/frontend/app/components/StudyBuddyWidget.tsx b/frontend/app/components/StudyBuddyWidget.tsx
+index d74dce4..891ad77 100644
+--- a/frontend/app/components/StudyBuddyWidget.tsx
++++ b/frontend/app/components/StudyBuddyWidget.tsx
+@@ -1,6 +1,7 @@
+ "use client";
+ 
+ import { useState, useRef, useEffect, useCallback } from "react";
++import { renderChatMarkdown } from "@/lib/chat-text.mjs";
+ import { useAuth } from "@/context/AuthContext";
+ import api from "@/lib/axios";
+ import {
+@@ -48,11 +49,8 @@ function MessageBubble({ msg }: { msg: Message }) {
+                         ? "bg-primary text-primary-foreground rounded-br-sm"
+                         : "bg-muted text-foreground rounded-bl-sm",
+                 )}
+-                dangerouslySetInnerHTML={{
+-                    __html: msg.content
+-                        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+-                        .replace(/\*(.*?)\*/g, "<em>$1</em>"),
+-                }}
++                // Escaped before formatting: chat text must never be able to inject a tag.
++                dangerouslySetInnerHTML={{ __html: renderChatMarkdown(msg.content) }}
+             />
+         </div>
+     );
+diff --git a/frontend/app/dashboard/leaderboard/page.tsx b/frontend/app/dashboard/leaderboard/page.tsx
+index 32df687..b91f1b7 100644
+--- a/frontend/app/dashboard/leaderboard/page.tsx
++++ b/frontend/app/dashboard/leaderboard/page.tsx
+@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
+ 
+ interface LeaderboardEntry {
+     rank: number;
+-    userId: string;
+     name: string;
+     totalXp: number;
+     currentLevel: number;
+@@ -164,7 +163,7 @@ export default function LeaderboardPage() {
+                         <div className="divide-y">
+                             {remaining.map((entry) => (
+                                 <div
+-                                    key={entry.userId}
++                                    key={entry.rank}
+                                     className={cn(
+                                         "group flex items-center gap-6 p-5 hover:bg-slate-50 transition-colors",
+                                         entry.isCurrentUser && "bg-primary/5"
+diff --git a/frontend/lib/chat-text.mjs b/frontend/lib/chat-text.mjs
+new file mode 100644
+index 0000000..c4005f8
+--- /dev/null
++++ b/frontend/lib/chat-text.mjs
+@@ -0,0 +1,19 @@
++/**
++ * Turns chat text into safe HTML. Every character that could start a tag or attribute is escaped FIRST,
++ * and only then are **bold** and *italic* converted. Without the escaping, a message such as
++ * <img src=x onerror=...> would run script in a page that also holds the login token.
++ */
++export function escapeHtml(text) {
++  return String(text ?? "")
++    .replace(/&/g, "&amp;")
++    .replace(/</g, "&lt;")
++    .replace(/>/g, "&gt;")
++    .replace(/"/g, "&quot;")
++    .replace(/'/g, "&#39;");
++}
++
++export function renderChatMarkdown(text) {
++  return escapeHtml(text)
++    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
++    .replace(/\*(.*?)\*/g, "<em>$1</em>");
++}
+diff --git a/frontend/lib/features.mjs b/frontend/lib/features.mjs
+new file mode 100644
+index 0000000..a9d47e9
+--- /dev/null
++++ b/frontend/lib/features.mjs
+@@ -0,0 +1,9 @@
++/** A frontend feature is on only when its NEXT_PUBLIC_* value is exactly "true" (any case). */
++export function isOn(flag) {
++  return String(flag ?? "").toLowerCase() === "true";
++}
++
++/** The discussion forum link is shown only when NEXT_PUBLIC_ENABLE_FORUM is true. */
++export function forumEnabled(flag) {
++  return isOn(flag);
++}
+diff --git a/frontend/lib/practice-errors.mjs b/frontend/lib/practice-errors.mjs
+index f226a8a..2b5d850 100644
+--- a/frontend/lib/practice-errors.mjs
++++ b/frontend/lib/practice-errors.mjs
+@@ -19,7 +19,9 @@ export function practiceSubmitMessage(status) {
+   return "Something went wrong submitting your answers. Please tell your teacher.";
+ }
+ 
+-/** The AI mentor sidebar is shown only when NEXT_PUBLIC_ENABLE_AI_MENTOR is exactly "true" (any case). */
++import { isOn } from "./features.mjs";
++
++/** The AI mentor (sidebar and floating chat widget) is shown only when NEXT_PUBLIC_ENABLE_AI_MENTOR is exactly "true". */
+ export function aiMentorEnabled(flag) {
+-  return String(flag ?? "").toLowerCase() === "true";
++  return isOn(flag);
+ }
+diff --git a/frontend/lib/safety.test.mjs b/frontend/lib/safety.test.mjs
+new file mode 100644
+index 0000000..b9c2084
+--- /dev/null
++++ b/frontend/lib/safety.test.mjs
+@@ -0,0 +1,49 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { escapeHtml, renderChatMarkdown } from "./chat-text.mjs";
++import { forumEnabled, isOn } from "./features.mjs";
++import { aiMentorEnabled } from "./practice-errors.mjs";
++import { securityHeaders } from "./security-headers.mjs";
++
++test("chat text never lets a tag through", () => {
++  const attacks = [
++    '<img src=x onerror="alert(1)">',
++    "<script>alert(document.cookie)</script>",
++    '"><svg onload=alert(1)>',
++    "**<b onmouseover=alert(1)>x</b>**",
++    "<a href='javascript:alert(1)'>click</a>",
++  ];
++  for (const a of attacks) {
++    const html = renderChatMarkdown(a);
++    const withoutOurTags = html.replace(/<\/?(strong|em)>/g, "");
++    assert.doesNotMatch(withoutOurTags, /</, `raw < survived in: ${html}`);
++    assert.doesNotMatch(withoutOurTags, />/, `raw > survived in: ${html}`);
++  }
++});
++
++test("chat text still formats bold and italic, and keeps ordinary punctuation readable", () => {
++  assert.equal(renderChatMarkdown("**bold** and *italic*"), "<strong>bold</strong> and <em>italic</em>");
++  assert.equal(renderChatMarkdown("2 < 3 & 5 > 4"), "2 &lt; 3 &amp; 5 &gt; 4");
++  assert.equal(renderChatMarkdown(undefined), "");
++  assert.equal(escapeHtml(`"'`), "&quot;&#39;");
++});
++
++test("feature switches are off unless exactly true", () => {
++  for (const off of [undefined, "", "false", "1", "yes"]) {
++    assert.equal(isOn(off), false);
++    assert.equal(forumEnabled(off), false);
++    assert.equal(aiMentorEnabled(off), false);
++  }
++  assert.equal(forumEnabled("TRUE"), true);
++  assert.equal(aiMentorEnabled("true"), true);
++});
++
++test("security headers are present and keep the camera and microphone the classroom needs", () => {
++  const h = Object.fromEntries(securityHeaders.map((x) => [x.key, x.value]));
++  assert.equal(h["X-Content-Type-Options"], "nosniff");
++  assert.equal(h["X-Frame-Options"], "SAMEORIGIN");
++  assert.match(h["Referrer-Policy"], /strict-origin/);
++  assert.match(h["Permissions-Policy"], /camera=\(self\)/);
++  assert.match(h["Permissions-Policy"], /microphone=\(self\)/);
++  assert.match(h["Permissions-Policy"], /geolocation=\(\)/);
++});
+diff --git a/frontend/lib/security-headers.mjs b/frontend/lib/security-headers.mjs
+new file mode 100644
+index 0000000..67da43b
+--- /dev/null
++++ b/frontend/lib/security-headers.mjs
+@@ -0,0 +1,11 @@
++/**
++ * Response headers for every page. camera and microphone stay available to this site only, because the live
++ * classroom uses them; geolocation is switched off. No content-security-policy is set here: it needs testing in
++ * a real browser against the video call and the PWA before it can be turned on safely.
++ */
++export const securityHeaders = [
++  { key: "X-Content-Type-Options", value: "nosniff" },
++  { key: "X-Frame-Options", value: "SAMEORIGIN" },
++  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
++  { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
++];
+diff --git a/frontend/next.config.ts b/frontend/next.config.ts
+index 818f8c0..6e732c7 100644
+--- a/frontend/next.config.ts
++++ b/frontend/next.config.ts
+@@ -1,4 +1,5 @@
+ import type { NextConfig } from "next";
++import { securityHeaders } from "./lib/security-headers.mjs";
+ // @ts-ignore
+ import withPWAInit from "@ducanh2912/next-pwa";
+ 
+@@ -16,6 +17,9 @@ const withPWA = withPWAInit({
+ 
+ const nextConfig: NextConfig = {
+   turbopack: {},
++  async headers() {
++    return [{ source: "/:path*", headers: securityHeaders }];
++  },
+ };
+ 
+ export default withPWA(nextConfig);
+-- 
+2.43.0
+

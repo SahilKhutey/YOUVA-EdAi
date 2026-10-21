@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { forumEnabled } from "@/lib/features.mjs";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -39,7 +40,9 @@ const studentNavItems = [
   { name: "Mock Tests", icon: FileText, href: "/dashboard/mock-tests" },
   { name: "Project Assessment", icon: Briefcase, href: "/dashboard/assessment/project" },
   { name: "Credential Wallet", icon: ShieldCheck, href: "/dashboard/credentials" },
-  { name: "Discussion", icon: MessageSquare, href: "/dashboard/discussion" },
+  ...(forumEnabled(process.env.NEXT_PUBLIC_ENABLE_FORUM)
+    ? [{ name: "Discussion", icon: MessageSquare, href: "/dashboard/discussion" }]
+    : []),
   { name: "Leaderboard", icon: Trophy, href: "/dashboard/leaderboard" },
   { name: "Schedule", icon: Calendar, href: "/dashboard/schedule" },
   { name: "Goals", icon: Target, href: "/dashboard/goals" },

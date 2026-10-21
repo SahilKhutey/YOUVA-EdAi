@@ -1,0 +1,399 @@
+From 6f1680a610ab22e0aa3f602674413ec9e17730f1 Mon Sep 17 00:00:00 2001
+From: phase9-fixes <phase9@example.invalid>
+Date: Tue, 20 Oct 2026 14:17:10 +0000
+Subject: [PATCH 3/4] feat(security): inventory shows which routes cannot tell
+ who is calling; route review log
+
+---
+ backend/scripts/route-audit.ts          |   6 +-
+ backend/src/security/route-inventory.ts |  14 +-
+ docs/ROUTE_AUDIT.generated.md           | 270 ++++++++++++------------
+ docs/ROUTE_REVIEW.md                    |  43 ++++
+ 4 files changed, 194 insertions(+), 139 deletions(-)
+ create mode 100644 docs/ROUTE_REVIEW.md
+
+diff --git a/backend/scripts/route-audit.ts b/backend/scripts/route-audit.ts
+index 0516c58..33c9903 100644
+--- a/backend/scripts/route-audit.ts
++++ b/backend/scripts/route-audit.ts
+@@ -14,9 +14,9 @@ async function main() {
+     .compile();
+   const routes = collectRoutes(moduleRef.get(ModulesContainer));
+   console.log(`# Route inventory (generated, ${routes.length} routes)\n`);
+-  console.log('Read from decorator metadata. "Login" = JwtAuthGuard present. Ownership checks inside handlers are NOT shown here.\n');
+-  console.log('| Method | Path | Login | Roles | Controller |\n|---|---|---|---|---|');
+-  for (const r of routes) console.log(`| ${r.method} | ${r.path} | ${r.authenticated ? 'yes' : '**NO**'} | ${r.roles.join(', ') || '-'} | ${r.controller} |`);
++  console.log('Read from decorator metadata. "Login" = JwtAuthGuard present. "Knows caller" = the handler receives the request object, so it can tell who is calling; a login-only route that does not can only be safe if it serves the same public data to everyone. Ownership checks inside handlers are NOT shown here.\n');
++  console.log('| Method | Path | Login | Roles | Knows caller | Controller |\n|---|---|---|---|---|---|');
++  for (const r of routes) console.log(`| ${r.method} | ${r.path} | ${r.authenticated ? 'yes' : '**NO**'} | ${r.roles.join(', ') || '-'} | ${r.usesRequest ? 'yes' : 'no'} | ${r.controller} |`);
+   await moduleRef.close();
+ }
+ main().catch((e) => { console.error(e); process.exit(1); });
+diff --git a/backend/src/security/route-inventory.ts b/backend/src/security/route-inventory.ts
+index b499a71..5cb6e5e 100644
+--- a/backend/src/security/route-inventory.ts
++++ b/backend/src/security/route-inventory.ts
+@@ -1,5 +1,6 @@
+ import { ModulesContainer } from '@nestjs/core';
+-import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
++import { METHOD_METADATA, PATH_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
++import { RouteParamtypes } from '@nestjs/common/enums/route-paramtypes.enum';
+ import { RequestMethod } from '@nestjs/common';
+ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+ import { ROLES_KEY } from '../auth/roles.decorator';
+@@ -11,6 +12,10 @@ export interface RouteInfo {
+   authenticated: boolean;
+   guards: string[];
+   roles: string[];
++  /** True when the handler receives the request object (so it can know who is calling). */
++  usesRequest: boolean;
++  /** Names read from the body, query string or URL path with @Body('x') / @Query('x') / @Param('x'). */
++  inputs: string[];
+ }
+ 
+ const join = (a: string, b: string) => '/' + [a, b].map((p) => (p ?? '').replace(/^\/+|\/+$/g, '')).filter(Boolean).join('/');
+@@ -34,7 +39,14 @@ export function collectRoutes(modules: ModulesContainer): RouteInfo[] {
+         const sub = Reflect.getMetadata(PATH_METADATA, handler) ?? '';
+         const guards = [...guardsOn(ctrl), ...guardsOn(handler)];
+         const roles: string[] = Reflect.getMetadata(ROLES_KEY, handler) ?? Reflect.getMetadata(ROLES_KEY, ctrl) ?? [];
++        const args: Record<string, { index: number; data?: any }> = Reflect.getMetadata(ROUTE_ARGS_METADATA, ctrl, name) ?? {};
++        const kinds = Object.keys(args).map((k) => Number(k.split(':')[0]));
++        const inputs = Object.entries(args)
++          .filter(([k]) => [RouteParamtypes.BODY, RouteParamtypes.QUERY, RouteParamtypes.PARAM].includes(Number(k.split(':')[0])))
++          .map(([, v]) => (typeof v.data === 'string' ? v.data : '(whole)'));
+         routes.push({
++          usesRequest: kinds.includes(RouteParamtypes.REQUEST),
++          inputs,
+           controller: ctrl.name,
+           method: RequestMethod[verb],
+           path: join(base, Array.isArray(sub) ? sub[0] : sub),
+diff --git a/docs/ROUTE_AUDIT.generated.md b/docs/ROUTE_AUDIT.generated.md
+index 50aefab..0557e75 100644
+--- a/docs/ROUTE_AUDIT.generated.md
++++ b/docs/ROUTE_AUDIT.generated.md
+@@ -1,138 +1,138 @@
+ # Route inventory (generated, 132 routes)
+ 
+-Read from decorator metadata. "Login" = JwtAuthGuard present. Ownership checks inside handlers are NOT shown here.
++Read from decorator metadata. "Login" = JwtAuthGuard present. "Knows caller" = the handler receives the request object, so it can tell who is calling; a login-only route that does not can only be safe if it serves the same public data to everyone. Ownership checks inside handlers are NOT shown here.
+ 
+-| Method | Path | Login | Roles | Controller |
+-|---|---|---|---|---|
+-| POST | /ai-mentor/chat | yes | - | AiMentorController |
+-| GET | /ai-mentor/context/:topicId | yes | - | AiMentorController |
+-| POST | /ai-mentor/study-buddy | yes | - | AiMentorController |
+-| POST | /ai/generate | yes | - | AiController |
+-| GET | /analytics/ai-report | yes | - | AnalyticsController |
+-| GET | /analytics/dashboard-stats | yes | - | AnalyticsController |
+-| GET | /analytics/heatmap | yes | - | AnalyticsController |
+-| GET | /analytics/recent-sessions | yes | - | AnalyticsController |
+-| GET | /analytics/recommendations | yes | - | AnalyticsController |
+-| GET | /analytics/subject-breakdown | yes | - | AnalyticsController |
+-| GET | /analytics/summary | yes | - | AnalyticsController |
+-| GET | /analytics/upcoming-tests | yes | - | AnalyticsController |
+-| GET | /analytics/weak-topics | yes | - | AnalyticsController |
+-| DELETE | /announcements/:id | yes | TEACHER, ADMIN | AnnouncementController |
+-| GET | /announcements | yes | - | AnnouncementController |
+-| POST | /announcements | yes | TEACHER, ADMIN | AnnouncementController |
+-| POST | /assessment-intelligence/assign | yes | TEACHER, ADMIN | AssessmentIntelligenceController |
+-| POST | /assessment-intelligence/evaluate/:id | yes | - | AssessmentIntelligenceController |
+-| POST | /assessment/:sessionId/log-anomaly | yes | - | AssessmentController |
+-| POST | /assessment/:sessionId/submit | yes | - | AssessmentController |
+-| POST | /assessment/start | yes | - | AssessmentController |
+-| PATCH | /auth/complete-onboarding | yes | - | AuthController |
+-| POST | /auth/login | **NO** | - | AuthController |
+-| POST | /auth/register | **NO** | - | AuthController |
+-| PUT | /classroom/lesson-plan/:id/publish | yes | TEACHER, ADMIN | ClassroomController |
+-| GET | /classroom/lesson-plan/:id | yes | - | ClassroomController |
+-| POST | /classroom/lesson-plan/generate | yes | TEACHER, ADMIN | ClassroomController |
+-| GET | /classroom/lesson-plan | yes | TEACHER, ADMIN | ClassroomController |
+-| GET | /classroom/session/:id | yes | - | ClassroomController |
+-| POST | /classroom/session/start | yes | TEACHER, ADMIN | ClassroomController |
+-| PUT | /classroom/worksheet/:id/publish | yes | TEACHER, ADMIN | ClassroomController |
+-| POST | /classroom/worksheet/:id/submit | yes | - | ClassroomController |
+-| GET | /classroom/worksheet/:id | yes | - | ClassroomController |
+-| POST | /classroom/worksheet/generate | yes | TEACHER, ADMIN | ClassroomController |
+-| GET | /classroom/worksheet/submission/:id | yes | - | ClassroomController |
+-| GET | /classroom/worksheet | yes | TEACHER, ADMIN | ClassroomController |
+-| POST | /cognitive-state/hebbian-transfer | yes | - | NeuralCognitiveController |
+-| POST | /cognitive-state/log | yes | - | NeuralCognitiveController |
+-| POST | /consent/student/:studentId/erase | yes | ADMIN | ConsentController |
+-| GET | /consent/student/:studentId/export | yes | TEACHER, ADMIN | ConsentController |
+-| POST | /consent/student/:studentId/revoke | yes | TEACHER, ADMIN | ConsentController |
+-| GET | /consent/student/:studentId | yes | TEACHER, ADMIN | ConsentController |
+-| POST | /consent | yes | TEACHER, ADMIN | ConsentController |
+-| GET | /content-gen/drafts | yes | TEACHER, ADMIN | ContentGenController |
+-| POST | /content-gen/generate | yes | TEACHER, ADMIN | ContentGenController |
+-| PUT | /content-gen/publish/:draftId | yes | TEACHER, ADMIN | ContentGenController |
+-| POST | /content/engage | yes | - | ContentSearchController |
+-| GET | /content/search | yes | - | ContentSearchController |
+-| GET | /credential-mesh/my-credentials | yes | - | CredentialMeshController |
+-| GET | /dashboard/stats | yes | - | DashboardController |
+-| POST | /engagement/telemetry | yes | - | EngagementController |
+-| GET | /feedback/overview | yes | TEACHER, ADMIN | FeedbackController |
+-| POST | /feedback | yes | - | FeedbackController |
+-| GET | /forum/home | yes | - | ForumController |
+-| PATCH | /forum/post/:id/pin | yes | TEACHER, ADMIN | ForumController |
+-| PATCH | /forum/post/:id/upvote | yes | - | ForumController |
+-| GET | /forum/post/:id | yes | - | ForumController |
+-| POST | /forum/post/:postId/reply | yes | - | ForumController |
+-| POST | /forum/post | yes | - | ForumController |
+-| PATCH | /forum/reply/:id/accept | yes | TEACHER, ADMIN | ForumController |
+-| GET | /forum/topic/:topicId | yes | - | ForumController |
+-| GET | /gamification/badges/list | yes | - | GamificationController |
+-| GET | /gamification/badges | yes | - | GamificationController |
+-| GET | /gamification/leaderboard | yes | - | GamificationController |
+-| POST | /gamification/seed-badges | yes | - | GamificationController |
+-| GET | /gamification/stats | yes | - | GamificationController |
+-| GET | / | **NO** | - | AppController |
+-| GET | /global-verification/:hash | **NO** | - | GlobalVerificationController |
+-| GET | /goals/progress | yes | - | GoalController |
+-| GET | /goals | yes | - | GoalController |
+-| POST | /goals | yes | - | GoalController |
+-| GET | /learning-loop/audit/:studentId | yes | - | LearningLoopController |
+-| POST | /learning-loop/context | yes | - | LearningLoopController |
+-| POST | /learning-loop/escalation/:id/resolve | yes | TEACHER, ADMIN | LearningLoopController |
+-| POST | /learning-loop/evidence | yes | - | LearningLoopController |
+-| GET | /learning-loop/gate/:studentId | yes | - | LearningLoopController |
+-| POST | /learning-loop/personalize | yes | - | LearningLoopController |
+-| POST | /learning-loop/teacher/intervention | yes | TEACHER, ADMIN | LearningLoopController |
+-| GET | /learning-loop/teacher/queue | yes | TEACHER, ADMIN | LearningLoopController |
+-| POST | /learning/chat | yes | - | LearningController |
+-| POST | /learning/end | yes | - | LearningController |
+-| GET | /learning/history | yes | - | LearningController |
+-| GET | /learning/mastery | yes | - | LearningController |
+-| GET | /learning/recommendations | yes | - | LearningController |
+-| GET | /learning/sessions/:id | yes | - | LearningController |
+-| GET | /learning/sessions | yes | - | LearningController |
+-| POST | /learning/start | yes | - | LearningController |
+-| GET | /learning/today | yes | - | LearningController |
+-| PATCH | /notifications/:id/read | yes | - | NotificationController |
+-| PATCH | /notifications/read-all | yes | - | NotificationController |
+-| GET | /notifications | yes | - | NotificationController |
+-| POST | /practice/generate | yes | - | PracticeController |
+-| POST | /practice/submit | yes | - | PracticeController |
+-| GET | /practice/tests | yes | - | PracticeController |
+-| GET | /revision/schedule | yes | - | RevisionController |
+-| POST | /revision/start | yes | - | RevisionController |
+-| GET | /revision/suggestions | yes | - | RevisionController |
+-| PATCH | /schedule/:id/complete | yes | - | SchedulerController |
+-| DELETE | /schedule/:id | yes | - | SchedulerController |
+-| POST | /schedule/generate-plan | yes | - | SchedulerController |
+-| GET | /schedule/suggested | yes | - | SchedulerController |
+-| GET | /schedule | yes | - | SchedulerController |
+-| POST | /schedule | yes | - | SchedulerController |
+-| GET | /subjects/:id | yes | - | SubjectsController |
+-| GET | /subjects | yes | - | SubjectsController |
+-| POST | /subscription/create-checkout-session | yes | - | SubscriptionController |
+-| GET | /subscription/status | yes | - | SubscriptionController |
+-| POST | /subscription/webhook | **NO** | - | SubscriptionController |
+-| GET | /teacher-analytics/cohort | yes | TEACHER, ADMIN | TeacherAnalyticsController |
+-| GET | /teacher-analytics/content-performance | yes | TEACHER, ADMIN | TeacherAnalyticsController |
+-| GET | /teacher-analytics/export-csv | yes | TEACHER, ADMIN | TeacherAnalyticsController |
+-| GET | /teacher-analytics/student/:studentId | yes | TEACHER, ADMIN | TeacherAnalyticsController |
+-| GET | /teacher-analytics/students | yes | TEACHER, ADMIN | TeacherAnalyticsController |
+-| GET | /teacher-analytics/worksheet-performance | yes | TEACHER, ADMIN | TeacherAnalyticsController |
+-| GET | /teacher/analytics | yes | TEACHER, ADMIN | TeacherOpsController |
+-| POST | /teacher/classes/:id/enroll | yes | TEACHER, ADMIN | TeacherOpsController |
+-| GET | /teacher/classes | yes | TEACHER, ADMIN | TeacherOpsController |
+-| POST | /teacher/classes | yes | TEACHER, ADMIN | TeacherOpsController |
+-| POST | /teacher/content/assign | yes | TEACHER, ADMIN | TeacherOpsController |
+-| POST | /teacher/content/publish/:id | yes | TEACHER, ADMIN | TeacherOpsController |
+-| GET | /teacher/content | yes | TEACHER, ADMIN | TeacherOpsController |
+-| GET | /teacher/dashboard | yes | TEACHER, ADMIN | TeacherOpsController |
+-| POST | /teacher/interventions/:id/resolve | yes | TEACHER, ADMIN | TeacherOpsController |
+-| GET | /teacher/interventions | yes | TEACHER, ADMIN | TeacherOpsController |
+-| POST | /teacher/recommendations/:id/approve | yes | TEACHER, ADMIN | TeacherOpsController |
+-| POST | /teacher/recommendations/:id/override | yes | TEACHER, ADMIN | TeacherOpsController |
+-| GET | /teacher/recommendations | yes | TEACHER, ADMIN | TeacherOpsController |
+-| GET | /teacher/students/:id | yes | TEACHER, ADMIN | TeacherOpsController |
+-| POST | /teacher/students/:studentId/topics/:topicId/difficulty | yes | TEACHER, ADMIN | TeacherOpsController |
+-| GET | /teacher/students | yes | TEACHER, ADMIN | TeacherOpsController |
+-| GET | /users/me | yes | - | UsersController |
+-| PATCH | /users/profile | yes | - | UsersController |
++| Method | Path | Login | Roles | Knows caller | Controller |
++|---|---|---|---|---|---|
++| POST | /ai-mentor/chat | yes | - | yes | AiMentorController |
++| GET | /ai-mentor/context/:topicId | yes | - | yes | AiMentorController |
++| POST | /ai-mentor/study-buddy | yes | - | yes | AiMentorController |
++| POST | /ai/generate | yes | - | no | AiController |
++| GET | /analytics/ai-report | yes | - | yes | AnalyticsController |
++| GET | /analytics/dashboard-stats | yes | - | yes | AnalyticsController |
++| GET | /analytics/heatmap | yes | - | yes | AnalyticsController |
++| GET | /analytics/recent-sessions | yes | - | yes | AnalyticsController |
++| GET | /analytics/recommendations | yes | - | yes | AnalyticsController |
++| GET | /analytics/subject-breakdown | yes | - | yes | AnalyticsController |
++| GET | /analytics/summary | yes | - | yes | AnalyticsController |
++| GET | /analytics/upcoming-tests | yes | - | yes | AnalyticsController |
++| GET | /analytics/weak-topics | yes | - | yes | AnalyticsController |
++| DELETE | /announcements/:id | yes | TEACHER, ADMIN | no | AnnouncementController |
++| GET | /announcements | yes | - | no | AnnouncementController |
++| POST | /announcements | yes | TEACHER, ADMIN | yes | AnnouncementController |
++| POST | /assessment-intelligence/assign | yes | TEACHER, ADMIN | yes | AssessmentIntelligenceController |
++| POST | /assessment-intelligence/evaluate/:id | yes | - | yes | AssessmentIntelligenceController |
++| POST | /assessment/:sessionId/log-anomaly | yes | - | yes | AssessmentController |
++| POST | /assessment/:sessionId/submit | yes | - | yes | AssessmentController |
++| POST | /assessment/start | yes | - | yes | AssessmentController |
++| PATCH | /auth/complete-onboarding | yes | - | yes | AuthController |
++| POST | /auth/login | **NO** | - | yes | AuthController |
++| POST | /auth/register | **NO** | - | no | AuthController |
++| PUT | /classroom/lesson-plan/:id/publish | yes | TEACHER, ADMIN | yes | ClassroomController |
++| GET | /classroom/lesson-plan/:id | yes | - | yes | ClassroomController |
++| POST | /classroom/lesson-plan/generate | yes | TEACHER, ADMIN | yes | ClassroomController |
++| GET | /classroom/lesson-plan | yes | TEACHER, ADMIN | yes | ClassroomController |
++| GET | /classroom/session/:id | yes | - | yes | ClassroomController |
++| POST | /classroom/session/start | yes | TEACHER, ADMIN | yes | ClassroomController |
++| PUT | /classroom/worksheet/:id/publish | yes | TEACHER, ADMIN | yes | ClassroomController |
++| POST | /classroom/worksheet/:id/submit | yes | - | yes | ClassroomController |
++| GET | /classroom/worksheet/:id | yes | - | yes | ClassroomController |
++| POST | /classroom/worksheet/generate | yes | TEACHER, ADMIN | yes | ClassroomController |
++| GET | /classroom/worksheet/submission/:id | yes | - | yes | ClassroomController |
++| GET | /classroom/worksheet | yes | TEACHER, ADMIN | yes | ClassroomController |
++| POST | /cognitive-state/hebbian-transfer | yes | - | yes | NeuralCognitiveController |
++| POST | /cognitive-state/log | yes | - | yes | NeuralCognitiveController |
++| POST | /consent/student/:studentId/erase | yes | ADMIN | yes | ConsentController |
++| GET | /consent/student/:studentId/export | yes | TEACHER, ADMIN | yes | ConsentController |
++| POST | /consent/student/:studentId/revoke | yes | TEACHER, ADMIN | yes | ConsentController |
++| GET | /consent/student/:studentId | yes | TEACHER, ADMIN | yes | ConsentController |
++| POST | /consent | yes | TEACHER, ADMIN | yes | ConsentController |
++| GET | /content-gen/drafts | yes | TEACHER, ADMIN | yes | ContentGenController |
++| POST | /content-gen/generate | yes | TEACHER, ADMIN | yes | ContentGenController |
++| PUT | /content-gen/publish/:draftId | yes | TEACHER, ADMIN | yes | ContentGenController |
++| POST | /content/engage | yes | - | yes | ContentSearchController |
++| GET | /content/search | yes | - | yes | ContentSearchController |
++| GET | /credential-mesh/my-credentials | yes | - | yes | CredentialMeshController |
++| GET | /dashboard/stats | yes | - | yes | DashboardController |
++| POST | /engagement/telemetry | yes | - | yes | EngagementController |
++| GET | /feedback/overview | yes | TEACHER, ADMIN | no | FeedbackController |
++| POST | /feedback | yes | - | yes | FeedbackController |
++| GET | /forum/home | yes | - | no | ForumController |
++| PATCH | /forum/post/:id/pin | yes | TEACHER, ADMIN | no | ForumController |
++| PATCH | /forum/post/:id/upvote | yes | - | yes | ForumController |
++| GET | /forum/post/:id | yes | - | no | ForumController |
++| POST | /forum/post/:postId/reply | yes | - | yes | ForumController |
++| POST | /forum/post | yes | - | yes | ForumController |
++| PATCH | /forum/reply/:id/accept | yes | TEACHER, ADMIN | no | ForumController |
++| GET | /forum/topic/:topicId | yes | - | no | ForumController |
++| GET | /gamification/badges/list | yes | - | no | GamificationController |
++| GET | /gamification/badges | yes | - | yes | GamificationController |
++| GET | /gamification/leaderboard | yes | - | yes | GamificationController |
++| POST | /gamification/seed-badges | yes | ADMIN | no | GamificationController |
++| GET | /gamification/stats | yes | - | yes | GamificationController |
++| GET | / | **NO** | - | no | AppController |
++| GET | /global-verification/:hash | **NO** | - | no | GlobalVerificationController |
++| GET | /goals/progress | yes | - | yes | GoalController |
++| GET | /goals | yes | - | yes | GoalController |
++| POST | /goals | yes | - | yes | GoalController |
++| GET | /learning-loop/audit/:studentId | yes | - | yes | LearningLoopController |
++| POST | /learning-loop/context | yes | - | yes | LearningLoopController |
++| POST | /learning-loop/escalation/:id/resolve | yes | TEACHER, ADMIN | yes | LearningLoopController |
++| POST | /learning-loop/evidence | yes | - | yes | LearningLoopController |
++| GET | /learning-loop/gate/:studentId | yes | - | yes | LearningLoopController |
++| POST | /learning-loop/personalize | yes | - | yes | LearningLoopController |
++| POST | /learning-loop/teacher/intervention | yes | TEACHER, ADMIN | yes | LearningLoopController |
++| GET | /learning-loop/teacher/queue | yes | TEACHER, ADMIN | yes | LearningLoopController |
++| POST | /learning/chat | yes | - | yes | LearningController |
++| POST | /learning/end | yes | - | yes | LearningController |
++| GET | /learning/history | yes | - | yes | LearningController |
++| GET | /learning/mastery | yes | - | yes | LearningController |
++| GET | /learning/recommendations | yes | - | yes | LearningController |
++| GET | /learning/sessions/:id | yes | - | yes | LearningController |
++| GET | /learning/sessions | yes | - | yes | LearningController |
++| POST | /learning/start | yes | - | yes | LearningController |
++| GET | /learning/today | yes | - | yes | LearningController |
++| PATCH | /notifications/:id/read | yes | - | yes | NotificationController |
++| PATCH | /notifications/read-all | yes | - | yes | NotificationController |
++| GET | /notifications | yes | - | yes | NotificationController |
++| POST | /practice/generate | yes | - | yes | PracticeController |
++| POST | /practice/submit | yes | - | yes | PracticeController |
++| GET | /practice/tests | yes | - | yes | PracticeController |
++| GET | /revision/schedule | yes | - | yes | RevisionController |
++| POST | /revision/start | yes | - | yes | RevisionController |
++| GET | /revision/suggestions | yes | - | yes | RevisionController |
++| PATCH | /schedule/:id/complete | yes | - | yes | SchedulerController |
++| DELETE | /schedule/:id | yes | - | yes | SchedulerController |
++| POST | /schedule/generate-plan | yes | - | yes | SchedulerController |
++| GET | /schedule/suggested | yes | - | yes | SchedulerController |
++| GET | /schedule | yes | - | yes | SchedulerController |
++| POST | /schedule | yes | - | yes | SchedulerController |
++| GET | /subjects/:id | yes | - | no | SubjectsController |
++| GET | /subjects | yes | - | no | SubjectsController |
++| POST | /subscription/create-checkout-session | yes | - | yes | SubscriptionController |
++| GET | /subscription/status | yes | - | yes | SubscriptionController |
++| POST | /subscription/webhook | **NO** | - | yes | SubscriptionController |
++| GET | /teacher-analytics/cohort | yes | TEACHER, ADMIN | yes | TeacherAnalyticsController |
++| GET | /teacher-analytics/content-performance | yes | TEACHER, ADMIN | yes | TeacherAnalyticsController |
++| GET | /teacher-analytics/export-csv | yes | TEACHER, ADMIN | yes | TeacherAnalyticsController |
++| GET | /teacher-analytics/student/:studentId | yes | TEACHER, ADMIN | yes | TeacherAnalyticsController |
++| GET | /teacher-analytics/students | yes | TEACHER, ADMIN | yes | TeacherAnalyticsController |
++| GET | /teacher-analytics/worksheet-performance | yes | TEACHER, ADMIN | yes | TeacherAnalyticsController |
++| GET | /teacher/analytics | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| POST | /teacher/classes/:id/enroll | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| GET | /teacher/classes | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| POST | /teacher/classes | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| POST | /teacher/content/assign | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| POST | /teacher/content/publish/:id | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| GET | /teacher/content | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| GET | /teacher/dashboard | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| POST | /teacher/interventions/:id/resolve | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| GET | /teacher/interventions | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| POST | /teacher/recommendations/:id/approve | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| POST | /teacher/recommendations/:id/override | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| GET | /teacher/recommendations | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| GET | /teacher/students/:id | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| POST | /teacher/students/:studentId/topics/:topicId/difficulty | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| GET | /teacher/students | yes | TEACHER, ADMIN | yes | TeacherOpsController |
++| GET | /users/me | yes | - | yes | UsersController |
++| PATCH | /users/profile | yes | - | yes | UsersController |
+diff --git a/docs/ROUTE_REVIEW.md b/docs/ROUTE_REVIEW.md
+new file mode 100644
+index 0000000..ffbdcb5
+--- /dev/null
++++ b/docs/ROUTE_REVIEW.md
+@@ -0,0 +1,43 @@
++# Route review log
++A person-readable record of what was checked, by whom, and how. Regenerate the machine list with `cd backend && npx ts-node --transpile-only scripts/route-audit.ts > ../docs/ROUTE_AUDIT.generated.md`. Update this log whenever a route changes.
++
++Method: (1) the inventory reads decorator metadata for all 132 routes; (2) every route with no login, and every login-only route that cannot tell who is calling, was read; (3) every login-only route that knows the caller but takes an id-like value in the URL, query or body was read, including the service method that uses it; (4) request body types (DTOs) were searched for user, student or teacher id properties. A route that only uses the logged-in user's own identity and takes no such input was not read line by line.
++
++## Public (no login): 5 routes
++| Route | Verdict |
++|---|---|
++| `GET /` | hello message; fine |
++| `POST /auth/login` | credentials are the check; rate limited |
++| `POST /auth/register` | creates students only; rate limited; can be closed |
++| `GET /global-verification/:hash` | public credential lookup by hash; returns the skill and an anonymous hash; accepted for now |
++| `POST /subscription/webhook` | needs a valid Stripe signature; disabled without a secret |
++
++## Login-only routes that cannot tell who is calling: 9 routes
++| Route | Verdict |
++|---|---|
++| `GET /subjects`, `GET /subjects/:id` | public course data; fine |
++| `GET /announcements` | shared notices; fine |
++| `GET /gamification/badges/list` | badge catalogue; fine |
++| `POST /gamification/seed-badges` | **was open to any logged-in user; now admin only** |
++| `POST /ai/generate` | arbitrary prompt to the AI; needs login and `ENABLE_AI_FEATURES=true` |
++| `GET /forum/home`, `/forum/topic/:topicId`, `/forum/post/:id` | show every post and author name to every logged-in student; **forum is now off unless `ENABLE_FORUM=true`** |
++
++## Login-only routes that know the caller and take an id-like input: 22 routes
++| Route | Where it is enforced |
++|---|---|
++| `GET /classroom/lesson-plan/:id`, `GET /classroom/worksheet/:id`, `GET /classroom/worksheet/submission/:id`, `GET /classroom/session/:id`, `POST /classroom/worksheet/:id/submit` | owner/participant rules and published-only access in the classroom services (fixed in Phase 7) |
++| `POST /assessment-intelligence/evaluate/:id` | project's student, their teacher, or admin; AI switch (Phase 7) |
++| `POST /assessment/start`, `/assessment/:sessionId/submit`, `/assessment/:sessionId/log-anomaly` | session must belong to the caller (read in the service) |
++| `GET /content/search` | uses the logged-in user; ignores any user id sent (Phase 7) |
++| `GET /learning-loop/audit/:studentId`, `GET /learning-loop/gate/:studentId` | students only their own; teachers need the student in scope (Phases 7 and 8) |
++| `POST /learning/start`, `POST /learning/end`, `GET /learning/sessions/:id` | session must belong to the caller (read in the service); start is also behind the AI switch |
++| `PATCH /notifications/:id/read`, `PATCH /schedule/:id/complete`, `DELETE /schedule/:id` | item must belong to the caller (read in the service) |
++| `PATCH /forum/post/:id/upvote`, `POST /forum/post/:postId/reply` | per-user vote; replies are by the caller; whole forum is off by default |
++| `GET /ai-mentor/context/:topicId`, `POST /practice/generate` | topic data only / consent and bank rules (Phases 2, 3 and 6) |
++
++## Other fixes from this review
++- The leaderboard returned the top 50 users in the system, **including email addresses and user ids**, to any logged-in student. It now returns only classmates (teachers: their own students), students only, display names only.
++- The floating AI chat widget on every page is hidden unless `NEXT_PUBLIC_ENABLE_AI_MENTOR=true`, and chat text is HTML-escaped before display (it was inserted as raw HTML).
++
++## Not covered
++Business-logic abuse (for example repeated forum replies earning points), AI prompt manipulation, and the line-by-line behaviour of the roughly 50 routes that use only the caller's own identity and take no id-like input.
+-- 
+2.43.0
+

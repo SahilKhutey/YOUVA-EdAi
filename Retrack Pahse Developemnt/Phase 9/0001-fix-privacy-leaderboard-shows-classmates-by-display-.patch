@@ -1,0 +1,316 @@
+From a083ad23868d002cd1c409001d90258b7b1e6b16 Mon Sep 17 00:00:00 2001
+From: phase9-fixes <phase9@example.invalid>
+Date: Tue, 20 Oct 2026 14:17:10 +0000
+Subject: [PATCH 1/4] fix(privacy): leaderboard shows classmates by display
+ name only (was system-wide with emails and ids); badge seeding admin-only;
+ forum off by default (+5 tests)
+
+---
+ backend/.env.example                          |  1 +
+ .../src/common/guards/feature-flag.guard.ts   | 17 ++++++
+ backend/src/forum/forum-flag.spec.ts          | 24 +++++++++
+ backend/src/forum/forum.controller.ts         |  3 +-
+ .../gamification/gamification.controller.ts   | 19 +++++--
+ .../src/gamification/gamification.module.ts   |  3 +-
+ .../src/gamification/gamification.service.ts  | 23 ++++++--
+ backend/src/gamification/leaderboard.spec.ts  | 53 +++++++++++++++++++
+ backend/src/security/render-config.spec.ts    |  2 +
+ backend/src/security/route-coverage.spec.ts   |  3 ++
+ render.yaml                                   |  5 ++
+ 11 files changed, 144 insertions(+), 9 deletions(-)
+ create mode 100644 backend/src/common/guards/feature-flag.guard.ts
+ create mode 100644 backend/src/forum/forum-flag.spec.ts
+ create mode 100644 backend/src/gamification/leaderboard.spec.ts
+
+diff --git a/backend/.env.example b/backend/.env.example
+index ab2300d..81269d1 100644
+--- a/backend/.env.example
++++ b/backend/.env.example
+@@ -13,3 +13,4 @@ TRUST_PROXY_HOPS="0" # set 1 behind a reverse proxy (Render, nginx) so rate limi
+ ENABLE_SHARED_BOARD="false" # the shared whiteboard puts all users in one room; keep off for pilots
+ # API_PREFIX="api" # only if the frontend calls /api/...; render.yaml sets it
+ # FRONTEND_URL="" # fallback for CORS_ORIGINS
++ENABLE_FORUM="false" # the forum shows every student every post and author name; keep off for pilots
+diff --git a/backend/src/common/guards/feature-flag.guard.ts b/backend/src/common/guards/feature-flag.guard.ts
+new file mode 100644
+index 0000000..6e858d5
+--- /dev/null
++++ b/backend/src/common/guards/feature-flag.guard.ts
+@@ -0,0 +1,17 @@
++import { CanActivate, ForbiddenException, Injectable, Type } from '@nestjs/common';
++
++/** Makes a guard that blocks a feature unless the named environment variable is exactly "true" (any case). */
++export function featureFlagGuard(envName: string, message: string, className: string): Type<CanActivate> {
++  @Injectable()
++  class FeatureFlagGuard implements CanActivate {
++    canActivate(): boolean {
++      if ((process.env[envName] ?? 'false').toLowerCase() !== 'true') throw new ForbiddenException(message);
++      return true;
++    }
++  }
++  Object.defineProperty(FeatureFlagGuard, 'name', { value: className });
++  return FeatureFlagGuard;
++}
++
++/** The discussion forum lets every logged-in student read every post and author name. Off unless ENABLE_FORUM=true. */
++export const ForumFeatureGuard = featureFlagGuard('ENABLE_FORUM', 'The discussion forum is turned off for this deployment.', 'ForumFeatureGuard');
+diff --git a/backend/src/forum/forum-flag.spec.ts b/backend/src/forum/forum-flag.spec.ts
+new file mode 100644
+index 0000000..5020025
+--- /dev/null
++++ b/backend/src/forum/forum-flag.spec.ts
+@@ -0,0 +1,24 @@
++import { ForbiddenException } from '@nestjs/common';
++import { ForumController } from '../forum/forum.controller';
++import { ForumFeatureGuard } from '../common/guards/feature-flag.guard';
++
++describe('forum feature switch', () => {
++  const OLD = process.env.ENABLE_FORUM;
++  afterEach(() => { if (OLD === undefined) delete process.env.ENABLE_FORUM; else process.env.ENABLE_FORUM = OLD; });
++
++  it('is off by default and only an exact "true" turns it on', () => {
++    const guard = new ForumFeatureGuard();
++    delete process.env.ENABLE_FORUM;
++    expect(() => guard.canActivate({} as any)).toThrow(ForbiddenException);
++    process.env.ENABLE_FORUM = '1';
++    expect(() => guard.canActivate({} as any)).toThrow(ForbiddenException);
++    process.env.ENABLE_FORUM = 'True';
++    expect(guard.canActivate({} as any)).toBe(true);
++  });
++
++  it('is attached to the whole forum controller, before the login check', () => {
++    const guards: any[] = Reflect.getMetadata('__guards__', ForumController);
++    expect(guards[0]).toBe(ForumFeatureGuard);
++    expect(ForumFeatureGuard.name).toBe('ForumFeatureGuard');
++  });
++});
+diff --git a/backend/src/forum/forum.controller.ts b/backend/src/forum/forum.controller.ts
+index 8153725..0204e1f 100644
+--- a/backend/src/forum/forum.controller.ts
++++ b/backend/src/forum/forum.controller.ts
+@@ -13,9 +13,10 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+ import { RolesGuard } from '../auth/roles.guard';
+ import { Roles } from '../auth/roles.decorator';
+ import { Role } from '../auth/role.enum';
++import { ForumFeatureGuard } from '../common/guards/feature-flag.guard';
+ 
+ @Controller('forum')
+-@UseGuards(JwtAuthGuard)
++@UseGuards(ForumFeatureGuard, JwtAuthGuard)
+ export class ForumController {
+     constructor(private readonly service: ForumService) { }
+ 
+diff --git a/backend/src/gamification/gamification.controller.ts b/backend/src/gamification/gamification.controller.ts
+index fcbfca0..8d4fd7a 100644
+--- a/backend/src/gamification/gamification.controller.ts
++++ b/backend/src/gamification/gamification.controller.ts
+@@ -1,11 +1,18 @@
+ import { Controller, Get, UseGuards, Request, Post } from '@nestjs/common';
+ import { GamificationService } from './gamification.service';
+ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
++import { RolesGuard } from '../auth/roles.guard';
++import { Roles } from '../auth/roles.decorator';
++import { Role } from '../auth/role.enum';
++import { ScopeAuthorizationService } from '../auth/services/scope-authorization.service';
+ 
+ @Controller('gamification')
+ @UseGuards(JwtAuthGuard)
+ export class GamificationController {
+-  constructor(private readonly gamificationService: GamificationService) { }
++  constructor(
++    private readonly gamificationService: GamificationService,
++    private readonly scope: ScopeAuthorizationService,
++  ) { }
+ 
+   @Get('stats')
+   async getStats(@Request() req: any) {
+@@ -24,10 +31,16 @@ export class GamificationController {
+ 
+   @Get('leaderboard')
+   async getLeaderboard(@Request() req: any) {
+-    return this.gamificationService.getLeaderboard(req.user.userId);
++    // Students see only their own classmates; teachers see their own students; admins see all students.
++    const visible = req.user.role === Role.STUDENT
++      ? await this.gamificationService.getClassmateIds(req.user.userId)
++      : await this.scope.getScopedStudentIds(req.user.userId);
++    return this.gamificationService.getLeaderboard(req.user.userId, visible);
+   }
+ 
+-  // Temporary endpoint to trigger seeding for testing
++  // Seeds the badge catalogue. Admin only (it used to be open to any logged-in user).
++  @UseGuards(RolesGuard)
++  @Roles(Role.ADMIN)
+   @Post('seed-badges')
+   async seedBadges() {
+     await this.gamificationService.seedBadges();
+diff --git a/backend/src/gamification/gamification.module.ts b/backend/src/gamification/gamification.module.ts
+index f5caaff..cd7ccc1 100644
+--- a/backend/src/gamification/gamification.module.ts
++++ b/backend/src/gamification/gamification.module.ts
+@@ -3,9 +3,10 @@ import { GamificationService } from './gamification.service';
+ import { GamificationController } from './gamification.controller';
+ import { PrismaModule } from '../prisma/prisma.module';
+ import { NotificationModule } from '../notification/notification.module';
++import { AuthModule } from '../auth/auth.module';
+ 
+ @Module({
+-  imports: [PrismaModule, NotificationModule],
++  imports: [PrismaModule, NotificationModule, AuthModule],
+   providers: [GamificationService],
+   controllers: [GamificationController],
+   exports: [GamificationService],
+diff --git a/backend/src/gamification/gamification.service.ts b/backend/src/gamification/gamification.service.ts
+index 17f6bcd..201b524 100644
+--- a/backend/src/gamification/gamification.service.ts
++++ b/backend/src/gamification/gamification.service.ts
+@@ -243,19 +243,34 @@ export class GamificationService {
+   }
+ 
+   // ── Leaderboard ─────────────────────────────────────────────
+-  async getLeaderboard(currentUserId: string) {
++  /** The caller plus every student who shares a class with them. */
++  async getClassmateIds(userId: string): Promise<string[]> {
++    const mine = await this.prisma.teacherClassEnrollment.findMany({ where: { studentId: userId }, select: { classId: true } });
++    if (mine.length === 0) return [userId];
++    const peers = await this.prisma.teacherClassEnrollment.findMany({
++      where: { classId: { in: mine.map((m) => m.classId) } },
++      select: { studentId: true },
++    });
++    return [...new Set([userId, ...peers.map((p) => p.studentId)])];
++  }
++
++  /**
++   * Ranking among the given students only. It never returns email addresses or user ids, and never includes
++   * teachers or admins. A student without a name shows as "Student".
++   */
++  async getLeaderboard(currentUserId: string, visibleUserIds: string[]) {
+     const rows = await this.prisma.userStats.findMany({
++      where: { userId: { in: visibleUserIds }, user: { role: 'STUDENT' } },
+       orderBy: { totalXp: 'desc' },
+       take: 50,
+       include: {
+-        user: { select: { id: true, name: true, email: true } },
++        user: { select: { name: true } },
+       },
+     });
+ 
+     return rows.map((row, index) => ({
+       rank: index + 1,
+-      userId: row.userId,
+-      name: row.user.name ?? row.user.email,
++      name: row.user.name ?? 'Student',
+       totalXp: row.totalXp,
+       currentLevel: row.currentLevel,
+       currentStreak: row.currentStreak,
+diff --git a/backend/src/gamification/leaderboard.spec.ts b/backend/src/gamification/leaderboard.spec.ts
+new file mode 100644
+index 0000000..c7376c1
+--- /dev/null
++++ b/backend/src/gamification/leaderboard.spec.ts
+@@ -0,0 +1,53 @@
++import { GamificationService } from './gamification.service';
++import { GamificationController } from './gamification.controller';
++
++function makeService(opts: { enrollments?: { classId: string; studentId: string }[]; stats?: any[] } = {}) {
++  const enrollments = opts.enrollments ?? [];
++  const seen: any = {};
++  const prisma: any = {
++    teacherClassEnrollment: {
++      findMany: jest.fn(async ({ where }: any) => {
++        if (where.studentId) return enrollments.filter((e) => e.studentId === where.studentId).map((e) => ({ classId: e.classId }));
++        return enrollments.filter((e) => where.classId.in.includes(e.classId)).map((e) => ({ studentId: e.studentId }));
++      }),
++    },
++    userStats: { findMany: jest.fn(async (args: any) => { seen.args = args; return opts.stats ?? []; }) },
++  };
++  return { svc: new GamificationService(prisma, {} as any), prisma, seen };
++}
++
++describe('leaderboard privacy', () => {
++  it('classmates are the caller plus students who share a class; a student in no class sees only themselves', async () => {
++    const { svc } = makeService({ enrollments: [
++      { classId: 'c1', studentId: 'me' }, { classId: 'c1', studentId: 'a' }, { classId: 'c2', studentId: 'b' },
++    ] });
++    expect((await svc.getClassmateIds('me')).sort()).toEqual(['a', 'me']);
++    expect(await svc.getClassmateIds('loner')).toEqual(['loner']);
++  });
++
++  it('ranks only the visible students, only students, and never returns emails or user ids', async () => {
++    const { svc, seen } = makeService({ stats: [
++      { userId: 'me', totalXp: 50, currentLevel: 2, currentStreak: 3, user: { name: 'Asha' } },
++      { userId: 'a', totalXp: 40, currentLevel: 1, currentStreak: 0, user: { name: null } },
++    ] });
++    const out: any[] = await svc.getLeaderboard('me', ['me', 'a']);
++    expect(seen.args.where).toEqual({ userId: { in: ['me', 'a'] }, user: { role: 'STUDENT' } });
++    expect(seen.args.include.user.select).toEqual({ name: true }); // email and id are never selected
++    expect(out).toEqual([
++      { rank: 1, name: 'Asha', totalXp: 50, currentLevel: 2, currentStreak: 3, isCurrentUser: true },
++      { rank: 2, name: 'Student', totalXp: 40, currentLevel: 1, currentStreak: 0, isCurrentUser: false },
++    ]);
++    expect(JSON.stringify(out)).not.toMatch(/@|userId/);
++  });
++
++  it('the controller shows a student their classmates and a teacher their own students', async () => {
++    const service: any = { getClassmateIds: jest.fn(async () => ['me', 'a']), getLeaderboard: jest.fn(async () => []) };
++    const scope: any = { getScopedStudentIds: jest.fn(async () => ['s1', 's2']) };
++    const ctrl = new GamificationController(service, scope);
++    await ctrl.getLeaderboard({ user: { userId: 'me', id: 'me', role: 'STUDENT' } });
++    expect(service.getLeaderboard).toHaveBeenLastCalledWith('me', ['me', 'a']);
++    await ctrl.getLeaderboard({ user: { userId: 't1', id: 't1', role: 'TEACHER' } });
++    expect(scope.getScopedStudentIds).toHaveBeenCalledWith('t1');
++    expect(service.getLeaderboard).toHaveBeenLastCalledWith('t1', ['s1', 's2']);
++  });
++});
+diff --git a/backend/src/security/render-config.spec.ts b/backend/src/security/render-config.spec.ts
+index e6a2656..a2ae884 100644
+--- a/backend/src/security/render-config.spec.ts
++++ b/backend/src/security/render-config.spec.ts
+@@ -27,6 +27,8 @@ describe('render.yaml', () => {
+     expect(value('QUESTION_SOURCE')).toBe('BANK');
+     expect(value('ENABLE_AI_FEATURES')).toBe('false');
+     expect(value('ENABLE_SHARED_BOARD')).toBe('false');
++    expect(value('ENABLE_FORUM')).toBe('false');
++    expect(value('NEXT_PUBLIC_ENABLE_FORUM')).toBe('false');
+     expect(value('NEXT_PUBLIC_ENABLE_AI_MENTOR')).toBe('false');
+     expect(value('TRUST_PROXY_HOPS')).toBe('1');
+     expect(value('NODE_ENV')).toBe('production');
+diff --git a/backend/src/security/route-coverage.spec.ts b/backend/src/security/route-coverage.spec.ts
+index 5a51471..bdc8b7a 100644
+--- a/backend/src/security/route-coverage.spec.ts
++++ b/backend/src/security/route-coverage.spec.ts
+@@ -54,6 +54,9 @@ describe('route coverage', () => {
+     ]) {
+       expect(find(m, p)?.roles).toEqual(staff);
+     }
++    // seeding the badge catalogue is an admin action; the forum is behind its own switch
++    expect(find('POST', '/gamification/seed-badges')?.roles).toEqual(['ADMIN']);
++    for (const r of routes.filter((x) => x.path.startsWith('/forum'))) expect(r.guards).toContain('ForumFeatureGuard');
+     // the AI-sending evaluation route also needs the AI switch
+     expect(find('POST', '/assessment-intelligence/evaluate/:id')?.guards).toContain('AiFeaturesGuard');
+   });
+diff --git a/render.yaml b/render.yaml
+index bd95fd3..b20f0ac 100644
+--- a/render.yaml
++++ b/render.yaml
+@@ -16,6 +16,9 @@ services:
+       # The AI mentor sidebar is off for pilots (see docs/DECISIONS.md D-007). Baked in at build time.
+       - key: NEXT_PUBLIC_ENABLE_AI_MENTOR
+         value: "false"
++      # The discussion forum lets every logged-in student see every post and author name; off for pilots.
++      - key: NEXT_PUBLIC_ENABLE_FORUM
++        value: "false"
+ 
+   - type: web
+     name: youva-edai-backend
+@@ -57,6 +60,8 @@ services:
+         value: "false"
+       - key: ENABLE_SHARED_BOARD
+         value: "false"
++      - key: ENABLE_FORUM
++        value: "false"
+ 
+ databases:
+   - name: youva-edai-db
+-- 
+2.43.0
+

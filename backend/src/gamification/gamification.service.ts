@@ -243,19 +243,34 @@ export class GamificationService {
   }
 
   // ── Leaderboard ─────────────────────────────────────────────
-  async getLeaderboard(currentUserId: string) {
+  /** The caller plus every student who shares a class with them. */
+  async getClassmateIds(userId: string): Promise<string[]> {
+    const mine = await this.prisma.teacherClassEnrollment.findMany({ where: { studentId: userId }, select: { classId: true } });
+    if (mine.length === 0) return [userId];
+    const peers = await this.prisma.teacherClassEnrollment.findMany({
+      where: { classId: { in: mine.map((m) => m.classId) } },
+      select: { studentId: true },
+    });
+    return [...new Set([userId, ...peers.map((p) => p.studentId)])];
+  }
+
+  /**
+   * Ranking among the given students only. It never returns email addresses or user ids, and never includes
+   * teachers or admins. A student without a name shows as "Student".
+   */
+  async getLeaderboard(currentUserId: string, visibleUserIds: string[]) {
     const rows = await this.prisma.userStats.findMany({
+      where: { userId: { in: visibleUserIds }, user: { role: 'STUDENT' } },
       orderBy: { totalXp: 'desc' },
       take: 50,
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: { select: { name: true } },
       },
     });
 
     return rows.map((row, index) => ({
       rank: index + 1,
-      userId: row.userId,
-      name: row.user.name ?? row.user.email,
+      name: row.user.name ?? 'Student',
       totalXp: row.totalXp,
       currentLevel: row.currentLevel,
       currentStreak: row.currentStreak,

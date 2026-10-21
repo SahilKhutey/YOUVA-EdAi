@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 |---|---|
 | Files tracked | 385 |
 | Backend TypeScript errors | 0 |
-| Unit test suites | 72 passed of 72 (excluding prisma.service.spec, which needs a DB engine) |
-| Unit tests | 222 passed, 0 failed |
+| Unit test suites | 74 passed of 74 (excluding prisma.service.spec, which needs a DB engine) |
+| Unit tests | 227 passed, 0 failed |
 | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
 | Schema models / migrations | 53 / 1 (PostgreSQL baseline) |
 
@@ -68,4 +68,14 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
 - Global `ValidationPipe` unknown field stripping enabled (`whitelist: true`, `transform: true`), preventing mass-assignment vulnerability vectors across all endpoints.
 - Account lockout protection implemented in `AuthService` (5 consecutive failed login attempts lock account for 15 minutes).
 - Forum endpoints hardened with `CreatePostDto`, `CreateReplyDto`, topic existence validation, and author identification; 7 unit tests added in `src/forum/forum.spec.ts`.
-- Measured baseline: 222 passing unit tests across 72 test suites in backend; 4 passing unit tests in frontend; 0 TypeScript errors in both frontend and backend.
+- Measured baseline: 227 passing unit tests across 74 test suites in backend; 8 passing unit tests in frontend; 0 TypeScript errors in both frontend and backend.
+
+## Phase 9 additions (measured)
+- Scoped classmates-only leaderboard (`GamificationService.getLeaderboard` filtered to shared class enrollments, returning only name, points, rank; no email or user IDs exposed). Unit tests in `src/gamification/leaderboard.spec.ts` (3 tests).
+- Seed badges endpoint guarded with `@Roles(Role.ADMIN)`.
+- Forum feature switch (`ForumFeatureGuard`) disabling discussion forum endpoints when `ENABLE_FORUM="false"` (default) returning HTTP 403. Unit tests in `src/forum/forum-flag.spec.ts` (2 tests).
+- Chat text escaping and markdown sanitization in frontend (`renderChatMarkdown` and `escapeHtml` in `frontend/lib/chat-text.mjs`) preventing HTML injection / XSS in `StudyBuddyWidget`.
+- Floating `StudyBuddyWidget` gated by `NEXT_PUBLIC_ENABLE_AI_MENTOR` and Sidebar discussion link gated by `NEXT_PUBLIC_ENABLE_FORUM` via `frontend/lib/features.mjs`.
+- HTTP security headers in Next.js (`frontend/next.config.ts` via `frontend/lib/security-headers.mjs`): `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`.
+- Frontend safety unit tests in `frontend/lib/safety.test.mjs` (4 tests). Total frontend tests: 8 passed.
+- Route audit script and inventory updated with "Knows caller" verification column. Route review log documented in `docs/ROUTE_REVIEW.md`.

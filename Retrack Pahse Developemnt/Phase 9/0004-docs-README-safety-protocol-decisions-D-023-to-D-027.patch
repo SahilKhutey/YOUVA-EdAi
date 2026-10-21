@@ -1,0 +1,97 @@
+From 4e48cc745d86843e9fd6ebe596a7f342d4d4a57a Mon Sep 17 00:00:00 2001
+From: phase9-fixes <phase9@example.invalid>
+Date: Tue, 20 Oct 2026 14:17:10 +0000
+Subject: [PATCH 4/4] docs: README, safety protocol, decisions D-023 to D-027,
+ baseline for Phase 9
+
+---
+ README.md                     |  1 +
+ docs/DECISIONS.md             | 22 ++++++++++++++++++++++
+ docs/TRUTH_BASELINE.md        | 10 ++++++++--
+ docs/pilot/SAFETY_PROTOCOL.md |  3 ++-
+ 4 files changed, 33 insertions(+), 3 deletions(-)
+
+diff --git a/README.md b/README.md
+index 1c6ddc8..b5dbe59 100644
+--- a/README.md
++++ b/README.md
+@@ -44,6 +44,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev
+ | `ALLOW_PUBLIC_REGISTRATION` | Default `true` (creates student accounts only). `false` closes public sign-up; create accounts with `npm run create:user` |
+ | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (for example your frontend's URL). Default: `http://localhost:3000` only |
+ | `TRUST_PROXY_HOPS` | Number of reverse proxies in front of the server (0 to 3). Set `1` on Render or behind nginx, or rate limiting will treat everyone as one user |
++| `ENABLE_FORUM` | Default off. The forum shows every logged-in student every post and author name. Set `true` only if that is intended. The frontend link is shown only when `NEXT_PUBLIC_ENABLE_FORUM=true` |
+ | `ENABLE_SHARED_BOARD` | Default off. The shared whiteboard uses one room for every user, so it stays off for pilots; when on, a login token is still required |
+ | `API_PREFIX` | Optional URL prefix for every route, for example `api`. `render.yaml` sets `api` because the deployed frontend calls `https://<backend>/api/...`. Locally leave unset and set `NEXT_PUBLIC_API_URL` without `/api` |
+ | `FRONTEND_URL` | Used as the allowed browser origin when `CORS_ORIGINS` is not set |
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+index 377b9a4..d113d9f 100644
+--- a/docs/DECISIONS.md
++++ b/docs/DECISIONS.md
+@@ -102,3 +102,25 @@ Each entry: what was decided, why, and what evidence supports it. Add new entrie
+ 
+ ## D-022: Secrets scan
+ - Result: no secret-like strings in the current tree or in the history of this branch beyond regex fixtures in a test; no `.env` file was ever committed (only `.env.example`). Scan patterns cover cloud, payment, chat and git-hosting tokens, private keys and connection strings with passwords. A scan cannot prove absence: still rotate any key that has ever been pasted anywhere else.
++
++## D-023: The leaderboard shows classmates only, by display name
++- Context: it returned the top 50 users system-wide, including each person's email address (when no name was set), user id, and teachers and admins, to any logged-in student.
++- Decision: students see themselves and students who share a class; teachers see their own students; admins see all students. Only display names; no emails or ids; a student without a name shows as "Student".
++- Evidence: `backend/src/gamification/leaderboard.spec.ts` (mutation-checked: selecting the email again made a test fail).
++
++## D-024: The discussion forum is off by default
++- Context: every logged-in student could read every post and every author's name across the whole system, which is peer contact the pilot is designed to avoid.
++- Decision: `ENABLE_FORUM` (backend) and `NEXT_PUBLIC_ENABLE_FORUM` (frontend link) default off; `render.yaml` sets both to false.
++- Evidence: `backend/src/forum/forum-flag.spec.ts`; the route test checks every forum route carries the guard.
++
++## D-025: Chat text is escaped before display, and the floating AI widget is gated
++- Context: the "study buddy" widget on every page inserted chat text as raw HTML, so a message or AI reply containing a tag with a script handler would run in a page that holds the login token. It also showed an AI chat bubble everywhere, though the AI endpoints are off.
++- Decision: escape `& < > " '` first, then format bold and italic; show the widget only when `NEXT_PUBLIC_ENABLE_AI_MENTOR=true`.
++- Evidence: `frontend/lib/safety.test.mjs` (mutation-checked: removing the escaping failed two tests).
++
++## D-026: Page security headers, without a content-security-policy
++- Decision: `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, and a `Permissions-Policy` that keeps camera and microphone for this site (the live classroom needs them) and turns geolocation off. A content-security-policy is deliberately not set: it needs testing in a real browser against the video call and the PWA.
++- Evidence: `frontend/lib/safety.test.mjs` (tests the header list; the headers are served by `next.config.ts`, which I could not run in a real build here).
++
++## D-027: Route review completed for login-only routes with id-like inputs
++- Result: see `docs/ROUTE_REVIEW.md`. Open: routes that use only the caller's own identity and take no id-like input were not read line by line.
+diff --git a/docs/TRUTH_BASELINE.md b/docs/TRUTH_BASELINE.md
+index 7c68f27..cf6d9a5 100644
+--- a/docs/TRUTH_BASELINE.md
++++ b/docs/TRUTH_BASELINE.md
+@@ -5,8 +5,8 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ |---|---|
+ | Files tracked | 381 (was 1,425 on main) |
+ | Backend TypeScript errors | 0 (was 29 at base) |
+-| Unit test suites | 70 passed of 70 (excluding prisma.service.spec, which needs a DB engine) |
+-| Unit tests | 210 passed, 0 failed |
++| Unit test suites | 72 passed of 72 (excluding prisma.service.spec, which needs a DB engine) |
++| Unit tests | 215 passed, 0 failed |
+ | Real behavioral tests of mastery/difficulty math | 9 (added; previously only "should be defined") |
+ | Schema models / migrations | 53 / 4 |
+ 
+@@ -72,3 +72,9 @@ Measured in a sandbox with Prisma types generated but no query engine. Re-run sc
+ - Security headers, CORS fallback and API prefix tested over HTTP (7 tests); teacher analytics and learning-loop scoping (7 tests).
+ - Not verified: the Next.js 16.4.2 production build (blocked in the sandbox); `prisma db push` against a real database; a deployed Render environment.
+ - Still open: migration baseline for PostgreSQL; forum and other login-only routes not each read; account lockout; token kept in `localStorage`; global validation does not strip unknown fields.
++
++## Phase 9 additions (measured)
++- Route review finished for the routes I had not read (`docs/ROUTE_REVIEW.md`): found and fixed a leaderboard that exposed emails and user ids system-wide, an admin-style badge-seeding route open to any logged-in user, a forum open to all students, an AI chat widget mounted on every page, and chat text inserted as raw HTML. 5 backend tests and 4 frontend tests added; two protections (HTML escaping of chat text, leaving emails out of the leaderboard) were removed once each to confirm a test fails; the forum switch and badge-seeding role were tested but not mutation-checked.
++- Frontend: 8 Node tests (was 4); `tsc` 0 errors. Page security headers added in `next.config.ts` (not exercised in a real build here).
++- Token lifetime is 60 minutes; no secrets or tokens are written to logs by the code I searched.
++- Still open: migration baseline for PostgreSQL; account lockout; login token in `localStorage`; no content-security-policy on the frontend; the Next.js production build and CI were not run in the sandbox.
+diff --git a/docs/pilot/SAFETY_PROTOCOL.md b/docs/pilot/SAFETY_PROTOCOL.md
+index 42f66e8..9ac6e17 100644
+--- a/docs/pilot/SAFETY_PROTOCOL.md
++++ b/docs/pilot/SAFETY_PROTOCOL.md
+@@ -7,7 +7,8 @@
+ 3. Only reviewed questions are in use (`QUESTION_SOURCE=BANK`). The AI question mode is OFF for the pilot.
+ 4. The supervising adult has read this page.
+ 5. Students use the practice page only. The forum and other sections are not part of the pilot; do not open them with students.
+-6. The AI mentor is off: confirm `ENABLE_AI_FEATURES` is not `true` on the server and that no AI sidebar appears on the practice page. If a sidebar appears, stop and fix the setting before the session.
++6. The discussion forum is off (`ENABLE_FORUM` not `true`) and the Discussion link does not appear. The leaderboard shows only classmates, by display name; tell students not to use their full names or emails as display names.
++7. The AI mentor is off: confirm `ENABLE_AI_FEATURES` is not `true` on the server and that no AI sidebar appears on the practice page. If a sidebar appears, stop and fix the setting before the session.
+ 
+ ## During a session
+ - The supervising adult is in the room (or on the call with camera on) the whole time.
+-- 
+2.43.0
+
